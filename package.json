@@ -1,0 +1,81 @@
+{
+  "name": "@vulkano/cli",
+  "version": "0.1.0",
+  "description": "A MVC framework using Express 4",
+  "license": "MIT",
+  "author": "Vulkano Team",
+  "engines": {
+    "node": "^18"
+  },
+  "main": "bootstrap.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "preferGlobal": true,
+  "homepage": "https://github.com/vulkanojs/vulkano-core",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vulkanojs/vulkano-core"
+  },
+  "keywords": [
+    "vulkano",
+    "vulkano-core",
+    "express",
+    "mongo",
+    "mongoose"
+  ],
+  "bugs": {
+    "url": "https://github.com/vulkanojs/vulkano-cli/issues"
+  },
+  "dependencies": {
+    "@socket.io/redis-adapter": "^8.2.1",
+    "bluebird": "^3.7.2",
+    "body-parser": "^1.20.2",
+    "compression": "^1.7.4",
+    "concurrently": "^8.2.0",
+    "connect-timeout": "^1.9.0",
+    "cookie-parser": "^1.4.6",
+    "cron": "^2.4.0",
+    "deepmerge": "^4.3.1",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "express-jwt": "^8.4.1",
+    "express-useragent": "^1.0.15",
+    "foundation-sites": "^6.7.5",
+    "frameguard": "^4.0.0",
+    "fs": "^0.0.1-security",
+    "fs-extra": "^11.1.1",
+    "helmet": "^7.0.0",
+    "i18next": "^23.4.4",
+    "include-all": "^4.0.3",
+    "jwt-simple": "^0.5.6",
+    "moment": "^2.29.4",
+    "moment-timezone": "^0.5.43",
+    "mongoose": "^7.4.3",
+    "mongoose-paginate": "^5.0.3",
+    "morgan": "^1.10.0",
+    "multer": "^1.4.5-lts.1",
+    "nodemon": "^3.0.1",
+    "nunjucks": "^3.2.4",
+    "path": "^0.12.7",
+    "promise.prototype.finally": "^3.1.4",
+    "redis": "^4.6.7",
+    "socket.io": "^4.7.2",
+    "socket.io-client": "4.7.2",
+    "underscore": "^1.13.6",
+    "webp-middleware": "^0.4.0",
+    "yargs": "^17.7.2"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.22.9",
+    "@babel/eslint-parser": "^7.22.9",
+    "@babel/plugin-syntax-dynamic-import": "^7.8.3",
+    "@babel/plugin-syntax-jsx": "^7.22.5",
+    "@babel/preset-env": "^7.22.9",
+    "@babel/preset-react": "^7.22.5",
+    "@babel/preset-stage-1": "^7.8.3",
+    "eslint": "^8.46.0",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-plugin-import": "^2.28.0"
+  }
+}
