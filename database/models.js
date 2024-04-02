@@ -79,7 +79,6 @@ module.exports = function loadModelsApplication() {
       ...Callbacks,
       ...scaffold,
       ...custom,
-      ...ActiveRecord,
       ...Current
     };
 

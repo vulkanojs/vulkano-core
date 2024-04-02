@@ -23,6 +23,7 @@
     "Promise": true,
     "Paginate": true,
     "i18n": true,
+    "Mixed": true,
     "Jwt": true,
     "Encrypter": true,
     "Crontab": true,
