@@ -15,7 +15,7 @@
   "homepage": "https://github.com/vulkanojs/vulkano-core",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/vulkanojs/vulkano-core"
+    "url": "git+https://github.com/vulkanojs/vulkano-core.git"
   },
   "keywords": [
     "vulkano",
