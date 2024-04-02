@@ -20,6 +20,7 @@
   "globals": {
     "app": true,
     "io": true,
+    "ApiClient": true,
     "Promise": true,
     "Paginate": true,
     "Mixed": true,
