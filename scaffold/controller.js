@@ -16,7 +16,7 @@ module.exports = (modelName) => {
     connection
   } = database || {};
 
-  if (!connection) {
+  if (!connection && !process.env.MONGO_URI) {
     return {};
   }
 
