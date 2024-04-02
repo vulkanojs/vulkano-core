@@ -22,16 +22,17 @@
     "io": true,
     "Promise": true,
     "Paginate": true,
-    "i18n": true,
     "Mixed": true,
-    "Jwt": true,
-    "Encrypter": true,
     "Crontab": true,
-    "VSError": true,
+    "Encrypter": true,
     "Filter": true,
+    "i18n": true,
+    "Jwt": true,
+    "VSError": true,
     "ABS_PATH": true,
     "APP_PATH": true,
-    "CORE_PATH": true
+    "CORE_PATH": true,
+    "PUBLIC_PATH": true
   },
   "settings": {
     "react": {
