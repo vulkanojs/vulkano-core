@@ -7,11 +7,25 @@ moment.locale('en');
 
 module.exports = (() => {
 
-  const locales = Object.keys(app.config.locales);
+  const {
+    config
+  } = app || {};
+
+  let {
+    locales: configLocales
+  } = config || {};
+
+  if (!configLocales) {
+    configLocales = {
+      en: {}
+    };
+  }
+
+  const locales = Object.keys(configLocales);
   const resources = new Map();
 
   locales.forEach( (locale) => {
-    resources.set(locale, { translation: app.config.locales[locale] });
+    resources.set(locale, { translation: configLocales[locale] });
   });
 
   // Change translations
