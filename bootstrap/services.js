@@ -17,7 +17,18 @@ const appServices = require('include-all')({
   optional: true
 });
 
-const allServices = { ...coreLibs, ...appServices };
+const appLibs = require('include-all')({
+  dirname: path.join(APP_PATH, '/libs'),
+  filter: /(.+)\.js$/,
+  optional: true
+});
+
+
+const allServices = {
+  ...coreLibs,
+  ...appServices,
+  ...appLibs
+};
 
 module.exports = function loadServicesApplication() {
 

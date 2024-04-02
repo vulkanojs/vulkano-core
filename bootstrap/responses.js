@@ -2,13 +2,15 @@ const path = require('path');
 
 // Include all user's responses
 const VulkanoResponses = require('include-all')({
-  dirname: path.normalize(path.join(__dirname, 'responses')),
-  optional: true
+  dirname: path.join(CORE_PATH, '/responses'),
+  optional: true,
+  filter: /(.+)\.js$/
 });
 
 const CustomResponses = require('include-all')({
-  dirname: path.normalize(path.join(__dirname, '../app/responses')),
-  optional: true
+  dirname: path.join(APP_PATH, '/responses'),
+  optional: true,
+  filter: /(.+)\.js$/
 });
 
 module.exports = function loadResponsesApplication(req, res, next) {
