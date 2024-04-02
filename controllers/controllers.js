@@ -9,7 +9,7 @@ const AllControllers = require('include-all')({
   optional: true
 });
 
-const scaffoldController = require('./scaffold/controller');
+const scaffoldController = require('./ScaffoldController');
 
 module.exports = function loadControllersApplication() {
 
