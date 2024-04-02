@@ -17,27 +17,27 @@ global._ = _;
 global.Promise = Promise;
 
 if (!global.ABS_PATH) {
-  global.ABS_PATH = path.resolve(__dirname, '');
+  global.ABS_PATH = path.resolve(__dirname, './');
 }
 
 if (!global.APP_PATH) {
-  global.APP_PATH = path.join(__dirname, '../app');
+  global.APP_PATH = path.join(__dirname, './');
 }
 
 if (!global.PUBLIC_PATH) {
-  global.PUBLIC_PATH = path.join(__dirname, '../public');
+  global.PUBLIC_PATH = path.join(__dirname, './');
 }
 
-global.CORE_PATH = path.join(__dirname, '');
+global.CORE_PATH = path.join(__dirname, './');
 
 if (!fs.existsSync(APP_PATH)) {
-  console.log('the global var APP_PATH or directory not found');
-  global.APP_PATH = path.resolve(__dirname, '');
+  console.log('the global var APP_PATH or directory not found', APP_PATH);
+  global.APP_PATH = path.resolve(__dirname, './');
 }
 
 if (!fs.existsSync(PUBLIC_PATH)) {
-  console.log('the global var PUBLIC_PATH or directory not found');
-  global.PUBLIC_PATH = path.resolve(__dirname, '');
+  console.log('the global var PUBLIC_PATH or directory not found', PUBLIC_PATH);
+  global.PUBLIC_PATH = path.resolve(__dirname, './');
 }
 
 // Read Dontenv config
@@ -201,10 +201,11 @@ function startVulkano() {
       const nodeVersion = process.version.match(/^v(\d+\.\d+\.\d+)/)[1];
       const portText = String(app.server.get('port') || 8000).padEnd(nodeVersion.length, ' ');
       const socketText = (sockets.enabled ? 'YES' : 'NO').padEnd(nodeVersion.length - 3, ' ');
+      const redisText = (redis && redis.enabled ? 'YES' : 'NO').padEnd(5, ' ');
 
       serverConfig.push(` PORT: ${colors.fg.green}${portText}${colors.reset}`);
       serverConfig.push(' | ');
-      serverConfig.push(` ENV: ${app.PRODUCTION ? colors.fg.red : colors.fg.green}${env}${colors.reset}`);
+      serverConfig.push(` ENV: ${app.PRODUCTION ? colors.fg.red : colors.fg.green}${NODE_ENV}${colors.reset}`);
 
       console.log(serverConfig.join(''));
 
@@ -218,20 +219,16 @@ function startVulkano() {
       console.log(nodeConfig.join(''));
 
       const startUpConfig = [];
-      if (sockets.redis && redis && redis.enabled) {
-        startUpConfig.push(' SOCKETS: ', `${colors.fg.green}${socketText}${colors.reset}`);
-      } else {
-        startUpConfig.push(' SOCKETS: ', `${colors.fg.green}${socketText}${colors.reset}`);
-      }
+      startUpConfig.push(' SOCKETS: ', `${colors.fg.green}${socketText}${colors.reset}`);
       startUpConfig.push(' | ');
       startUpConfig.push(` STARTUP: ${colors.fg.green}${moment(moment().diff(global.START_TIME)).format('ss.SSS')} sec${colors.reset}`);
       console.log(startUpConfig.join(''));
 
       const dbConfig = [];
       if (redis && redis.enabled) {
-        dbConfig.push(' REDIS: ', `${colors.fg.green}YES   ${colors.reset}`);
+        dbConfig.push(' REDIS: ', `${colors.fg.green}${redisText}${colors.reset}`);
       } else {
-        dbConfig.push(' REDIS: ', `${colors.fg.green}NO    ${colors.reset}`);
+        dbConfig.push(' REDIS: ', `${colors.fg.green}${redisText}${colors.reset}`);
       }
 
       dbConfig.push(' | ');
