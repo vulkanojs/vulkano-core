@@ -97,7 +97,7 @@ module.exports = {
 
     const optHeaders = {
       'Content-Type': 'application/json',
-      'Accept': 'application/json'
+      Accept: 'application/json'
     };
 
     const options = {
