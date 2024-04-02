@@ -8,7 +8,6 @@ node_modules
 bower_components
 npm-debug.log
 package-lock.json
-*.lockb
 
 # OS generated files #
 ######################
@@ -30,6 +29,7 @@ Thumbs.db
 *.dev
 .DS_Store
 *.lock
+*.lockb
 *.identifier
 *.LICENSE.txt
 
