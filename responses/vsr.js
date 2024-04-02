@@ -53,12 +53,7 @@ module.exports = function VSRPromise(promiseToRun, httpStatusCode) {
 
       }
 
-      if (r && r.serialized) { // if the object has serialized? see services/Serializer
-        output = { ...output, ...r };
-        delete output.serialized;
-      } else {
-        output.data = r;
-      }
+      output.data = r;
 
       return true;
 
