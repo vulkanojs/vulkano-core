@@ -8,6 +8,7 @@ node_modules
 bower_components
 npm-debug.log
 package-lock.json
+*.lockb
 
 # OS generated files #
 ######################
@@ -54,15 +55,3 @@ dwsync.xml
 # Docker
 #Dockerfile
 #docker-compose.yml
-
-# Project
-public/css/app.css
-public/css/app.css.map
-public/js/app.js
-public/js/app.js.map
-public/css/cms.css
-public/css/cms.css.map
-public/js/cms.js
-public/js/cms.js.map
-public/js/vendors.js
-public/js/vendors.js.map
