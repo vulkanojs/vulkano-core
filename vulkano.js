@@ -10,15 +10,35 @@ const merge = require('deepmerge');
 const _ = require('underscore');
 const Promise = require('bluebird');
 const v8 = require('v8');
+const fs = require('fs');
 
 global.app = {};
 global._ = _;
 global.Promise = Promise;
 
-global.ABS_PATH = path.resolve(__dirname, '../');
-global.CORE_PATH = path.join(__dirname, '../core');
-global.APP_PATH = path.join(__dirname, '../app');
-global.PUBLIC_PATH = path.join(__dirname, '../public');
+if (!global.ABS_PATH) {
+  global.ABS_PATH = path.resolve(__dirname, '');
+}
+
+if (!global.APP_PATH) {
+  global.APP_PATH = path.join(__dirname, '../app');
+}
+
+if (!global.PUBLIC_PATH) {
+  global.PUBLIC_PATH = path.join(__dirname, '../public');
+}
+
+global.CORE_PATH = path.join(__dirname, '');
+
+if (!fs.existsSync(APP_PATH)) {
+  console.log('the global var APP_PATH or directory not found');
+  global.APP_PATH = path.resolve(__dirname, '');
+}
+
+if (!fs.existsSync(PUBLIC_PATH)) {
+  console.log('the global var PUBLIC_PATH or directory not found');
+  global.PUBLIC_PATH = path.resolve(__dirname, '');
+}
 
 // Read Dontenv config
 dotenv.config();
@@ -31,32 +51,42 @@ const config = require('include-all')({
 });
 
 // Get package.json information
-const pkg = require('../package.json');
+const pkg = require(`${CORE_PATH}/package.json`);
+const appPkg = require(`${ABS_PATH}/package.json`);
 
 // Environment
-app.PRODUCTION = (process.env.NODE_ENV || '').toLowerCase() === 'production';
-const env = (process.env.NODE_ENV || 'development').toLowerCase();
+const NODE_ENV = (process.env.NODE_ENV || 'development').toLowerCase();
+
+app.PRODUCTION = NODE_ENV === 'production' ? true : false;
 
 const {
-  views
-} = config;
-
-// Local Config
-const localConfig = config.local || {};
+  views,
+  local,
+  env
+} = config || {};
 
 // NODE_ENV
-const environmentConfig = config.env ? config.env[env] || {} : {};
+const environmentConfig = env ? env[NODE_ENV] || {} : {};
+
+// Merge Settings
 const settings = {
   ...config.settings,
-  views: views.config
+  views: views?.config || ''
 };
 
 // All config merged (default, NODE_ENV (folder env), local.js file)
 const allConfig = merge.all([
-  config,
+  // General Config
+  config || {},
+
+  // Settings Config
   { settings },
+
+  // Environment Config
   environmentConfig,
-  localConfig
+
+  // Local Config
+  local || {}
 ]);
 
 delete allConfig.env;
@@ -69,10 +99,11 @@ app.config = allConfig;
 app.pkg = pkg;
 
 // Include all components
-require('./services')();
-require('./database')();
-const controllers = require('./controllers')();
-const server = require('./server');
+require('./bootstrap/services')();
+require('./database/mongodb')();
+
+const controllers = require('./controllers/controllers')();
+const server = require('./bootstrap/server');
 
 const colors = {
   reset: '\x1b[0m',
@@ -106,19 +137,20 @@ const colors = {
   }
 };
 
-module.exports = function loadBootstrapApplication() {
+function startVulkano() {
 
   console.log('');
   console.log('');
-  console.log(`${colors.fg.magenta}--------------------------------------`, colors.reset);
+  console.log(`${colors.fg.magenta}------------------------------------------`, colors.reset);
   console.log('');
-  console.log(colors.fg.cyan, '               🌋', colors.reset);
+  console.log(colors.fg.cyan, '              🌋', colors.reset);
+  console.log(colors.fg.cyan, `       APP VERSION ${appPkg.version}`, colors.reset);
   console.log(colors.fg.cyan, `         VULKANO ${pkg.version}`, colors.reset);
   console.log('');
-  console.log(colors.fg.blue, 'https://github.com/vulkanojs/vulkano', colors.reset);
+  console.log(colors.fg.blue, '🔗 https://github.com/vulkanojs/vulkano', colors.reset);
   console.log(colors.fg.cyan, '☕ https://buymeacoffee.com/argordmel', colors.reset);
   console.log('');
-  console.log(`${colors.fg.magenta}--------------------------------------`, colors.reset);
+  console.log(`${colors.fg.magenta}------------------------------------------`, colors.reset);
 
   // Routes
   app.routes = controllers;
@@ -139,7 +171,7 @@ module.exports = function loadBootstrapApplication() {
   } = config;
 
   if (!bootstrap || typeof bootstrap !== 'function') {
-    console.log('Missing the boostrap file to start app: config/bootstrap.js');
+    console.log('Missing the boostrap file to start app: app/config/bootstrap.js');
     return;
   }
 
@@ -218,3 +250,5 @@ module.exports = function loadBootstrapApplication() {
   });
 
 };
+
+module.exports = startVulkano;
