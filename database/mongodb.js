@@ -8,13 +8,13 @@ const merge = require('deepmerge');
 
 const mongoose = require('mongoose');
 
+mongoose.Promise = Promise;
+
 global.mongoose = mongoose;
 global.Virtual = 'Virtual';
 global.Mixed = mongoose.Schema.Types.Mixed;
 
 const AllModels = require('./models')();
-
-mongoose.Promise = Promise;
 
 module.exports = function loadDatabaseApplication() {
 
@@ -25,11 +25,11 @@ module.exports = function loadDatabaseApplication() {
   const {
     connections,
     settings
-  } = config;
+  } = config || {};
 
   const {
     database
-  } = settings;
+  } = settings || {};
 
   const {
     connection,
