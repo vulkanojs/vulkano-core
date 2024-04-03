@@ -23,7 +23,6 @@ const appLibs = require('include-all')({
   optional: true
 });
 
-
 const allServices = {
   ...coreLibs,
   ...appServices,

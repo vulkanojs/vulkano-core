@@ -24,8 +24,10 @@ const AllControllers = require('include-all')({
   filter: /(.+Controller)\.js$/,
   optional: true
 });
+
 const responses = require('./responses');
-const JWT = require(`${CORE_PATH}/libs/Jwt`);
+
+const JWT = require('../libs/Jwt');
 
 module.exports = {
 
