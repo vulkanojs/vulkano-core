@@ -150,9 +150,9 @@ module.exports = {
     // COOKIES - File: app/config/express/cookies.js
     // ---------------
     if (expressConfig.cookies && expressConfig.cookies.enabled) {
-      const cookiesSecretKey = expressConfig.cookies && expressConfig.cookies.secret ? expressConfig.cookies.secret : '';
+      const cookiesSecretKey = process.env.COOKIES_SECRET_KEY || expressConfig.cookies.key || expressConfig.cookies.secret || '';
       if (!cookiesSecretKey) {
-        console.log('Warning: Please set cookie secret key in the file config/express/cookie.js');
+        console.log(' \x1b[33mWARNING\x1b[0m: Set the secret key in the config/express/cookie.js file or COOKIES_SECRET_KEY in the .env file.');
       }
       server.use(cookieParser(cookiesSecretKey));
     }
@@ -264,6 +264,12 @@ module.exports = {
     // JWT - File: app/config/express/jwt.js
     // ---------------
     if (expressConfig.jwt && expressConfig.jwt.enabled) {
+
+      const jwtSecretKey = process.env.JWT_SECRET_KEY || expressConfig.jwt.key || expressConfig.jwt.secret || '';
+      if (!jwtSecretKey) {
+        console.log(' \x1b[41mERROR\x1b[0m: Can not get key in config/express/jwt.js file or JWT_SECRET_KEY in .env file');
+        return;
+      }
 
       // JWT (secret key)
       server.use(expressConfig.jwt.path || '*', jwtMiddleware.init().unless({

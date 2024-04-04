@@ -1,6 +1,6 @@
 {
   "name": "@vulkano/core",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "description": "A MVC framework using Express 4",
   "license": "MIT",
   "author": "Vulkano Team",
