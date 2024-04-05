@@ -32,12 +32,15 @@ if (!global.ABS_PATH) {
 if (!global.APP_PATH) {
   global.APP_PATH = path.resolve(rootProject, './app');
   if (!fs.existsSync(APP_PATH)) {
-    global.APP_PATH = path.resolve(rootProject, './');
+    global.APP_PATH = path.resolve(rootProject, './vulkano');
+    if (!fs.existsSync(APP_PATH)) {
+      global.APP_PATH = path.resolve(rootProject, './');
+    }
   }
 }
 
 if (!fs.existsSync(APP_PATH)) {
-  console.log('the global var APP_PATH or directory not found', APP_PATH);
+  console.log('the global var APP_PATH or the vulkano directory not found', APP_PATH);
   global.APP_PATH = path.resolve(__dirname, './');
 }
 
@@ -167,7 +170,7 @@ function startVulkano() {
   console.log('');
   console.log(colors.fg.cyan, '              🌋', colors.reset);
   console.log(colors.fg.cyan, `       APP VERSION ${appPkg.version}`, colors.reset);
-  console.log(colors.fg.cyan, `         VULKANO ${pkg.version}`, colors.reset);
+  console.log(colors.fg.cyan, `      @VULKANO/CORE ${pkg.version}`, colors.reset);
   console.log('');
   console.log(colors.fg.blue, '🔗 https://github.com/vulkanojs/vulkano', colors.reset);
   console.log(colors.fg.cyan, '☕ https://buymeacoffee.com/argordmel', colors.reset);
