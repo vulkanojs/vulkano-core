@@ -1,7 +1,12 @@
+/* eslint-disable import/no-dynamic-require */
+
 /**
  * Bootstrap.js
  *
  */
+
+// Start Time for logs
+global.START_TIME = new Date();
 
 const dotenv = require('dotenv');
 const path = require('path');
@@ -16,19 +21,34 @@ global.app = {};
 global._ = _;
 global.Promise = Promise;
 
+const rootProject = path.resolve(process.cwd());
+
+// Set the ABS_PATH
 if (!global.ABS_PATH) {
-  global.ABS_PATH = path.resolve(__dirname, './');
+  global.ABS_PATH = path.resolve(rootProject, './');
 }
 
+// Set the APP_PATH
 if (!global.APP_PATH) {
-  global.APP_PATH = path.join(__dirname, './');
+  global.APP_PATH = path.resolve(rootProject, './app');
+  if (!fs.existsSync(APP_PATH)) {
+    global.APP_PATH = path.resolve(rootProject, './');
+  }
+}
+
+if (!fs.existsSync(APP_PATH)) {
+  console.log('the global var APP_PATH or directory not found', APP_PATH);
+  global.APP_PATH = path.resolve(__dirname, './');
 }
 
 if (!global.PUBLIC_PATH) {
-  global.PUBLIC_PATH = path.join(__dirname, './');
+  global.PUBLIC_PATH = path.resolve(rootProject, './public');
+  if (!fs.existsSync(PUBLIC_PATH)) {
+    global.PUBLIC_PATH = path.resolve(rootProject, './');
+  }
 }
 
-global.CORE_PATH = path.join(__dirname, './');
+global.CORE_PATH = __dirname;
 
 if (!fs.existsSync(APP_PATH)) {
   console.log('the global var APP_PATH or directory not found', APP_PATH);
@@ -50,7 +70,9 @@ const config = require('include-all')({
   optional: true
 });
 
+//
 // Get package.json information
+//
 const pkg = require(`${CORE_PATH}/package.json`);
 const appPkg = require(`${ABS_PATH}/package.json`);
 
@@ -246,6 +268,6 @@ function startVulkano() {
 
   });
 
-};
+}
 
 module.exports = startVulkano;
