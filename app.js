@@ -121,7 +121,7 @@ delete allConfig.local;
 app.config = allConfig;
 
 // Package Config
-app.pkg = pkg;
+app.pkg = appPkg;
 
 // Include all components
 require('./bootstrap/services')();
