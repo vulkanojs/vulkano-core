@@ -12,7 +12,6 @@ const multer = require('multer');
 const helmet = require('helmet');
 const timeout = require('connect-timeout');
 const useragent = require('express-useragent');
-const webp = require('webp-middleware');
 const cookieParser = require('cookie-parser');
 const merge = require('deepmerge');
 const { createClient } = require('redis');
@@ -176,19 +175,6 @@ module.exports = {
     // RESPONSES
     // ---------------
     server.use(responses);
-
-    // ---------------
-    // WEBP MIDDLEWARE - File: app/config/express/webp.js
-    // ---------------
-    if (expressConfig.webp && expressConfig.webp.enabled) {
-      const cacheDir = expressConfig.webp.folder || `${PUBLIC_PATH}/webp-cache`;
-      const webpConfig = {
-        quality: expressConfig.webp.quality || 80,
-        preset: expressConfig.webp.preset || 'photo',
-        cacheDir: expressConfig.webp.cacheDir || cacheDir
-      };
-      server.use(webp(PUBLIC_PATH, webpConfig));
-    }
 
     // ---------------
     // PUBLIC PATH - File: app/config/settings.js
