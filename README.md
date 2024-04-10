@@ -16,106 +16,61 @@ Thank you to all [our backers](https://opencollective.com/vulkanojs#backer)! �
 [![vulkano backers](https://opencollective.com/vulkanojs/tiers/backer.svg?avatarHeight=50)](https://opencollective.com/vulkanojs#backers)
 
 
-## Stack
+## Buy me a coffe
 
-### API
-
-- Node.js
-- [Express](http://expressjs.com)
-- [Mongoose](http://mongoosejs.com/)
-- [Nunjucks](http://mozilla.github.io/nunjucks/) (Template Engine)
-- [Nodemon](http://nodemon.io/) (Reload automatically for dev mode)
-- [PM2](http://pm2.keymetrics.io/) (Deployment)
-- [Gulp](https://gulpjs.com/) (Automate and enhance your workflow)
-- [BrowserSync](https://www.browsersync.io/) (Time-saving synchronised browser testing)
-- [WebPack](https://webpack.js.org/) (Bundle your scripts)
+[link](https://buymeacoffee.com/argordmel) 🙏
 
 ## Install
 
 ### System
 
 - Unix
-- Node.js v12+
+- Node.js v20+
 
 ### Packages
 
 ```bash
-$ yarn install
+$ npm install @vulkano/core
 ```
 
-## Workflow
+## Your App Structure
 
-| Command                         | Description                               |
-| :------------------------------	| :---------------------------------------- |
-| `npm run dev`                   | Run development server and watch changes	|
-| `npm run start`                 | Start development server                  |
-| `npm run gulp`                  | Start browsersync & sass                  |
-| `npm run webpack`               | Start webpack                             |
-| `npm run build`                 | Task to buils assets in production mode   |
-| `npm run deploy:heroku`         | Update Heroku app                         |
-| `npm run deploy:server`         | Deploy app into server                    |
-
-
-## Structure
-
-- `app/`
-- `client/`
-- `cms/`
-- `core/`
 - `public/` - HTTP Public folder
-- `Procfile` - Heroku entry point
-- `README.md`
+- `vulkano/` - Vulkano App (config, controllers, models, views)
 - `app.js` - Server entry point
-- `nodemon.json` - Nodemon entry point
+
+## Your Server entry point
+
+```bash
+/**
+ * vulkano.js
+ *
+ * To start the server, run: ⁠ node vulkano.js ⁠.
+ *
+ * For example:
+ *   => ⁠ npm run start ⁠
+ *   => ⁠ node vulkano.js ⁠
+ */
+
+const vulkano = require('@vulkano/core');
+
+vulkano(); ⁠
+```
 
 
-## Your App Folder
+## Your Vulkano App Folder
 
-### Config
-You can create any config enviroments as needed. By default, vulcano runs with NODE_ENV=development, in development mode. In productions servers, you should change NODE_ENV to _production_.
+- `vulkano/` - Vulkano App
+  - `config` - Your config files
+  - `controllers` - Your controllers
+  - `models` - Your models
+  - `services` - Your services or libs
 
-#### connections.js
+## Your Vulkano Public Folder
 
-#### policies.js
-
-#### routes.js
-
-#### server.js
-
-### Controllers
-
-### Helpers
-
-#### Filters
-
-### Models
-
-### Responses
-
-#### vsr.js
-
-### Services
-
-#### ActiveRecord.js
-
-#### AppController.js
-
-#### Filter.js
-
-#### Jwt.js (Json Web Token)
-
-#### Paginate.js
-
-#### Upload.js
-
-#### VSError.js
-
-### Views.js
-
-#### _shared
-
-##### Errors
-
-##### Partials
-
-##### Templates
+- `public/` - Public Path
+  - `css` - Styles
+  - `fonts` - Fonts
+  - `img` - Images
+  - `js` - Javascript
+  - `files` - Files uploaded
