@@ -18,7 +18,7 @@ Thank you to all [our backers](https://opencollective.com/vulkanojs#backer)! �
 
 ## Buy me a coffe
 
-[link](https://buymeacoffee.com/argordmel) 🙏
+[Buy me a coffe](https://buymeacoffee.com/argordmel) 🙏
 
 ## Install
 
@@ -43,13 +43,13 @@ $ npm install @vulkano/core
 
 ```bash
 /**
- * vulkano.js
+ * app.js
  *
- * To start the server, run: ⁠ node vulkano.js ⁠.
+ * To start the server, run: ⁠ node app.js ⁠.
  *
  * For example:
  *   => ⁠ npm run start ⁠
- *   => ⁠ node vulkano.js ⁠
+ *   => ⁠ node app.js ⁠
  */
 
 const vulkano = require('@vulkano/core');
@@ -62,6 +62,10 @@ vulkano(); ⁠
 
 - `vulkano/` - Vulkano App
   - `config` - Your config files
+    - `env` - Folder for custom environment settings
+    - `express` - Folder to customize the server (cookies, jwt, helmet, cors and settings)
+    - `locales` - i18n folder
+    - `views` - Folder to customize filters and helpers to Nunjukcs
   - `controllers` - Your controllers
   - `models` - Your models
   - `services` - Your services or libs
