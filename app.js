@@ -164,18 +164,41 @@ const colors = {
 
 function startVulkano() {
 
+  const appName = appPkg.name.toUpperCase().split('-').join(' ');
+  const appVersion = appPkg.version;
+  const author = appPkg.author || pkg.author;
+
+  const lineWidth = 38;
+
+  const showCenteredText = (text) => {
+
+    const colSize = (lineWidth / 2) - 3;
+    const textLength = (text || '').length;
+    const textLeftSize = Math.trunc(textLength / 2);
+    const textRightSize = textLength - textLeftSize;
+
+    const textPaddingLeft = ''.padStart( colSize - textLeftSize, ' ');
+    const textPaddingRight = ''.padEnd( colSize - textRightSize, ' ');
+    const textCentered = `${textPaddingLeft}${text}${textPaddingRight}`;
+
+    return textCentered;
+
+  };
+
+  const cutLine = '-'.padEnd(lineWidth, '-');
+
   console.log('');
+  console.log(`${colors.fg.magenta}${cutLine}`, colors.reset);
   console.log('');
-  console.log(`${colors.fg.magenta}------------------------------------------`, colors.reset);
+  console.log(colors.fg.cyan, showCenteredText('🌋'), colors.reset);
+  console.log(colors.fg.cyan, showCenteredText(`${appName} ${appVersion}`), colors.reset);
+  console.log(colors.fg.cyan, showCenteredText(`${pkg.name} ${pkg.version}`.toUpperCase()), colors.reset);
   console.log('');
-  console.log(colors.fg.cyan, '              🌋', colors.reset);
-  console.log(colors.fg.cyan, `       APP VERSION ${appPkg.version}`, colors.reset);
-  console.log(colors.fg.cyan, `      @VULKANO/CORE ${pkg.version}`, colors.reset);
+  console.log(colors.fg.blue, '🔗 github.com/vulkanojs/vulkano', colors.reset);
+  console.log(colors.fg.cyan, '☕ buymeacoffee.com/argordmel', colors.reset);
   console.log('');
-  console.log(colors.fg.blue, '🔗 https://github.com/vulkanojs/vulkano', colors.reset);
-  console.log(colors.fg.cyan, '☕ https://buymeacoffee.com/argordmel', colors.reset);
-  console.log('');
-  console.log(`${colors.fg.magenta}------------------------------------------`, colors.reset);
+  console.log(` Author: ${colors.fg.green}${author}${colors.reset}`);
+  console.log(`${colors.fg.magenta}${cutLine}`, colors.reset);
 
   // Routes
   app.routes = controllers;
@@ -219,18 +242,23 @@ function startVulkano() {
         connection
       } = database || {};
 
+      const showColumn = (text, titleLength) => {
+        const txt = `${text.padEnd( 16 - titleLength, ' ')}`;
+        return txt;
+      };
+
       const connectionToShow = connection && process.env.MONGO_URI ? 'MONGO_URI' : connection;
 
       const serverConfig = [];
 
       const nodeVersion = process.version.match(/^v(\d+\.\d+\.\d+)/)[1];
-      const portText = String(app.server.get('port') || 8000).padEnd(nodeVersion.length, ' ');
-      const socketText = (sockets.enabled ? 'YES' : 'NO').padEnd(nodeVersion.length - 3, ' ');
-      const redisText = (redis && redis.enabled ? 'YES' : 'NO').padEnd(5, ' ');
+      const portText = String(app.server.get('port') || 8000);
+      const socketText = sockets.enabled ? 'YES' : 'NO';
+      const redisText = redis && redis.enabled ? 'YES' : 'NO';
 
-      serverConfig.push(` PORT: ${colors.fg.green}${portText}${colors.reset}`);
+      serverConfig.push(` PORT: ${colors.fg.green}${showColumn(portText, 7)}${colors.reset}`);
       serverConfig.push(' | ');
-      serverConfig.push(` ENV: ${app.PRODUCTION ? colors.fg.red : colors.fg.green}${NODE_ENV}${colors.reset}`);
+      serverConfig.push(` ENV: ${app.PRODUCTION ? colors.fg.red : colors.fg.green}${showColumn(NODE_ENV, 0)}${colors.reset}`);
 
       console.log(serverConfig.join(''));
 
@@ -238,29 +266,24 @@ function startVulkano() {
       const totalHeapSizeGb = (totalHeapSize / 1024 / 1024 / 1024).toFixed(2);
 
       const nodeConfig = [];
-      nodeConfig.push(` NODE: ${colors.fg.green}${nodeVersion}${colors.reset}`);
+      nodeConfig.push(` NODE: ${colors.fg.green}${showColumn(nodeVersion, 7)}${colors.reset}`);
       nodeConfig.push(' | ');
       nodeConfig.push(' MAX MEM: ', `${colors.fg.green}${totalHeapSizeGb} GB${colors.reset}`);
       console.log(nodeConfig.join(''));
 
       const startUpConfig = [];
-      startUpConfig.push(' SOCKETS: ', `${colors.fg.green}${socketText}${colors.reset}`);
+      startUpConfig.push(' SOCKETS: ', `${colors.fg.green}${showColumn(socketText, 10)}${colors.reset}`);
       startUpConfig.push(' | ');
-      startUpConfig.push(` STARTUP: ${colors.fg.green}${moment(moment().diff(global.START_TIME)).format('ss.SSS')} sec${colors.reset}`);
+      startUpConfig.push(` STARTUP: ${colors.fg.green}${moment(moment().diff(global.START_TIME)).format('s.SSS')}s${colors.reset}`);
       console.log(startUpConfig.join(''));
 
       const dbConfig = [];
-      if (redis && redis.enabled) {
-        dbConfig.push(' REDIS: ', `${colors.fg.green}${redisText}${colors.reset}`);
-      } else {
-        dbConfig.push(' REDIS: ', `${colors.fg.green}${redisText}${colors.reset}`);
-      }
-
+      dbConfig.push(' REDIS: ', `${colors.fg.green}${showColumn(redisText, 8)}${colors.reset}`);
       dbConfig.push(' | ');
-      dbConfig.push(' DB: ', connection ? `${colors.fg.green}${connectionToShow}${colors.reset}` : `${colors.fg.blue}The connection is empty${colors.reset}`);
+      dbConfig.push(' DB: ', connection ? `${colors.fg.green}${connectionToShow}${colors.reset}` : `${colors.fg.blue}NO DATABASE${colors.reset}`);
       console.log(dbConfig.join(''));
 
-      console.log(`${colors.fg.magenta}--------------------------------------`, colors.reset);
+      console.log(`${colors.fg.magenta}${cutLine}`, colors.reset);
 
       // Run custom callback after init vulkano
       if (callbackAfterInitVulkano && typeof callbackAfterInitVulkano === 'function') {
