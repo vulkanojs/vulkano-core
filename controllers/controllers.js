@@ -22,12 +22,13 @@ module.exports = function loadControllersApplication() {
 
     const {
       scaffold,
+      allowedMethods,
       model
     } = current;
 
     if (scaffold && model) {
 
-      const scaffoldingCurrent = scaffoldController(model);
+      const scaffoldingCurrent = scaffoldController(model, allowedMethods);
 
       Object.keys(scaffoldingCurrent).forEach( (m) => {
 
@@ -61,12 +62,13 @@ module.exports = function loadControllersApplication() {
 
           const {
             scaffold: subcurrentScaffold,
+            allowedMethods: subAllowedMethods,
             model: subcurrentModel
           } = subcurrent || {};
 
           if (subcurrentScaffold && subcurrentModel) {
 
-            const scaffoldingSubcurrent = scaffoldController(subcurrentModel);
+            const scaffoldingSubcurrent = scaffoldController(subcurrentModel, subAllowedMethods);
 
             Object.keys(scaffoldingSubcurrent).forEach( (m) => {
 

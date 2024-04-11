@@ -1,4 +1,4 @@
-module.exports = (modelName) => {
+module.exports = (modelName, allowedMethods) => {
 
   const {
     config
@@ -51,7 +51,7 @@ module.exports = (modelName) => {
 
   }
 
-  return {
+  const allMethods = {
 
     get(req, res) {
 
@@ -104,5 +104,32 @@ module.exports = (modelName) => {
     }
 
   };
+
+  if (allowedMethods) {
+
+    const tempAllowedMethods = Array.isArray(allowedMethods)
+      ? allowedMethods.map( (m) => m.toLowerCase() )
+      : allowedMethods.split(',').map( (m) => m.trim().toLowerCase() );
+
+    if (!tempAllowedMethods.includes('post')) {
+      delete allMethods.post;
+    }
+
+    if (!tempAllowedMethods.includes('get')) {
+      delete allMethods.get;
+      delete allMethods['get :id'];
+    }
+
+    if (!tempAllowedMethods.includes('put')) {
+      delete allMethods['put :id'];
+    }
+
+    if (!tempAllowedMethods.includes('delete')) {
+      delete allMethods['delete :id'];
+    }
+
+  }
+
+  return allMethods;
 
 };
