@@ -24,6 +24,8 @@ const AllControllers = require('include-all')({
   optional: true
 });
 
+const viewsConfig = require('./views');
+
 const responses = require('./responses');
 
 const JWT = require('../libs/Jwt');
@@ -112,8 +114,6 @@ module.exports = {
     if (expressConfig && expressConfig.settings) {
       delete expressConfig.settings;
     }
-
-    const views = app.server.views || {};
 
     // Middleware
     const middleware = app.config.middleware || ((req, res, next) => {
@@ -306,13 +306,26 @@ module.exports = {
     // ---------------
     // VIEWS
     // ---------------
+
+    const views = {
+      ...viewsConfig,
+      ...(app.server.views || {})
+    };
+
     server.set('views', views.path);
 
-    const envNunjucks = nunjucks.configure(views.path, {
-      express: server,
+    const {
+      settings: nunjucksSettingsUser
+    } = views || {};
+
+    const nunjucksSettings = {
       autoescape: true,
-      watch: !app.PRODUCTION
-    });
+      watch: !app.PRODUCTION,
+      ...(nunjucksSettingsUser || {}),
+      express: server
+    };
+
+    const envNunjucks = nunjucks.configure(views.path, nunjucksSettings);
 
     app.server.views._engine = envNunjucks;
 
@@ -322,6 +335,14 @@ module.exports = {
       views.globals.forEach((global) => {
         Object.keys(global || []).forEach((i) => {
           envNunjucks.addGlobal(i, global[i]);
+        });
+      });
+    }
+
+    if (views.helpers && Array.isArray(views.helpers)) {
+      views.helpers.forEach((helper) => {
+        Object.keys(helper || []).forEach((i) => {
+          envNunjucks.addGlobal(i, helper[i]);
         });
       });
     }
