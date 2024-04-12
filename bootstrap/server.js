@@ -358,7 +358,7 @@ module.exports = {
       });
     }
 
-    // Middleware
+    // Middleware File (compatibility)
     const middleware = app.config.middleware || ((req, res, next) => {
       next();
     });
