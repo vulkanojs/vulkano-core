@@ -115,11 +115,6 @@ module.exports = {
       delete expressConfig.settings;
     }
 
-    // Middleware
-    const middleware = app.config.middleware || ((req, res, next) => {
-      next();
-    });
-
     const server = express();
 
     // Settings
@@ -362,6 +357,21 @@ module.exports = {
         });
       });
     }
+
+    // Middleware
+    const middleware = app.config.middleware || ((req, res, next) => {
+      next();
+    });
+
+    // Middleware Folder
+    const middlewares = app.config.middlewares || {};
+
+    Object.keys(middlewares).forEach( (item) => {
+      const middlewareFunction = middlewares[item];
+      if (typeof middlewareFunction === 'function') {
+        server.use(middlewareFunction);
+      }
+    });
 
     // ---------------
     // ROUTES
