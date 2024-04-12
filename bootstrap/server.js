@@ -4,7 +4,7 @@
 
 const express = require('express');
 const frameguard = require('frameguard');
-const { Server } = require('socket.io');
+// const { Server } = require('socket.io');
 const nunjucks = require('nunjucks');
 const morgan = require('morgan');
 const compression = require('compression');
@@ -13,9 +13,8 @@ const helmet = require('helmet');
 const timeout = require('connect-timeout');
 const useragent = require('express-useragent');
 const cookieParser = require('cookie-parser');
-const merge = require('deepmerge');
-const { createClient } = require('redis');
-const { createAdapter } = require('@socket.io/redis-adapter');
+// const { createClient } = require('redis');
+// const { createAdapter } = require('@socket.io/redis-adapter');
 
 // Include all api controllers
 const AllControllers = require('include-all')({
@@ -30,100 +29,25 @@ const responses = require('./responses');
 
 const JWT = require('../libs/Jwt');
 
+const expressConfig = require('./express')();
+
 module.exports = {
 
   routes: {},
 
-  start: function loadServerApplication(cb) {
+  start: async function loadServerApplication(cb) {
 
     const jwtMiddleware = JWT;
 
-    // Common config by filename
-    const {
-      cors,
-      jwt,
-      settings,
-      sockets,
-      cookies,
-      redis,
-      // Folder express config files
-      express: expressServerConfig
-    } = app.config || {};
-
-    // express config by file in settings.js
-    const {
-      port: expressUserPort,
-      express: expressConfigInSettings
-    } = settings || {};
-
-    // express config by file in app/config/express/settings.js
-    const {
-      settings: expressGeneralSettings
-    } = expressServerConfig || {};
-
-    // express port via file in app/config/express/settings.js
-    const {
-      port: expressSettingsPort
-    } = expressGeneralSettings || {};
-
-    const {
-      NODE_PORT: ENV_NODE_PORT,
-      PORT: ENV_PORT
-    } = process.env || {};
-
-    // Express default configuration
-    const expressDefaultConfig = {
-      timeout: 120000,
-      poweredBy: false,
-      port: ENV_NODE_PORT || ENV_PORT || expressUserPort || expressSettingsPort || 8000,
-      cors: {},
-      cookies: {},
-      jwt: {},
-      multer: {
-        dest: 'public/files'
-      },
-      morgan: {
-        format: 'dev',
-        skip: ((req, res) => res.statusCode < 400)
-      },
-      compression: {},
-      json: {},
-      urlencoded: {
-        extended: true
-      },
-      helmet: {
-        contentSecurityPolicy: false,
-        crossOriginEmbedderPolicy: false
-      },
-      frameguard: null
-    };
-
-    // Merge all express configuration: config/file.js, config/express/file.js, config/settings.js
-    const expressConfig = merge.all([
-      {
-        cookies,
-        jwt,
-        cors
-      },
-      expressDefaultConfig || {},
-      expressServerConfig || {},
-      expressGeneralSettings || {},
-      expressConfigInSettings || {},
-    ]);
-
-    if (expressConfig && expressConfig.settings) {
-      delete expressConfig.settings;
-    }
-
-    const server = express();
+    const vulkano = express();
 
     // Settings
-    server.enable('trust proxy');
+    vulkano.enable('trust proxy');
 
     // ---------------
     // PORT - File: app/config/express/settings.js
     // ---------------
-    server.set('port', expressConfig.port);
+    vulkano.set('port', expressConfig.port);
 
     // ---------------
     // MULTER - File: app/config/express/multer.js
@@ -133,17 +57,17 @@ module.exports = {
     // ---------------
     // MORGAN - File: app/config/express/morgan.js
     // ---------------
-    server.use(morgan(expressConfig.morgan.format, expressConfig.morgan));
+    vulkano.use(morgan(expressConfig.morgan.format, expressConfig.morgan));
 
     // ---------------
     // USER AGENT
     // ---------------
-    server.use(useragent.express());
+    vulkano.use(useragent.express());
 
     // ---------------
     // COMPRESSION - File: app/config/express/compression.js
     // ---------------
-    server.use(compression( expressConfig.compression || {} ));
+    vulkano.use(compression( expressConfig.compression || {} ));
 
     // ---------------
     // COOKIES - File: app/config/express/cookies.js
@@ -153,33 +77,28 @@ module.exports = {
       if (!cookiesSecretKey) {
         console.log(' \x1b[33mWARNING\x1b[0m: Set the secret key in the config/express/cookie.js file or COOKIES_SECRET_KEY in the .env file.');
       }
-      server.use(cookieParser(cookiesSecretKey));
+      vulkano.use(cookieParser(cookiesSecretKey));
     }
 
     // ---------------
     // EXPRESS JSON - File: app/config/express/json.js
     // ---------------
-    server.use(express.json(expressConfig.json));
+    vulkano.use(express.json(expressConfig.json));
 
     // ---------------
     // EXPRESS FORM DATA - File: app/config/express/urlencoded.js
     // ---------------
-    server.use(express.urlencoded(expressConfig.urlencoded));
+    vulkano.use(express.urlencoded(expressConfig.urlencoded));
 
     // ---------------
     // HELMET - File: app/config/express/helmet.js
     // ---------------
-    server.use(helmet(expressConfig.helmet));
+    vulkano.use(helmet(expressConfig.helmet));
 
     // ---------------
     // RESPONSES
     // ---------------
-    server.use(responses);
-
-    // ---------------
-    // PUBLIC PATH - File: app/config/settings.js
-    // ---------------
-    server.use(express.static(PUBLIC_PATH));
+    vulkano.use(responses);
 
     // ---------------
     // FRAMEGUARD - File: app/config/express/frameguard.js
@@ -187,17 +106,17 @@ module.exports = {
     if (expressConfig.frameguard) {
       if (Array.isArray(expressConfig.frameguard)) {
         expressConfig.frameguard.forEach( (frame) => {
-          server.use(frameguard(frame));
+          vulkano.use(frameguard(frame));
         });
       } else {
-        server.use(frameguard(expressConfig.frameguard));
+        vulkano.use(frameguard(expressConfig.frameguard));
       }
     }
 
     // ---------------
     // PROTOCOL & POWERED BY - File: app/config/settings.js
     // ---------------
-    server.use( (req, res, next) => {
+    vulkano.use( (req, res, next) => {
 
       const proto = req.secure ? 'https' : 'http';
       const forwarded = req.headers['x-forwaded-proto'] || null;
@@ -215,7 +134,7 @@ module.exports = {
     // ---------------
     // REQUEST OPTIONS - File: app/config/express/cors.js
     // ---------------
-    server.options('*', (req, res) => {
+    vulkano.options('*', (req, res) => {
 
       // ---------------
       // CORS
@@ -239,8 +158,9 @@ module.exports = {
     // ---------------
     // TIMEOUT - File: app/config/settings.js
     // ---------------
-    server.use(timeout( expressConfig.timeout || 120000 ));
-    server.use( (req, res, next) => {
+    vulkano.use(timeout( expressConfig.timeout || 120000 ));
+
+    vulkano.use( (req, res, next) => {
       if (!req.timedout) {
         next();
       }
@@ -258,12 +178,12 @@ module.exports = {
       }
 
       // JWT (secret key)
-      server.use(expressConfig.jwt.path || '*', jwtMiddleware.init().unless({
+      vulkano.use(expressConfig.jwt.path || '*', jwtMiddleware.init().unless({
         path: expressConfig.jwt.ignore || []
       }));
 
       // JWT  Handler error
-      server.use((err, req, res, next) => {
+      vulkano.use((err, req, res, next) => {
         if (err && err.name === 'UnauthorizedError') {
           res.status(401).jsonp({ success: false, error: 'Invalid token' });
         } else {
@@ -278,7 +198,7 @@ module.exports = {
     // ---------------
     if (expressConfig.cors && expressConfig.cors.enabled) {
 
-      server.use(expressConfig.cors.path, (req, res, next) => {
+      vulkano.use(expressConfig.cors.path, (req, res, next) => {
 
         // Enable CORS.
         let tmpCorsHeaders = ['X-Requested-With', 'X-HTTP-Method-Override', 'Content-Type', 'Accept'];
@@ -307,7 +227,7 @@ module.exports = {
       ...(app.server.views || {})
     };
 
-    server.set('views', views.path);
+    vulkano.set('views', views.path);
 
     const {
       settings: nunjucksSettingsUser
@@ -317,7 +237,7 @@ module.exports = {
       autoescape: true,
       watch: !app.PRODUCTION,
       ...(nunjucksSettingsUser || {}),
-      express: server
+      express: vulkano
     };
 
     const envNunjucks = nunjucks.configure(views.path, nunjucksSettings);
@@ -358,6 +278,12 @@ module.exports = {
       });
     }
 
+    app.nunjucks = nunjucks;
+
+    // ---------------
+    // Middlewares
+    // ---------------
+
     // Middleware File (compatibility)
     const middleware = app.config.middleware || ((req, res, next) => {
       next();
@@ -369,7 +295,7 @@ module.exports = {
     Object.keys(middlewares).forEach( (item) => {
       const middlewareFunction = middlewares[item];
       if (typeof middlewareFunction === 'function') {
-        server.use(middlewareFunction);
+        vulkano.use(middlewareFunction);
       }
     });
 
@@ -403,9 +329,9 @@ module.exports = {
       handler = routes[route];
 
       if (method === 'post') {
-        server[method](pathToRoute, upload.any(), middleware, handler);
+        vulkano[method](pathToRoute, upload.any(), middleware, handler);
       } else {
-        server[method](pathToRoute, middleware, handler);
+        vulkano[method](pathToRoute, middleware, handler);
       }
 
     });
@@ -453,9 +379,9 @@ module.exports = {
 
       if (toExecute) {
         if (option === 'post') {
-          server[option](pathToRun || '/', upload.any(), middleware, toExecute);
+          vulkano[option](pathToRun || '/', upload.any(), middleware, toExecute);
         } else {
-          server[option](pathToRun || '/', middleware, toExecute);
+          vulkano[option](pathToRun || '/', middleware, toExecute);
         }
       } else {
         console.error('\x1b[31mError:', 'Controller not found in', (module) ? `${module}.${controller}.${action}` : `${controller}.${action}`, '\x1b[0m');
@@ -463,10 +389,12 @@ module.exports = {
 
     });
 
+    const server = await vulkano.listen(expressConfig.port);
+
     // ---------------
     // ERROR 404
     // ---------------
-    server.use((req, res) => {
+    vulkano.use((req, res) => {
       if (+res.statusCode >= 500 && +res.statusCode < 600) {
         throw new Error();
       }
@@ -476,14 +404,14 @@ module.exports = {
     // ---------------
     // ERROR 5XX
     // ---------------
-    server.use((err, req, res) => {
+    vulkano.use((err, req, res) => {
       const status = err.status || res.statusCode || 500;
       res.status(status);
       if (!res.xhr) {
         if (+status > 400 && +status < 500) {
-          res.render(`${server.get('views')}/_shared/errors/404.html`, { content: err.stack });
+          res.render(`${vulkano.get('views')}/_shared/errors/404.html`, { content: err.stack });
         } else {
-          res.render(`${server.get('views')}/_shared/errors/500.html`, { content: err.stack });
+          res.render(`${vulkano.get('views')}/_shared/errors/500.html`, { content: err.stack });
         }
       } else {
         res.jsonp({
@@ -495,154 +423,14 @@ module.exports = {
     });
 
     // ---------------
-    // SOCKETS
+    // PUBLIC PATH - File: app/config/settings.js
     // ---------------
-    if (sockets.enabled) {
+    vulkano.use(express.static(PUBLIC_PATH));
 
-      const socketProps = {
-        pingTimeout: +sockets.timeout || 4000,
-        pingInterval: +sockets.interval || 2000,
-        transports: sockets.transports || ['websocket', 'polling']
-      };
+    app.vulkano = vulkano;
+    app.server = server;
 
-      if (sockets.cors) {
-        if (typeof sockets.cors === 'function') {
-          socketProps.allowRequest = sockets.cors;
-        } else if (typeof sockets.cors === 'string') {
-          socketProps.cors = sockets.cors || '';
-        }
-      }
-
-      if (sockets.redis && !redis.enabled) {
-        throw new Error('Enable the Redis config "app/config/redis.js" to connect the sockets');
-      }
-
-      const io = new Server(server.listen(expressConfig.port), socketProps);
-
-      let pubClient = null;
-      let subClient = null;
-
-      if (sockets.redis) {
-
-        const propsToRedis = {
-          host: redis.host,
-          port: redis.port
-        };
-
-        if (redis.password) {
-          propsToRedis.password = redis.password;
-        }
-
-        pubClient = createClient(propsToRedis);
-        subClient = pubClient.duplicate();
-
-        io.adapter(createAdapter(pubClient, subClient));
-
-      }
-
-      Promise
-        .all([
-          (sockets.redis ? pubClient.connect() : null),
-          (sockets.redis ? subClient.connect() : null)
-        ])
-        .then(() => {
-
-          io.on('connection', (socket) => {
-
-            if ( typeof sockets.onConnect === 'function') {
-              sockets.onConnect(socket);
-            }
-
-            const socketEvents = sockets.events || {};
-
-            Object.keys(socketEvents).forEach( (i) => {
-
-              const checkPath = socketEvents[i] || '';
-
-              let toExecute = null;
-              let module = null;
-              let controller = null;
-              let action = null;
-
-              if (typeof checkPath === 'function') {
-
-                toExecute = checkPath;
-
-              } else {
-
-                const fullPath = checkPath.split('.');
-
-                if (fullPath.length > 2) { // Has folder
-
-                  [
-                    module,
-                    controller,
-                    action
-                  ] = fullPath;
-
-                } else {
-
-                  [
-                    controller,
-                    action
-                  ] = fullPath;
-
-                }
-
-                try {
-                  toExecute = module
-                    ? (AllControllers[module][controller][action])
-                    : AllControllers[controller][action];
-                } catch (e) {
-                  toExecute = null;
-                }
-
-              }
-
-              if (toExecute) {
-                socket.on(i, (body) => {
-                  toExecute({ socket, body: body || {} });
-                });
-              } else {
-                console.error('\x1b[31mError:', 'Controller not found in', (module) ? `${module}.${controller}.${action}` : `${controller}.${action}`, '\x1b[0m', 'to socket event', i);
-              }
-
-            });
-
-            server.set('socket', socket);
-            app.socket = socket;
-
-          });
-
-          // next line is the money
-          global.io = io;
-          server.set('socketio', io);
-
-          // middleware
-          if (sockets.middleware) {
-            io.use(sockets.middleware);
-          }
-
-          app.server = server;
-
-          cb();
-
-        });
-
-      return;
-
-    }
-
-    // ---------------
-    // START SERVER
-    // ---------------
-    server.listen(server.get('port'), () => {
-      app.server = {
-        ...app.server,
-        ...server
-      };
-      cb();
-    });
+    cb();
 
   }
 

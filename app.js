@@ -252,7 +252,7 @@ function startVulkano() {
       const serverConfig = [];
 
       const nodeVersion = process.version.match(/^v(\d+\.\d+\.\d+)/)[1];
-      const portText = String(app.server.get('port') || 8000);
+      const portText = String(app.vulkano.get('port') || 8000);
       const socketText = sockets.enabled ? 'YES' : 'NO';
       const redisText = redis && redis.enabled ? 'YES' : 'NO';
 
