@@ -485,8 +485,6 @@ module.exports = {
     let pubClient = null;
     let subClient = null;
 
-    console.log(sockets.transports);
-
     if (sockets.redis) {
 
       if (sockets.transports.includes('polling')) {
