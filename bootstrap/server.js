@@ -23,13 +23,17 @@ const AllControllers = require('include-all')({
   optional: true
 });
 
+// Views Config
 const viewsConfig = require('./views');
 
-const responses = require('./responses');
+// JWT Middleware
+const jwtMiddleware = require('../libs/Jwt');
 
-const JWT = require('../libs/Jwt');
-
+// Express Config
 const expressConfig = require('./express')();
+
+// Express Responses
+const responses = require('./responses');
 
 module.exports = {
 
@@ -37,7 +41,11 @@ module.exports = {
 
   start: async function loadServerApplication(cb) {
 
-    const jwtMiddleware = JWT;
+    // Get ENV Vars
+    const {
+      JWT_SECRET_KEY,
+      COOKIES_SECRET_KEY
+    } = process.env || {};
 
     const vulkano = express();
 
@@ -73,7 +81,7 @@ module.exports = {
     // COOKIES - File: app/config/express/cookies.js
     // ---------------
     if (expressConfig.cookies && expressConfig.cookies.enabled) {
-      const cookiesSecretKey = process.env.COOKIES_SECRET_KEY || expressConfig.cookies.key || expressConfig.cookies.secret || '';
+      const cookiesSecretKey = COOKIES_SECRET_KEY || expressConfig.cookies.key || expressConfig.cookies.secret || '';
       if (!cookiesSecretKey) {
         console.log(' \x1b[33mWARNING\x1b[0m: Set the secret key in the config/express/cookie.js file or COOKIES_SECRET_KEY in the .env file.');
       }
@@ -171,7 +179,7 @@ module.exports = {
     // ---------------
     if (expressConfig.jwt && expressConfig.jwt.enabled) {
 
-      const jwtSecretKey = process.env.JWT_SECRET_KEY || expressConfig.jwt.key || expressConfig.jwt.secret || '';
+      const jwtSecretKey = JWT_SECRET_KEY || expressConfig.jwt.key || expressConfig.jwt.secret || '';
       if (!jwtSecretKey) {
         console.log(' \x1b[41mERROR\x1b[0m: Can not get key in config/express/jwt.js file or JWT_SECRET_KEY in .env file');
         return;
@@ -300,6 +308,14 @@ module.exports = {
     });
 
     // ---------------
+    // PUBLIC PATH - File: app/config/settings.js
+    // (if are using Vite)
+    // ---------------
+    if (!app.viteProxy) {
+      vulkano.use(express.static(PUBLIC_PATH));
+    }
+
+    // ---------------
     // ROUTES
     // ---------------
 
@@ -423,9 +439,12 @@ module.exports = {
     });
 
     // ---------------
-    // PUBLIC PATH - File: app/config/settings.js
+    // PUBLIC PATH
+    // (if not are using Vite)
     // ---------------
-    vulkano.use(express.static(PUBLIC_PATH));
+    if (app.viteProxy) {
+      vulkano.use(express.static(PUBLIC_PATH));
+    }
 
     app.vulkano = vulkano;
     app.server = server;
