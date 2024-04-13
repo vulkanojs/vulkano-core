@@ -4,7 +4,7 @@
 
 const express = require('express');
 const frameguard = require('frameguard');
-// const { Server } = require('socket.io');
+const { Server } = require('socket.io');
 const nunjucks = require('nunjucks');
 const morgan = require('morgan');
 const compression = require('compression');
@@ -13,8 +13,8 @@ const helmet = require('helmet');
 const timeout = require('connect-timeout');
 const useragent = require('express-useragent');
 const cookieParser = require('cookie-parser');
-// const { createClient } = require('redis');
-// const { createAdapter } = require('@socket.io/redis-adapter');
+const { createClient } = require('redis');
+const { createAdapter } = require('@socket.io/redis-adapter');
 
 // Include all api controllers
 const AllControllers = require('include-all')({
@@ -449,7 +449,155 @@ module.exports = {
     app.vulkano = vulkano;
     app.server = server;
 
-    cb();
+    // ---------------
+    // SOCKETS
+    // ---------------
+    const {
+      sockets,
+      redis
+    } = expressConfig || {};
+
+    if (!sockets || (sockets && !sockets.enabled)) {
+      cb();
+      return;
+    }
+
+    const socketProps = {
+      pingTimeout: +sockets.timeout || 4000,
+      pingInterval: +sockets.interval || 2000,
+      transports: sockets.transports || ['websocket', 'polling']
+    };
+
+    if (sockets.cors) {
+      if (typeof sockets.cors === 'function') {
+        socketProps.allowRequest = sockets.cors;
+      } else if (typeof sockets.cors === 'string') {
+        socketProps.cors = sockets.cors || '';
+      }
+    }
+
+    if (sockets.redis && !redis.enabled) {
+      throw new Error('Enable the Redis config "app/config/redis.js" to connect the sockets');
+    }
+
+    const io = new Server(server, socketProps);
+
+    let pubClient = null;
+    let subClient = null;
+
+    console.log(sockets.transports);
+
+    if (sockets.redis) {
+
+      if (sockets.transports.includes('polling')) {
+        throw new Error('To enable Sockets with Redis support, the transports must be set ¨websocket¨ only');
+      }
+
+      const propsToRedis = {
+        host: redis.host,
+        port: redis.port
+      };
+
+      if (redis.password) {
+        propsToRedis.password = redis.password;
+      }
+
+      pubClient = createClient(propsToRedis);
+      subClient = pubClient.duplicate();
+
+      io.adapter(createAdapter(pubClient, subClient));
+
+    }
+
+    Promise
+      .all([
+        (sockets.redis ? pubClient.connect() : null),
+        (sockets.redis ? subClient.connect() : null)
+      ])
+      .then(() => {
+
+        io.on('connection', (socket) => {
+
+          if ( typeof sockets.onConnect === 'function') {
+            sockets.onConnect(socket);
+          }
+
+          const socketEvents = sockets.events || {};
+
+          Object.keys(socketEvents).forEach( (i) => {
+
+            const checkPath = socketEvents[i] || '';
+
+            let toExecute = null;
+            let module = null;
+            let controller = null;
+            let action = null;
+
+            if (typeof checkPath === 'function') {
+
+              toExecute = checkPath;
+
+            } else {
+
+              const fullPath = checkPath.split('.');
+
+              if (fullPath.length > 2) { // Has folder
+
+                [
+                  module,
+                  controller,
+                  action
+                ] = fullPath;
+
+              } else {
+
+                [
+                  controller,
+                  action
+                ] = fullPath;
+
+              }
+
+              try {
+                toExecute = module
+                  ? (AllControllers[module][controller][action])
+                  : AllControllers[controller][action];
+              } catch (e) {
+                toExecute = null;
+              }
+
+            }
+
+            if (toExecute) {
+              socket.on(i, (body) => {
+                toExecute({ socket, body: body || {} });
+              });
+            } else {
+              console.error('\x1b[31mError:', 'Controller not found in', (module) ? `${module}.${controller}.${action}` : `${controller}.${action}`, '\x1b[0m', 'to socket event', i);
+            }
+
+          });
+
+          vulkano.set('socket', socket);
+          app.socket = socket;
+
+        });
+
+        // next line is the money
+        global.io = io;
+        vulkano.set('socketio', io);
+
+        // middleware
+        if (sockets.middleware && typeof sockets.middleware === 'function') {
+          io.use(sockets.middleware);
+        }
+
+        // override vulkano
+        app.vulkano = vulkano;
+
+        cb();
+
+      });
 
   }
 

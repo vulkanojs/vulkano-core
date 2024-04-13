@@ -7,6 +7,8 @@ module.exports = function getExpressConfiguration() {
     cors,
     jwt,
     settings,
+    sockets,
+    redis,
     cookies,
     // Folder express config files
     express: expressServerConfig
@@ -41,6 +43,8 @@ module.exports = function getExpressConfiguration() {
     cors: {},
     cookies: {},
     jwt: {},
+    sockets: {},
+    redis: {},
     multer: {
       dest: 'public/files'
     },
@@ -65,7 +69,9 @@ module.exports = function getExpressConfiguration() {
     {
       cookies,
       jwt,
-      cors
+      cors,
+      sockets,
+      redis
     },
     expressDefaultConfig || {},
     expressServerConfig || {},
