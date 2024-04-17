@@ -2,17 +2,25 @@ const Cron = require('cron').CronJob;
 
 module.exports = {
 
-  schedule(start, task, end, timeZone) {
+  schedule(props) {
+
+    const {
+      time,
+      start,
+      task,
+      onComplete,
+      timeZone
+    } = props || {};
 
     const config = {
-      cronTime: start,
+      cronTime: time,
       onTick: task || ( () => {} ),
-      onComplete: end || ( () => {} ),
+      onComplete: onComplete || ( () => {} ),
       timeZone: timeZone || 'America/New_York',
-      start: true
+      start: typeof start !== 'undefined' ? start : true
     };
 
-    return new Cron(config);
+    return Cron.from(config);
 
   }
 
