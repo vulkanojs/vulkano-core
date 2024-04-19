@@ -573,7 +573,7 @@ module.exports = function loadServer() {
             socketsDatabase = mongoose.connection.db.s.namespace.db;
 
             // SOCKETS_MONGO_URI
-            if (socketsConnection !== mongoClientDB.s.url) {
+            if (socketsConnection && ( socketsConnection !== mongoClientDB.s.url )) {
 
               const socketMongoInstance = new socketMongoose.Mongoose();
 
