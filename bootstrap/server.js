@@ -468,7 +468,8 @@ module.exports = function loadServer() {
       }
 
       const {
-        config: socketsConfig
+        config: socketsConfig,
+        middlewares: socketsMiddlewares
       } = sockets;
 
       const socketProps = {
@@ -686,6 +687,13 @@ module.exports = function loadServer() {
           if (sockets.middleware && typeof sockets.middleware === 'function') {
             io.use(sockets.middleware);
           }
+
+          Object.keys(socketsMiddlewares || {}).forEach( (item) => {
+            const middlewareFunction = socketsMiddlewares[item];
+            if (typeof middlewareFunction === 'function') {
+              io.use(middlewareFunction);
+            }
+          });
 
           // override vulkano
           app.vulkano = vulkano;
