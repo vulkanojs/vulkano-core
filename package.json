@@ -28,6 +28,7 @@
     "url": "https://github.com/vulkanojs/vulkano-core/issues"
   },
   "dependencies": {
+    "@socket.io/mongo-adapter": "^0.3.2",
     "@socket.io/redis-adapter": "^8.3.0",
     "axios": "^1.6.8",
     "bluebird": "^3.7.2",
