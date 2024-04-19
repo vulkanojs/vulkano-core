@@ -16,7 +16,7 @@ global.Mixed = mongoose.Schema.Types.Mixed;
 
 const AllModels = require('./models')();
 
-module.exports = function loadDatabaseApplication() {
+module.exports = async function loadDatabaseApplication() {
 
   const {
     config
@@ -66,7 +66,7 @@ module.exports = function loadDatabaseApplication() {
   }
 
   if (!mongoose.connection.readyState) {
-    mongoose.connect(toConnect, connectionProps);
+    await mongoose.connect(toConnect, connectionProps);
   }
 
   const db = mongoose.connection;
