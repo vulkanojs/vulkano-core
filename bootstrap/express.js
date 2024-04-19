@@ -7,8 +7,7 @@ module.exports = function getExpressConfiguration() {
     cors,
     jwt,
     settings,
-    sockets,
-    redis,
+    sockets: rawSockets,
     cookies,
     // Folder express config files
     express: expressServerConfig
@@ -64,14 +63,49 @@ module.exports = function getExpressConfiguration() {
     frameguard: null
   };
 
+  // --------
+  // Sockets
+  // --------
+
+  // Default config
+  const defaultConfig = {
+    enabled: false,
+    adapter: 'memory',
+    adapters: {
+      mongodb: {
+        enabled: false
+      },
+      redis: {
+        enabled: false
+      }
+    }
+  };
+
+  // Check Sockets configuration config/sockets/config.js
+  const {
+    config: socketsConfig
+  } = rawSockets || {};
+
+  // Merge config
+  const sockets = {
+    ...(defaultConfig || {}),
+    ...(socketsConfig || {}),
+    ...(rawSockets || {}),
+    config: {
+      ...(socketsConfig.config || {})
+    }
+  };
+
+  // Set the new values
+  app.config.sockets = { ...sockets };
+
   // Merge all express configuration: config/file.js, config/express/file.js, config/settings.js
   const expressConfig = merge.all([
     {
       cookies,
       jwt,
       cors,
-      sockets,
-      redis
+      sockets
     },
     expressDefaultConfig || {},
     expressServerConfig || {},
