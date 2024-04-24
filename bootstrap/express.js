@@ -92,7 +92,7 @@ module.exports = function getExpressConfiguration() {
     ...(socketsConfig || {}),
     ...(rawSockets || {}),
     config: {
-      ...(socketsConfig.config || {})
+      ...( socketsConfig ? (socketsConfig.config || {}) : {})
     }
   };
 
