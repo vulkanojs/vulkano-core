@@ -119,10 +119,12 @@ module.exports = {
   decode(token, customKey) {
 
     const {
-      key
+      key,
+      expiration: allowExpiration
     } = this.getConfig();
 
     let data = {};
+
     try {
 
       const payload = jwtSimple.decode(token, customKey || key);
@@ -141,6 +143,11 @@ module.exports = {
     // Token expired
     if (expiration && ( Number(now) > Number(expiration) )) {
       return null;
+    }
+
+    // Ignore expiration field
+    if (allowExpiration === false) {
+      return data;
     }
 
     // Expiration must be required
