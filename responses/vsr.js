@@ -16,7 +16,7 @@ module.exports = function VSRPromise(promiseToRun, httpStatusCode) {
   } = req;
 
   let code = httpStatusCode || 200;
-  let output = {
+  const output = {
     success: true,
     statusCode: code
   };
