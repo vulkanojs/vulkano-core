@@ -333,6 +333,7 @@ module.exports = function loadServer() {
       let pathToRoute;
       let handler;
 
+      // Routes from convention (controller name & method = route)
       Object.keys(routes).forEach((route) => {
 
         const parts = route.split(' ');
@@ -358,45 +359,66 @@ module.exports = function loadServer() {
 
       });
 
+      // Routes from config/routes.js
       Object.keys(this.routes || {}).forEach((i) => {
 
-        const fullPath = this.routes[i].split('.');
-
-        const [
-          moduleToRun,
-          controllerToRun,
-          actionToRun
-        ] = fullPath;
-
-        let module;
-        let controller;
-        let action;
-
-        if (actionToRun) { // Has folder
-          module = moduleToRun;
-          controller = controllerToRun;
-          action = actionToRun;
-        } else {
-          module = null;
-          controller = moduleToRun;
-          action = controllerToRun;
-        }
-
+        const current = this.routes[i];
         const parts = i.split(' ');
-        const pathToRun = parts.pop();
-        let option = (parts[0] !== undefined) ? parts[0].toLowerCase() : 'get';
+        let pathToRun = parts.pop();
+
+        // Capture the HTTP Method
+        let option = (parts[0] !== undefined) ? String(parts[0]).toLowerCase() : 'get';
+
         if (option !== 'get' && option !== 'post' && option !== 'put' && option !== 'delete') {
           option = 'get';
         }
 
+        if (!String(pathToRun).startsWith('/')) {
+          pathToRun = `/${pathToRun}`;
+        }
+
         let toExecute = null;
 
-        try {
-          toExecute = module
-            ? (AllControllers[module][controller][action])
-            : AllControllers[controller][action];
-        } catch (e) {
-          toExecute = null;
+        if (typeof current === 'function') {
+
+          toExecute = current;
+
+        } else {
+
+          const fullPath = this.routes[i].split('.');
+
+          const [
+            moduleToRun,
+            controllerToRun,
+            actionToRun
+          ] = fullPath;
+
+          let module;
+          let controller;
+          let action;
+
+          if (actionToRun) { // Has folder
+            module = moduleToRun;
+            controller = controllerToRun;
+            action = actionToRun;
+          } else {
+            module = null;
+            controller = moduleToRun;
+            action = controllerToRun;
+          }
+
+          try {
+            toExecute = module
+              ? (AllControllers[module][controller][action])
+              : AllControllers[controller][action];
+          } catch (e) {
+            toExecute = null;
+          }
+
+          if (!toExecute) {
+            console.error('\x1b[31mError:', 'Controller not found in', (module) ? `${module}.${controller}.${action}` : `${controller}.${action}`, '\x1b[0m');
+          }
+
         }
 
         if (toExecute) {
@@ -405,8 +427,6 @@ module.exports = function loadServer() {
           } else {
             vulkano[option](pathToRun || '/', middleware, toExecute);
           }
-        } else {
-          console.error('\x1b[31mError:', 'Controller not found in', (module) ? `${module}.${controller}.${action}` : `${controller}.${action}`, '\x1b[0m');
         }
 
       });
