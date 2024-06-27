@@ -41,7 +41,9 @@ module.exports = function getExpressConfiguration() {
     port: ENV_NODE_PORT || ENV_PORT || expressUserPort || expressSettingsPort || 8000,
     cors: {},
     cookies: {},
+    csp: {},
     jwt: {},
+    permissionPolicy: {},
     sockets: {},
     redis: {},
     multer: {

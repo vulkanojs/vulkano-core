@@ -233,6 +233,69 @@ module.exports = function loadServer() {
       }
 
       // ---------------
+      // Content Security Policy  - File: app/config/express/csp.js
+      // ---------------
+      const {
+        enabled: cspEnabled,
+        report: cspReportTo,
+        rules: cspRules
+      } = expressConfig.csp || {};
+
+      if (cspEnabled) {
+
+        if (!Array.isArray(cspRules)) {
+          console.error('Vulkano Error: ', 'The Content Security Policy Rules must be an array');
+          return;
+        }
+
+        if (cspRules.length > 0) {
+
+          vulkano.use( (req, res, next) => {
+
+            if (cspReportTo) {
+              res.setHeader('Report-To', JSON.stringify(cspReportTo));
+            }
+
+            res.setHeader('Content-Security-Policy', cspRules.join('; '));
+
+            next();
+
+          });
+
+        }
+
+      }
+
+      // ---------------
+      // Permission Policy  - File: app/config/express/permissionPolicy.js
+      // ---------------
+      const {
+        enabled: ppEnabled,
+        permissions: ppPermissions
+      } = expressConfig.permissionPolicy || {};
+
+      if (ppEnabled) {
+
+        if (!Array.isArray(ppPermissions)) {
+          console.error('Vulkano Error: ', 'The Permission Policy values must be an array');
+          return;
+        }
+
+        if (ppPermissions.length > 0) {
+
+          vulkano.use( (req, res, next) => {
+
+            res.setHeader('Permissions-Policy', ppPermissions.join(', '));
+
+            next();
+
+          });
+
+        }
+
+      }
+
+      // ---------------
       // VIEWS
       // ---------------
 
