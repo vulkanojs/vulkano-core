@@ -272,14 +272,35 @@ module.exports = function loadServer() {
         rules: cspRules
       } = expressConfig.csp || {};
 
-      if (cspEnabled) {
+      if (cspEnabled && cspRules) {
 
-        if (!Array.isArray(cspRules)) {
-          console.error('Vulkano Error: ', 'The Content Security Policy Rules must be an array');
-          return;
+        const cspRulesHeader = [];
+
+        if (Array.isArray(cspRules) && cspRules.length > 0) {
+
+          for ( let i = 0; i < cspRules.length; i += 1) {
+            cspRulesHeader.push(cspRules[i]);
+          }
+
+        } else if (typeof cspRules === 'object') {
+
+          Object.keys(cspRules).forEach( (r) => {
+            const tmpValues = cspRules[r];
+            if (Array.isArray(tmpValues)) {
+              cspRulesHeader.push(`${r} ${tmpValues.join(' ')}`);
+            } else if (typeof tmpValues === 'string') {
+              cspRulesHeader.push(`${r} ${tmpValues}`);
+            }
+          });
+
+        } else if (typeof cspRules === 'string') {
+
+          cspRulesHeader.push(cspRules);
+
         }
 
-        if (cspRules.length > 0) {
+        // Has Rules
+        if (cspRulesHeader.length > 0) {
 
           vulkano.use( (req, res, next) => {
 
@@ -287,7 +308,7 @@ module.exports = function loadServer() {
               res.setHeader('Report-To', JSON.stringify(cspReportTo));
             }
 
-            res.setHeader('Content-Security-Policy', cspRules.join('; '));
+            res.setHeader('Content-Security-Policy', cspRulesHeader.join('; '));
 
             next();
 
