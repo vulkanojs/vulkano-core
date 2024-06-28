@@ -15,6 +15,7 @@ const helmet = require('helmet');
 const timeout = require('connect-timeout');
 const useragent = require('express-useragent');
 const cookieParser = require('cookie-parser');
+const expressSession = require('express-session');
 const { createClient: socketRedis } = require('redis');
 const socketMongoose = require('mongoose');
 const { createAdapter: socketRedisAdapter } = require('@socket.io/redis-adapter');
@@ -86,12 +87,22 @@ module.exports = function loadServer() {
       // ---------------
       // COOKIES - File: app/config/express/cookies.js
       // ---------------
-      if (expressConfig.cookies && expressConfig.cookies.enabled) {
-        const cookiesSecretKey = COOKIES_SECRET_KEY || expressConfig.cookies.key || expressConfig.cookies.secret || '';
+      const {
+        enabled: cookiesEnabled
+      } = expressConfig.cookies || {};
+
+      let cookiesSecretKey = null;
+
+      if (cookiesEnabled) {
+
+        cookiesSecretKey = COOKIES_SECRET_KEY || expressConfig.cookies.key || expressConfig.cookies.secret || '';
+
         if (!cookiesSecretKey) {
           console.log(' \x1b[33mWARNING\x1b[0m: Set the secret key in the config/express/cookie.js file or COOKIES_SECRET_KEY in the .env file.');
         }
+
         vulkano.use(cookieParser(cookiesSecretKey));
+
       }
 
       // ---------------
@@ -230,6 +241,26 @@ module.exports = function loadServer() {
           next();
 
         });
+      }
+
+      // ---------------
+      // Express Session  - File: app/config/express/session.js
+      // ---------------
+      const {
+        enabled: sessionEnabled
+      } = expressConfig.session || {};
+
+      if (sessionEnabled) {
+
+        if (!cookiesEnabled) {
+          console.log(' \x1b[41mERROR\x1b[0m: Can not load the Express Session because the Cookies aren\'t enabled');
+          return;
+        }
+
+        delete expressConfig.session.enabled;
+
+        vulkano.use(expressSession({ ...expressConfig.session, secret: cookiesSecretKey }));
+
       }
 
       // ---------------

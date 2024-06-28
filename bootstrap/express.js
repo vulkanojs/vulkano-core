@@ -43,6 +43,7 @@ module.exports = function getExpressConfiguration() {
     cookies: {},
     csp: {},
     jwt: {},
+    session: {},
     permissionPolicy: {},
     sockets: {},
     redis: {},
