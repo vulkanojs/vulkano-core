@@ -21,6 +21,7 @@
     "app": true,
     "io": true,
     "ApiClient": true,
+    "Download": true,
     "Promise": true,
     "Paginate": true,
     "Mixed": true,
