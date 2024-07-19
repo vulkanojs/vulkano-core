@@ -1,0 +1,31 @@
+{% extends "../templates/error.html" %}
+
+{% block content %}
+
+  <div class="flash error">
+    <h1>View Not Found</h1>
+    <p>
+      <strong>Error: </strong>
+      The template <b><em>{{ view }}</em></b> does not exist or could not be found.
+    </p>
+  </div>
+
+  <div class="flash valid">
+    <h2>How To Fix:</h2>
+    <h4>
+      <strong>
+        Create the view <em>{{ view }}</em> into the <em>{{ APP_PATH }}/views</em> to make it work correctly :
+      </strong>
+    </h4>
+  </div>
+
+  {% if stack %}
+  <div class="flash stack">
+    <h2>Stack</h2>
+    <p>
+      {{ stack }}
+    </p>
+  </div>
+  {% endif %}
+
+{% endblock %}

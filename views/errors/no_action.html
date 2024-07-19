@@ -1,0 +1,49 @@
+{% extends "../templates/error.html" %}
+
+{% block content %}
+
+  <div class="flash error">
+    <h1>Action Not Found</h1>
+    <p>
+      <strong>Error: </strong>
+      The Action <b><em>{{ action }}</em></b> does not exist or could not be found.
+    </p>
+  </div>
+
+  <div class="flash valid">
+    <h2>How To Fix:</h2>
+    <h4>
+      <strong>
+        Create the method <em>{{ action }}</em> into the <em>{{ controller | vCamelCase }}Controller</em> to make it work correctly :
+      </strong>
+    </h4>
+    <pre>
+      <code>
+      /**
+       * Controller:
+       * {{ controller | vCamelCase }}Controller.js
+       */
+      module.exports = {
+
+        // Action to run
+        '{{ action if action else method | vLowercase }}': (req, res) => {
+
+          // Render your view
+          res.render('{{ controller | vLowercase }}/index.html');
+        }
+
+      };
+      </code>
+    </pre>
+  </div>
+
+  {% if stack %}
+  <div class="flash stack">
+    <h2>Stack</h2>
+    <p>
+      {{ stack }}
+    </p>
+  </div>
+  {% endif %}
+
+{% endblock %}

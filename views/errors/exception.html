@@ -1,0 +1,21 @@
+{% extends "../templates/exception.html" %}
+
+{% block content %}
+
+  <div class="flash error">
+    <h1>Internal Error</h1>
+    <p>
+      <strong>Error: {{ statusCode }} </strong>
+    </p>
+  </div>
+
+  {% if stack %}
+  <div class="flash stack">
+    <h2>Stack</h2>
+    <p>
+      {{ stack }}
+    </p>
+  </div>
+  {% endif %}
+
+{% endblock %}

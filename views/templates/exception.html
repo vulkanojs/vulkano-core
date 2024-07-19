@@ -1,0 +1,83 @@
+<!DOCTYPE HTML>
+<html lang="en">
+  <head>
+    <title>Oops! something was wrong :( - VulkanoJS</title>
+    <meta charset=UTF-8 >
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+
+    <style>
+
+      * { -webkit-box-sizing: border-box; -moz-box-sizing: border-box; box-sizing: border-box; }
+      html{ font-family:sans-serif;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100% }
+      html, body { margin: 0; padding: 0; }
+
+      .flash {
+        margin: 0;
+        min-height: 32px;
+        padding:3px 50px;
+        background-repeat: no-repeat;
+        background-position: 10px center;
+        line-height: 1.7;
+        border-radius: 2px;
+      }
+      .error {
+        color: #D8000C;
+        background-color: #FFBABA;
+      }
+      .info {
+        color: #00529B;
+        background-color: #BDE5F8;
+      }
+      .valid {
+        color: #4F8A10;
+        background-color: #DFF2BF;
+      }
+      .warning {
+        color: #9F6000;
+        background-color: #FEEFB3;
+      }
+
+      pre {
+        tab-size: 2;
+      }
+
+      body {
+        background: #f2f2f2;
+      }
+
+      .file{ word-break: break-word; }
+
+    </style>
+  </head>
+  <body>
+
+
+    <div id="vulkano-error">
+      {% block content %} {% endblock %}
+    </div>
+
+    <footer>
+      <div class="flash info">
+        <p>
+          <b>In PRODUCTION this error does not appear :), it shows the app error template:</b>
+        </p>
+        <p>
+          /app/views/_shared/errors/500.html
+        </p>
+        <p>
+          <span style="font-weight: normal">You can edit it as you want!</span>
+        </p>
+      </div>
+     </footer>
+
+
+    <!-- and it's easy to individually load additional languages -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/javascript.min.js"></script>
+
+    <script>hljs.highlightAll();</script>
+  </body>
+</html>

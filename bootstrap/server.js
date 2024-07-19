@@ -369,7 +369,7 @@ module.exports = function loadServer() {
         express: vulkano
       };
 
-      const envNunjucks = nunjucks.configure(views.path, nunjucksSettings);
+      const envNunjucks = nunjucks.configure([views.path, CORE_PATH], nunjucksSettings);
 
       app.server.views._engine = envNunjucks;
 
@@ -545,35 +545,124 @@ module.exports = function loadServer() {
 
       const server = await vulkano.listen(expressConfig.port);
 
+      // Routes registered
+      const routesRegistered = vulkano._router.stack // registered routes
+        .filter((r) => r.route && r.route.path !== '*') // take out all the middleware
+        .map((r) => {
+          return {
+            method: Object.keys(r.route.methods)[0].toUpperCase(),
+            path: r.route.path
+          };
+        });
+
       // ---------------
       // ERROR 404
       // ---------------
       vulkano.use((req, res) => {
+
         if (+res.statusCode >= 500 && +res.statusCode < 600) {
           throw new Error();
         }
-        res.status(404).render(`${views.path}/_shared/errors/404.html`);
+
+        res.status(404);
+
+        if (app.PRODUCTION) {
+          res.render(`${views.path}/_shared/errors/404.html`);
+          return;
+        }
+
+        // Verify if the error is a controller
+        const isController = routesRegistered.filter( (r) => {
+
+          const {
+            path: routePath
+          } = r || {};
+
+          const routerControllerToCheck = Filter.get(req.path, 'trim', '/').split('/')[0];
+
+          return routePath.startsWith(`/${routerControllerToCheck}`);
+
+        });
+
+        if (isController.length === 0) {
+
+          res.render(`${CORE_PATH}/views/errors/no_controller.html`, {
+            method: req.method,
+            controller: req.path.split('/')[1]
+          });
+
+          return;
+
+        }
+
+        // Show the action name error
+        res.render(`${CORE_PATH}/views/errors/no_action.html`, {
+          method: req.method,
+          controller: req.path.split('/')[1],
+          action: req.path.split('/')[2]
+        });
+
       });
 
       // ---------------
       // ERROR 5XX
       // ---------------
-      vulkano.use((err, req, res) => {
-        const status = err.status || res.statusCode || 500;
+      vulkano.use((err, req, res, next) => {
+
+        if (res.headersSent) {
+          next(err);
+          return;
+        }
+
+        const status = err ? (err.status || 500) : (res.statusCode || 500);
+
         res.status(status);
-        if (!res.xhr) {
-          if (+status > 400 && +status < 500) {
-            res.render(`${vulkano.get('views')}/_shared/errors/404.html`, { content: err.stack });
-          } else {
-            res.render(`${vulkano.get('views')}/_shared/errors/500.html`, { content: err.stack });
-          }
-        } else {
+
+        // AJAX Response
+        if (req.xhr) {
+
           res.jsonp({
             success: false,
-            error: err.message || err.error || err.invalidAttributes || err.toString() || 'Object Not Found',
-            data: (app.PRODUCTION) ? {} : (err.stack || {})
+            statusCode: status,
+            error: {
+              detail: err.message || err.error || err.invalidAttributes || err.toString() || 'Object Not Found',
+              stack: (app.PRODUCTION) ? {} : (err.stack || {})
+            }
           });
+
+          return;
+
         }
+
+        if (app.PRODUCTION) {
+
+          if (+status > 400 && +status < 500) {
+            res.render(`${vulkano.get('views')}/_shared/errors/404.html`);
+          } else {
+            res.render(`${vulkano.get('views')}/_shared/errors/500.html`);
+          }
+
+          return;
+
+        }
+
+        let errorViewToShow = `${CORE_PATH}/views/errors/exception.html`;
+
+        if (err.stack.indexOf('template not found') >= 0) {
+          errorViewToShow = `${CORE_PATH}/views/errors/no_view.html`;
+        }
+
+        res.render(errorViewToShow, {
+          statusCode: status,
+          method: req.method,
+          controller: req.path.split('/')[1],
+          action: req.path.split('/')[2],
+          view: err.stack.indexOf('template not found') >= 0
+            ? String( `${(err.stack.split('not found:')[1]).split('.')[0]}.html` ).trim()
+            : '',
+          stack: err.stack
+        });
+
       });
 
       app.vulkano = vulkano;
