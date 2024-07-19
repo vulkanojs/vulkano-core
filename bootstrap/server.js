@@ -430,11 +430,8 @@ module.exports = function loadServer() {
 
       // ---------------
       // PUBLIC PATH - File: app/config/settings.js
-      // (if are using Vite)
       // ---------------
-      if (!app.viteProxy) {
-        vulkano.use(express.static(PUBLIC_PATH));
-      }
+      vulkano.use(express.static(PUBLIC_PATH));
 
       // ---------------
       // ROUTES
@@ -578,14 +575,6 @@ module.exports = function loadServer() {
           });
         }
       });
-
-      // ---------------
-      // PUBLIC PATH
-      // (if not are using Vite)
-      // ---------------
-      if (app.viteProxy) {
-        vulkano.use(express.static(PUBLIC_PATH));
-      }
 
       app.vulkano = vulkano;
       app.server = server;
