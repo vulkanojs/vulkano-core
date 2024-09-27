@@ -8,7 +8,7 @@
 module.exports = {
 
   exec: (_str, opt) => {
-    const str = Filter.get(_str, ['rtrim', 'ltrim'], opt);
+    const str = Filter.get( String(_str).trim(), ['rtrim', 'ltrim'], opt);
     return str;
   }
 

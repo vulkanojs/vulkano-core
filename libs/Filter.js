@@ -24,16 +24,19 @@ const allFilters = { ...coreFilters, ...appFilters };
 
 module.exports = {
 
-  get(str, filters, opts) {
-
-    let result = null;
+  get(str, filters, opts) {    
 
     if (Array.isArray(filters)) {
+
+      let result = str;
+      
       filters.forEach((filter) => {
         const f = Filter.load(filter);
-        result = (!f) ? '' : f.exec(str, opts);
+        result = (!f) ? '' : f.exec(result, opts);
       });
+
       return result;
+
     }
 
     const f = Filter.load(filters);
