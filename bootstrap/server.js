@@ -319,7 +319,7 @@ module.exports = function loadServer() {
       }
 
       // ---------------
-      // Permission Policy  - File: app/config/express/permissionPolicy.js
+      // Permission Policy - File: app/config/express/permissionPolicy.js
       // ---------------
       const {
         enabled: ppEnabled,
@@ -344,6 +344,28 @@ module.exports = function loadServer() {
           });
 
         }
+
+      }
+
+      // ---------------
+      // REDIS - File: app/config/redis.js
+      // ---------------
+      const {
+        enabled: redisEnabled
+      } = app.config.redis || {};
+
+      app.redisClient = null;
+
+      if (redisEnabled === true) {
+
+        const {
+          redis
+        } = app.config || {};
+
+        const rClient = socketRedis(redis);
+        rClient.on('error', (err) => console.log('Redis Client Error', err));
+
+        app.redisClient = await rClient.connect();
 
       }
 
