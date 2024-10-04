@@ -56,6 +56,7 @@ module.exports = {
 
   /**
    * Method to create a new record
+   *
    * @param {Promise} data
    */
   create(data) {
@@ -72,6 +73,7 @@ module.exports = {
 
   /**
    * Method to update a record
+   *
    * @param {ObjectID} id
    * @param {Object} data
    * @returns {Promise}
@@ -102,6 +104,7 @@ module.exports = {
 
   /**
    * Method to delete a record
+   *
    * @param {ObjectID} id
    * @returns {Promise}
    */
@@ -113,6 +116,121 @@ module.exports = {
     // Soft delete
     return this.update(id, { active: false });
 
+  },
+
+  /**
+   * Method to add a subdocument
+   *
+   * @param {String} key
+   * @param {ObjectID} parent
+   * @param {Object} data
+   * @returns {Promise}
+   */
+  createSubdoc(key, parent, data) {
+
+    return this
+      .findOne({ _id: parent })
+      .then( (r) => {
+
+        if (!r) {
+          return VSError.reject('Invalid ID. Record not found.', 404);
+        }
+
+        r[key].push(data);
+
+        r.markModified(key);
+
+        return r.save()
+          .then( () => {
+            return r[key][r[key].length - 1];
+          });
+
+      });
+
+  },
+
+  /**
+   * Method to update a subdocument
+   *
+   * @param {String} key
+   * @param {ObjectID} parent
+   * @param {ObjectID} subdoc
+   * @param {Object} data
+   * @returns {Promise}
+   */
+  updateSubdoc(key, parent, subdoc, data) {
+
+    return this
+      .findOne({ _id: parent })
+      .then( (r) => {
+
+        if (!r) {
+          return VSError.reject('Invalid ID. Record not found.', 404);
+        }
+
+        const current = r[key] ? r[key].id(subdoc) : null;
+
+        if (!current) {
+          return VSError.reject('Invalid ID. Item not found.', 404);
+        }
+
+        r[key].id(subdoc).set({ ...data, _id: subdoc });
+
+        r.markModified(key);
+
+        return r.save()
+          .then( () => {
+            return r[key].id(subdoc);
+          });
+
+      });
+
+  },
+
+  /**
+   * Method to remove a subdocument
+   *
+   * @param {String} key
+   * @param {ObjectID} parent
+   * @param {ObjectID} subdoc
+   * @returns {Promise}
+   */
+  removeSubdoc(key, parent, subdoc) {
+
+    return this
+      .findOne({ _id: parent })
+      .then( (r) => {
+
+        if (!r) {
+          return VSError.reject('Invalid ID. Record not found.', 404);
+        }
+
+        const current = r[key] ? r[key].id(subdoc) : null;
+
+        if (!current) {
+          return VSError.reject('Invalid ID. Item not found.', 404);
+        }
+
+        r[key].id(subdoc).deleteOne();
+
+        r.markModified(key);
+
+        return r.save();
+
+      });
+
+  },
+
+  /**
+   * ALIAS: removeSubdoc
+   *
+   * @param {String} key
+   * @param {ObjectID} parent
+   * @param {ObjectID} subdoc
+   * @returns {Promise}
+   */
+  deleteSubdoc(key, parent, subdoc) {
+    return this.removeSubdoc(key, parent, subdoc);
   }
 
 };
