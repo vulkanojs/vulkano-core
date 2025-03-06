@@ -3,7 +3,7 @@
  */
 
 const Promise = require('bluebird');
-const paginate = require('mongoose-paginate');
+const paginate = require('mongoose-paginate-v2');
 const merge = require('deepmerge');
 
 const mongoose = require('mongoose');
@@ -49,8 +49,6 @@ module.exports = async function loadDatabaseApplication() {
   }
 
   const defaultProps = {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
     family: 4
   };
 

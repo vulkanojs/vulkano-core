@@ -13,13 +13,11 @@ const path = require('path');
 const moment = require('moment');
 const merge = require('deepmerge');
 const _ = require('underscore');
-const Promise = require('bluebird');
 const v8 = require('v8');
 const fs = require('fs');
 
 global.app = {};
 global._ = _;
-global.Promise = Promise;
 
 const rootProject = path.resolve(process.cwd());
 
