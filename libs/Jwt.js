@@ -74,13 +74,18 @@ module.exports = {
       ? req.cookies[cookieName]
       : null;
 
+    // Get Token via Cookie RAW
+    const cookieTokenRaw = req.headers.cookie && this.getCookieRAW(req, cookieName)
+      ? this.getCookieRAW(req, cookieName)
+      : null;
+
     // Get Token via Query Parameter
     const queryToken = req.query && req.query[queryParameter]
       ? req.query[queryParameter]
       : null;
 
     // Current Token
-    const token = headerToken || cookieToken || queryToken || null;
+    const token = headerToken || cookieToken || cookieTokenRaw || queryToken || null;
 
     // Decode Token
     const hasData = this.decode(token);
@@ -207,20 +212,42 @@ module.exports = {
     } = socket.handshake.auth || {};
 
     if (token === null || typeof token === 'undefined' || !token) {
-      return false;
+      return this.getToken(socket.handshake);
     }
 
+    // Decode Token
     const data = this.decode(token);
 
+    // Return only if token is valid
+    return data ? data : null;
+
+  },
+
+  /**
+   * Read cookie RAW
+   *
+   * @param {Socket} socket
+   * @returns String
+   */
+  getCookieRAW(req, cookieName) {
+
     const {
-      _id
-    } = data || {};
+      cookie
+    } = req.headers || {};
 
-    if (!_id) {
-      return false;
-    }
+    const name = `${cookieName}=`;
+    const cDecoded = decodeURIComponent(cookie || '');
+    const cArr = cDecoded.split(';');
 
-    return data;
+    let res;
+
+    cArr.forEach((val) => {
+      if (String(val).trim().indexOf(name) === 0) {
+        res = String(val).trim().substring(name.length);
+      }
+    });
+
+    return res;
 
   }
 
