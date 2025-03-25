@@ -207,12 +207,15 @@ module.exports = {
    */
   socket(socket) {
 
-    const {
+    let {
       token
     } = socket.handshake.auth || {};
 
     if (token === null || typeof token === 'undefined' || !token) {
-      return this.getToken(socket.handshake);
+      token = this.getToken(socket.handshake);
+      if (!token) {
+        return null;
+      }
     }
 
     // Decode Token
