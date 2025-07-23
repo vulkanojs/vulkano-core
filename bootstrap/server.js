@@ -900,8 +900,8 @@ module.exports = function loadServer() {
               }
 
               if (toExecute) {
-                socket.on(i, (body) => {
-                  toExecute({ socket, body: body || {} });
+                socket.on(i, (body, callback) => {
+                  toExecute({ socket, body: body || {} }, callback || (() => {}));
                 });
               } else {
                 console.error('\x1b[31mError:', 'Controller not found in', (module) ? `${module}.${controller}.${action}` : `${controller}.${action}`, '\x1b[0m', 'to socket event', i);
