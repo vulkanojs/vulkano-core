@@ -842,8 +842,8 @@ module.exports = function loadServer() {
 
       Promise
         .all([
-          (sockets.redis ? pubClient.connect() : null),
-          (sockets.redis ? subClient.connect() : null)
+          (pubClient ? pubClient.connect() : null),
+          (subClient ? subClient.connect() : null)
         ])
         .then(() => {
 
