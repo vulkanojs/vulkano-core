@@ -734,9 +734,13 @@ module.exports = function loadServer() {
       if ( String(adapter).toLocaleLowerCase() === 'redis') {
 
         const {
+          socket: socketRedisConfig
+        } = redisAdapter || {};
+
+        const {
           host,
           port
-        } = redisAdapter || {};
+        } = socketRedisConfig || redisAdapter || {};
 
         if (!host || !port) {
           throw new Error('Unable to connect to Redis. File: "app/config/sockets/adapters/redis.js" to connect the sockets');
@@ -762,16 +766,9 @@ module.exports = function loadServer() {
 
       if ( String(adapter).toLocaleLowerCase() === 'redis') {
 
-        const propsToRedis = {
-          host: redisAdapter.host,
-          port: redisAdapter.port
-        };
+        pubClient = socketRedis(redisAdapter);
+        pubClient.on('error', (err) => console.log('Socket Redis Client Error', err));
 
-        if (redisAdapter.password) {
-          propsToRedis.password = redisAdapter.password;
-        }
-
-        pubClient = socketRedis(propsToRedis);
         subClient = pubClient.duplicate();
 
         io.adapter(socketRedisAdapter(pubClient, subClient));
