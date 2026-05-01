@@ -31,7 +31,7 @@ module.exports = {
       let result = str;
 
       filters.forEach((filter) => {
-        const f = Filter.load(filter);
+        const f = this.load(filter);
         result = (!f) ? '' : f.exec(result, opts);
       });
 
@@ -39,7 +39,7 @@ module.exports = {
 
     }
 
-    const f = Filter.load(filters);
+    const f = this.load(filters);
     return (!f) ? '' : f.exec(str, opts);
 
   },
