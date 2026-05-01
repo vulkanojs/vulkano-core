@@ -1,9 +1,23 @@
-# IGNORE ALL #
-###############
+# Dev & CI files
 .editorconfig
 .env
+.env.test
+.eslintignore
 .eslintrc
-.npmignore
-.env
-.lockb
-.lock
+.eslintrc.js
+.gitattributes
+.nvmrc
+
+# Lock files
+*.lockb
+*.lock
+
+# Internal / AI context
+CLAUDE.md
+
+# Test suite
+test/
+jest.config.js
+
+# Dev tooling config
+nodemon.json
