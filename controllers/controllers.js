@@ -17,7 +17,7 @@ module.exports = function loadControllersApplication() {
 
   Object.keys(AllControllers).forEach( (controller) => {
 
-    const methods = ['get', 'post', 'put', 'delete'];
+    const methods = ['get', 'post', 'put', 'patch', 'delete'];
     const current = AllControllers[controller];
 
     const {
@@ -101,7 +101,7 @@ module.exports = function loadControllersApplication() {
                 method = pathToRun.toLowerCase();
                 pathToRun = `/${moduleName}/${controllerName}/`;
               } else {
-                pathToRun = `/${moduleName}/${controllerName}/${pathToRun.replace(/GET|POST|DELETE|PUT/i, '')}`;
+                pathToRun = `/${moduleName}/${controllerName}/${pathToRun.replace(/GET|POST|DELETE|PUT|PATCH/i, '')}`;
               }
 
             }
@@ -132,7 +132,7 @@ module.exports = function loadControllersApplication() {
             method = pathToRun.toLowerCase();
             pathToRun = `/${controllerName}/`;
           } else {
-            pathToRun = `/${controllerName}/${pathToRun.replace(/GET|POST|DELETE|PUT/i, '')}`;
+            pathToRun = `/${controllerName}/${pathToRun.replace(/GET|POST|DELETE|PUT|PATCH/i, '')}`;
           }
         }
 

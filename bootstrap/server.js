@@ -177,8 +177,8 @@ module.exports = function loadServer() {
           res.header('Access-Control-Allow-Origin', '*');
           res.header('Access-Control-Allow-Headers', 'X-Requested-With, X-HTTP-Method-Override, Content-Type, Accept');
         }
-        res.header('Allow', 'GET,PUT,POST,DELETE,OPTIONS');
-        res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
+        res.header('Allow', 'GET,PUT,PATCH,POST,DELETE,OPTIONS');
+        res.header('Access-Control-Allow-Methods', 'GET,PUT,PATCH,POST,DELETE,OPTIONS');
 
         res.status(200).end();
 
@@ -234,7 +234,7 @@ module.exports = function loadServer() {
           tmpCorsHeaders = tmpCorsHeaders.concat(expressConfig.cors.headers || []);
 
           res.header('Access-Control-Allow-Origin', expressConfig.cors.origin);
-          res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
+          res.header('Access-Control-Allow-Methods', 'GET,PUT,PATCH,POST,DELETE,OPTIONS');
           res.header('Access-Control-Allow-Headers', tmpCorsHeaders.join(', '));
 
           // Disable CACHE in API resources.
@@ -525,7 +525,7 @@ module.exports = function loadServer() {
         // Capture the HTTP Method
         let option = (parts[0] !== undefined) ? String(parts[0]).toLowerCase() : 'get';
 
-        if (option !== 'get' && option !== 'post' && option !== 'put' && option !== 'delete') {
+        if (option !== 'get' && option !== 'post' && option !== 'put' && option !== 'patch' && option !== 'delete') {
           option = 'get';
         }
 

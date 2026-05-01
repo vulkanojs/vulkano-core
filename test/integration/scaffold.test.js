@@ -204,6 +204,13 @@ describe('Sequential CRUD', () => {
     expect(data.data.name).toBe('CRUD Updated');
   });
 
+  it('PATCH /:id partially updates and returns 202', async () => {
+    const { status, data } = await http.patch(`/${id}`, { value: 55 });
+    expect(status).toBe(202);
+    expect(data.data.value).toBe(55);
+    expect(data.data.name).toBe('CRUD Updated');
+  });
+
   it('GET with non-existent id returns 404', async () => {
     const { status } = await http.get('/000000000000000000000000');
     expect(status).toBe(404);

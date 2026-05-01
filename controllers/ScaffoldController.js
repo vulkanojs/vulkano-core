@@ -93,6 +93,20 @@ module.exports = (modelName, allowedMethods) => {
 
     },
 
+    'patch :id': function onPatchRecord(req, res) {
+
+      const {
+        id
+      } = req.params || {};
+
+      const {
+        body
+      } = req || {};
+
+      res.vsr(global[modelName].update(id, body), 202);
+
+    },
+
     'delete :id': function onDeleteRecord(req, res) {
 
       const {
@@ -122,6 +136,10 @@ module.exports = (modelName, allowedMethods) => {
 
     if (!tempAllowedMethods.includes('put')) {
       delete allMethods['put :id'];
+    }
+
+    if (!tempAllowedMethods.includes('patch')) {
+      delete allMethods['patch :id'];
     }
 
     if (!tempAllowedMethods.includes('delete')) {
