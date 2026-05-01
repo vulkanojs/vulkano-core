@@ -600,7 +600,9 @@ module.exports = function loadServer() {
             path: routePath
           } = r || {};
 
-          const routerControllerToCheck = Filter.get(req.path, 'trim', '/').split('/')[0];
+          const routerControllerToCheck = (typeof Filter !== 'undefined')
+            ? Filter.get(req.path, 'trim', '/').split('/')[0]
+            : req.path.replace(/^\/+|\/+$/g, '').split('/')[0];
 
           return routePath.startsWith(`/${routerControllerToCheck}`);
 
@@ -668,21 +670,26 @@ module.exports = function loadServer() {
 
         }
 
-        let errorViewToShow = `${CORE_PATH}/views/errors/exception.html`;
+        const errStack = (err && err.stack) ? String(err.stack) : '';
+        const isMissingTemplate = errStack.includes('template not found');
 
-        if (err.stack.indexOf('template not found') >= 0) {
-          errorViewToShow = `${CORE_PATH}/views/errors/no_view.html`;
+        let missingView = '';
+        if (isMissingTemplate) {
+          const afterNotFound = errStack.split('not found:')[1] || '';
+          missingView = `${afterNotFound.split('.')[0].trim()}.html`;
         }
+
+        const errorViewToShow = isMissingTemplate
+          ? `${CORE_PATH}/views/errors/no_view.html`
+          : `${CORE_PATH}/views/errors/exception.html`;
 
         res.render(errorViewToShow, {
           statusCode: status,
           method: req.method,
           controller: req.path.split('/')[1],
           action: req.path.split('/')[2],
-          view: err.stack.indexOf('template not found') >= 0
-            ? String( `${(err.stack.split('not found:')[1]).split('.')[0]}.html` ).trim()
-            : '',
-          stack: err.stack
+          view: missingView,
+          stack: errStack
         });
 
       });
