@@ -8,7 +8,7 @@
 const mongoose = require('mongoose');
 const path = require('path');
 
-require('dotenv').config({ path: path.join(__dirname, '../../.env.test') });
+require('dotenv').config({ path: path.join(__dirname, '../../.env.test'), quiet: !process.env.DOTENV_VERBOSE });
 
 const http = require('axios').create({
   baseURL: `${process.env.TEST_SERVER_URL}/api/item`,

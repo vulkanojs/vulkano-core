@@ -59,7 +59,7 @@ if (!fs.existsSync(PUBLIC_PATH)) {
 }
 
 // Read Dontenv config
-dotenv.config({ path: `${ABS_PATH}/.env` });
+dotenv.config({ path: `${ABS_PATH}/.env`, quiet: !process.env.DOTENV_VERBOSE });
 
 // Include all api config
 const config = require('include-all')({

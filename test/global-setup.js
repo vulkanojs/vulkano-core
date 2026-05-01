@@ -4,7 +4,7 @@ const fs = require('fs');
 const os = require('os');
 const dotenv = require('dotenv');
 
-dotenv.config({ path: path.join(__dirname, '../.env.test') });
+dotenv.config({ path: path.join(__dirname, '../.env.test'), quiet: !process.env.DOTENV_VERBOSE });
 
 const TEST_PORT = process.env.TEST_PORT || 9877;
 const TEST_DB_URI = process.env.TEST_DB_URI;
