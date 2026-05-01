@@ -48,12 +48,10 @@ module.exports = async function loadDatabaseApplication() {
     throw new Error(`Invalid connection to MongoDB with source "${connection}"`);
   }
 
-  const defaultProps = {
-    family: 4
-  };
-
+  // Build connection props from user config; family defaults to 4 (IPv4)
+  // unless explicitly set to another value in database.config
   const connectionProps = merge.all([
-    defaultProps,
+    { family: 4 },
     (database ? database.config || {} : {})
   ]);
 

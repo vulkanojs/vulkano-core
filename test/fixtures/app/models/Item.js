@@ -11,7 +11,7 @@ module.exports = {
   // Override scaffold getAll to enable search by name
   getAll(props) {
     const defaultProps = {
-      sort: 'createdAt|DESC',
+      sort: 'createdAt|DESC,_id|ASC',
       searchBy: ['name'],
       filter: { active: true }
     };

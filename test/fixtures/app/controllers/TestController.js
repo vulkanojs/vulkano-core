@@ -45,6 +45,13 @@ module.exports = {
     res.vsr(Promise.reject(err));
   },
 
+  // GET /test/earlyresponse — sends headers manually before calling res.vsr()
+  // used to verify the headers-sent guard in VSR
+  'get earlyresponse': function onEarlyResponse(req, res) {
+    res.status(200).json({ early: true });
+    res.vsr(Promise.resolve({ late: true }));
+  },
+
   // GET /test/:id — single route param (after specific routes to avoid shadowing)
   'get :id': function onGetById(req, res) {
     const { id } = req.params;

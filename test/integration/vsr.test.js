@@ -76,4 +76,16 @@ describe('VSR — Vulkano Standard Response', () => {
 
   });
 
+  describe('Headers-sent guard (bug fix)', () => {
+
+    it('does not crash or double-send when headers are already sent before VSR resolves', async () => {
+      // The controller calls res.json() then res.vsr() — without the guard
+      // the second send would throw "Cannot set headers after they are sent"
+      const { status, data } = await axios.get('/test/earlyresponse');
+      expect(status).toBe(200);
+      expect(data.early).toBe(true); // first response wins
+    });
+
+  });
+
 });
