@@ -45,7 +45,7 @@ module.exports = async function loadDatabaseApplication() {
     : (connection || null);
 
   if (!toConnect) {
-    throw `Invalid conection to user MongoDB with source ${connection}`;
+    throw new Error(`Invalid connection to MongoDB with source "${connection}"`);
   }
 
   const defaultProps = {
