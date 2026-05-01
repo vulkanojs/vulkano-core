@@ -121,6 +121,54 @@ describe('Routing', () => {
 
   });
 
+  describe('Explicit routes — inline function (definition pattern)', () => {
+
+    it('GET with inline handler returns expected JSON', async () => {
+      const { status, data } = await axios.get('/explicit/inline');
+      expect(status).toBe(200);
+      expect(data.source).toBe('inline');
+      expect(data.success).toBe(true);
+    });
+
+    it('POST with inline handler receives req.body', async () => {
+      const { status, data } = await axios.post('/explicit/inline', { key: 'value' });
+      expect(status).toBe(200);
+      expect(data.source).toBe('inline-post');
+      expect(data.received.key).toBe('value');
+    });
+
+    it('inline handler bypasses VSR and responds directly with res.json', async () => {
+      const { data } = await axios.get('/explicit/inline');
+      // VSR wraps response in { success, statusCode, data }
+      // Inline res.json skips that wrapper
+      expect(data.statusCode).toBeUndefined();
+    });
+
+  });
+
+  describe('Explicit routes — custom() initializer (advanced pattern)', () => {
+
+    it('GET registered inside custom() is reachable', async () => {
+      const { status, data } = await axios.get('/explicit/custom');
+      expect(status).toBe(200);
+      expect(data.source).toBe('custom');
+      expect(data.success).toBe(true);
+    });
+
+    it('POST registered inside custom() is reachable', async () => {
+      const { status, data } = await axios.post('/explicit/custom', { hello: 'world' });
+      expect(status).toBe(200);
+      expect(data.source).toBe('custom-post');
+      expect(data.received.hello).toBe('world');
+    });
+
+    it('custom() route also responds directly with res.json (no VSR wrapper)', async () => {
+      const { data } = await axios.get('/explicit/custom');
+      expect(data.statusCode).toBeUndefined();
+    });
+
+  });
+
   describe('404 handling (bug fix: Filter guard)', () => {
 
     it('unknown controller returns 404', async () => {
