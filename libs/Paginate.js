@@ -4,7 +4,7 @@
 const _ACCENT_MAP = (() => {
 
   const from = 'ŠŒŽšœžŸ¥µÀÁÂÃÄÅÆÇÈÉÊËẼÌÍÎÏĨÐÑÒÓÔÕÖØÙÚÛÜÝßàáâãäåæçèéêëẽìíîïĩðñòóôõöøùúûüýÿ'.split('');
-  const to   = 'SOZsozYYuAAAAAAACEEEEEIIIIIDNOOOOOOUUUUYsaaaaaaaceeeeeiiiiionoooooouuuuyy'.split('');
+  const to = 'SOZsozYYuAAAAAAACEEEEEIIIIIDNOOOOOOUUUUYsaaaaaaaceeeeeiiiiionoooooouuuuyy'.split('');
 
   const groups = [];
 
@@ -18,9 +18,9 @@ const _ACCENT_MAP = (() => {
   });
 
   return groups.map((rg, key) => ({
-    charClass:   new RegExp(`[${rg}]`),
+    charClass: new RegExp(`[${rg}]`),
     placeholder: new RegExp(`_${key}_`),
-    expanded:    `[${rg}]`,
+    expanded: `[${rg}]`,
     key
   }));
 
@@ -60,7 +60,9 @@ module.exports = {
     const searchType = (query.searchType || '').toLowerCase().replace('-', '');
 
     const result = Object.fromEntries(
-      Object.entries({ page, perPage, fields, sort, search }).filter(([, v]) => v)
+      Object.entries({
+        page, perPage, fields, sort, search
+      }).filter(([, v]) => v)
     );
 
     // Filter by search
@@ -208,7 +210,7 @@ module.exports = {
 
     const populate = hasPopulate || [];
 
-    let criteria = query || {};
+    const criteria = query || {};
 
     // Setup
     const page = criteria.page === 'all' ? 'all' : ( parseInt(criteria.page, 10) || 1);

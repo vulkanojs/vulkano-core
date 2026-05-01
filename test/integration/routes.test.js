@@ -166,6 +166,43 @@ describe('Routing', () => {
 
   });
 
+  describe('File upload — POST with multipart/form-data', () => {
+
+    it('single file upload reaches controller via upload.any()', async () => {
+      const form = new FormData();
+      form.append('document', new Blob(['hello'], { type: 'text/plain' }), 'hello.txt');
+
+      const res = await fetch(`${process.env.TEST_SERVER_URL}/test/upload`, { method: 'POST', body: form });
+      const data = await res.json();
+
+      expect(res.status).toBe(200);
+      expect(data.data.uploaded).toBe(1);
+      expect(data.data.files[0].originalname).toBe('hello.txt');
+    });
+
+    it('multiple files are all received', async () => {
+      const form = new FormData();
+      form.append('a', new Blob(['1'], { type: 'text/plain' }), 'a.txt');
+      form.append('b', new Blob(['2'], { type: 'text/plain' }), 'b.txt');
+
+      const res = await fetch(`${process.env.TEST_SERVER_URL}/test/upload`, { method: 'POST', body: form });
+      const data = await res.json();
+
+      expect(data.data.uploaded).toBe(2);
+    });
+
+    it('POST without files returns uploaded: 0', async () => {
+      const form = new FormData();
+      form.append('field', 'value');
+
+      const res = await fetch(`${process.env.TEST_SERVER_URL}/test/upload`, { method: 'POST', body: form });
+      const data = await res.json();
+
+      expect(data.data.uploaded).toBe(0);
+    });
+
+  });
+
   describe('404 handling (bug fix: Filter guard)', () => {
 
     it('unknown controller returns 404', async () => {

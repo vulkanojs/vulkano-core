@@ -52,6 +52,17 @@ module.exports = {
     res.vsr(Promise.resolve({ late: true }));
   },
 
+  // POST /test/upload — file upload via multipart/form-data (upload.any() middleware)
+  'post upload': function onUpload(req, res) {
+    const files = (req.files || []).map((f) => ({
+      fieldname: f.fieldname,
+      originalname: f.originalname,
+      mimetype: f.mimetype,
+      size: f.size
+    }));
+    res.vsr(Promise.resolve({ uploaded: files.length, files }));
+  },
+
   // GET /test/:id — single route param (after specific routes to avoid shadowing)
   'get :id': function onGetById(req, res) {
     const { id } = req.params;

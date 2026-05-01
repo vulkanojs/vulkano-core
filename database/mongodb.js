@@ -4,7 +4,6 @@
 
 const mongoose = require('mongoose');
 const paginate = require('mongoose-paginate-v2');
-
 const merge = require('../libs/Merge');
 
 global.mongoose = mongoose;
