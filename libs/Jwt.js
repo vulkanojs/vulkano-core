@@ -13,7 +13,7 @@ module.exports = {
 
     const {
       jwt,
-      // Express config folder in app/confg/express
+      // Express config folder in app/config/express
       express
     } = app.config || {};
 
@@ -166,7 +166,7 @@ module.exports = {
   },
 
   /**
-   * Decryp Token
+   * Decrypt token payload
    *
    * @param {String} str
    * @returns {String}

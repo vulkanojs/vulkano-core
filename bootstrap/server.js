@@ -796,7 +796,7 @@ module.exports = function loadServer() {
 
           let mongoClientDB = null;
 
-          // if not has a mongo conection try to create it
+          // If no active Mongoose connection, create a dedicated one
           if (!mongoose.connection.readyState) {
 
             if (!socketsConnection) {
@@ -918,7 +918,7 @@ module.exports = function loadServer() {
 
           });
 
-          // next line is the money
+          // Expose io globally so controllers can emit events
           global.io = io;
           vulkano.set('socketio', io);
 

@@ -7,7 +7,7 @@
  */
 const path = require('path');
 
-// Include all api controllers
+// Load built-in core filters and app-level custom filters
 const coreFilters = require('include-all')({
   dirname: path.join(CORE_PATH, '/libs/filters'),
   filter: /(.+)\.js$/,
@@ -24,12 +24,12 @@ const allFilters = { ...coreFilters, ...appFilters };
 
 module.exports = {
 
-  get(str, filters, opts) {    
+  get(str, filters, opts) {
 
     if (Array.isArray(filters)) {
 
       let result = str;
-      
+
       filters.forEach((filter) => {
         const f = Filter.load(filter);
         result = (!f) ? '' : f.exec(result, opts);

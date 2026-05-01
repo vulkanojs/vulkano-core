@@ -110,10 +110,7 @@ module.exports = {
    */
   delete(id) {
 
-    // Scaffold Model
-    // const Model = global[modelName];
-
-    // Soft delete
+    // Soft delete: set active=false instead of removing the document
     return this.update(id, { active: false });
 
   },
