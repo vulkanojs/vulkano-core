@@ -10,7 +10,6 @@ global.START_TIME = Date.now();
 
 const dotenv = require('dotenv');
 const path = require('path');
-const merge = require('deepmerge');
 const v8 = require('v8');
 const fs = require('fs');
 
@@ -67,6 +66,8 @@ const config = require('include-all')({
   filter: /(.+)\.js$/,
   optional: true
 });
+
+const merge = require('./libs/Merge');
 
 //
 // Get package.json information

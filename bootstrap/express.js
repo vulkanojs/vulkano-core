@@ -1,4 +1,4 @@
-const merge = require('deepmerge');
+const merge = require('../libs/Merge');
 
 module.exports = function getExpressConfiguration() {
 
