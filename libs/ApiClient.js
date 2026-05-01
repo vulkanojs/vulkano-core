@@ -90,10 +90,14 @@ module.exports = {
       body,
       method,
       responseType,
-      headers
+      headers,
+      rejectUnauthorized
     } = typeof props === 'string'
       ? { path: props, method: 'get' }
       : (props || {});
+
+    // SSL verification is enabled by default; pass rejectUnauthorized: false to disable
+    const sslVerify = rejectUnauthorized !== false;
 
     const optHeaders = {
       'Content-Type': 'application/json',
@@ -104,8 +108,8 @@ module.exports = {
       url,
       method: (method || 'GET').toLowerCase(),
       headers: Object.assign(optHeaders, headers || {}),
-      httpAgent: new http.Agent({ keepAlive: true, rejectUnauthorized: false }),
-      httpsAgent: new https.Agent({ keepAlive: true, rejectUnauthorized: false }),
+      httpAgent: new http.Agent({ keepAlive: true, rejectUnauthorized: sslVerify }),
+      httpsAgent: new https.Agent({ keepAlive: true, rejectUnauthorized: sslVerify }),
       responseType: responseType || 'json'
     };
 
