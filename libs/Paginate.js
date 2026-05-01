@@ -1,5 +1,3 @@
-const _ = require('underscore');
-
 // Built once when the module loads: maps each base letter to a character class
 // containing all its accented variants. Pre-compiling the RegExp objects avoids
 // rebuilding them on every accentToRegex() call.
@@ -61,13 +59,9 @@ module.exports = {
     const search = query.search || props.search || null;
     const searchType = (query.searchType || '').toLowerCase().replace('-', '');
 
-    const result = _.omit({
-      page,
-      perPage,
-      fields,
-      sort,
-      search
-    }, (value) => !value );
+    const result = Object.fromEntries(
+      Object.entries({ page, perPage, fields, sort, search }).filter(([, v]) => v)
+    );
 
     // Filter by search
     const searchBy = props.searchBy || [];
@@ -251,16 +245,16 @@ module.exports = {
     delete criteria.sort;
 
     if (criteria.search) {
-      criteria = _.extend(criteria, criteria.search);
+      Object.assign(criteria, criteria.search);
       delete criteria.search;
     }
 
     const optPopulate = this.getPopulatedCollections(populate || []);
-    const queryModel = _.extend(criteria, {});
+    const queryModel = { ...criteria };
 
     if (page === 'all') {
 
-      const optsModel = _.extend(sort, { populate: optPopulate });
+      const optsModel = { ...sort, populate: optPopulate };
       return Model.find(queryModel, fields.join(' '), optsModel);
 
     }
@@ -280,7 +274,7 @@ module.exports = {
 
         opts.populate = optPopulate;
 
-        const optsModel = _.extend(opts, sort);
+        const optsModel = { ...opts, ...sort };
 
         return Model
           .paginate(queryModel, optsModel)

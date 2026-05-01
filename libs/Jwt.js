@@ -1,6 +1,5 @@
 const { expressjwt: JWT } = require('express-jwt');
 const jwtSimple = require('jwt-simple');
-const moment = require('moment');
 
 module.exports = {
 
@@ -143,7 +142,7 @@ module.exports = {
       expiration
     } = data || {};
 
-    const now = moment().format('x');
+    const now = String(Date.now());
 
     // Token expired
     if (expiration && ( Number(now) > Number(expiration) )) {

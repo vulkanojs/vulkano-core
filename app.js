@@ -6,18 +6,15 @@
  */
 
 // Start Time for logs
-global.START_TIME = new Date();
+global.START_TIME = Date.now();
 
 const dotenv = require('dotenv');
 const path = require('path');
-const moment = require('moment');
 const merge = require('deepmerge');
-const _ = require('underscore');
 const v8 = require('v8');
 const fs = require('fs');
 
 global.app = {};
-global._ = _;
 
 const rootProject = path.resolve(process.cwd());
 
@@ -236,7 +233,7 @@ async function startVulkano() {
       const startUpConfig = [];
       startUpConfig.push(' SOCKETS: ', `${colors.fg.green}${showColumn(socketText, 10)}${colors.reset}`);
       startUpConfig.push(' | ');
-      startUpConfig.push(` STARTUP: ${colors.fg.green}${moment(moment().diff(global.START_TIME)).format('s.SSS')}s${colors.reset}`);
+      startUpConfig.push(` STARTUP: ${colors.fg.green}${((Date.now() - global.START_TIME) / 1000).toFixed(3)}s${colors.reset}`);
       console.log(startUpConfig.join(''));
 
       const dbConfig = [];

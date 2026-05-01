@@ -1,9 +1,4 @@
 const i18next = require('i18next');
-const moment = require('moment');
-
-require('moment/min/locales.min');
-
-moment.locale('en');
 
 module.exports = (() => {
 
@@ -33,17 +28,6 @@ module.exports = (() => {
     lng: 'en',
     fallbackLng: 'en',
     resources: Object.fromEntries(resources)
-  });
-
-  // catch the event and make changes accordingly
-  i18next.on('languageChanged', (lng) => {
-
-    try {
-      moment.locale(lng);
-    } catch (err) {
-      console.log(err);
-    }
-
   });
 
   return i18next;
