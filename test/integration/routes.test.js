@@ -4,10 +4,7 @@
  *        route params, query strings, 404 handling
  */
 
-const axios = require('axios').create({
-  baseURL: process.env.TEST_SERVER_URL,
-  validateStatus: () => true
-});
+const axios = require('./helpers/http')(process.env.TEST_SERVER_URL);
 
 describe('Routing', () => {
 

@@ -10,10 +10,7 @@ const path = require('path');
 
 require('dotenv').config({ path: path.join(__dirname, '../../.env.test'), quiet: !process.env.DOTENV_VERBOSE });
 
-const http = require('axios').create({
-  baseURL: `${process.env.TEST_SERVER_URL}/api/item`,
-  validateStatus: () => true
-});
+const http = require('./helpers/http')(`${process.env.TEST_SERVER_URL}/api/item`);
 
 const TOTAL    = 30;
 const PER_PAGE = 15;

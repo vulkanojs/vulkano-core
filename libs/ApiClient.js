@@ -1,6 +1,4 @@
-const http = require('http');
-const https = require('https');
-const axios = require('axios');
+const { Agent } = require('undici');
 
 module.exports = {
 
@@ -12,13 +10,7 @@ module.exports = {
    * @returns {Promise}
    */
   get(url, props) {
-
-    return this.send({
-      url,
-      ...props,
-      method: 'GET'
-    });
-
+    return this.send({ url, ...props, method: 'GET' });
   },
 
   /**
@@ -30,14 +22,7 @@ module.exports = {
    * @returns {Promise}
    */
   post(url, body, props) {
-
-    return this.send({
-      url,
-      body,
-      ...props,
-      method: 'POST'
-    });
-
+    return this.send({ url, body, ...props, method: 'POST' });
   },
 
   /**
@@ -49,32 +34,18 @@ module.exports = {
    * @returns {Promise}
    */
   put(url, body, props) {
-
-    return this.send({
-      url,
-      body,
-      ...props,
-      method: 'PUT'
-    });
-
+    return this.send({ url, body, ...props, method: 'PUT' });
   },
 
   /**
    * Method to make a DELETE request
    *
    * @param {String} url
-   * @param {Object} body
    * @param {Object} props { headers }
    * @returns {Promise}
    */
   delete(url, props) {
-
-    return this.send({
-      url,
-      ...props,
-      method: 'DELETE'
-    });
-
+    return this.send({ url, ...props, method: 'DELETE' });
   },
 
   /**
@@ -83,7 +54,7 @@ module.exports = {
    * @param {Object} props
    * @returns {Promise}
    */
-  send(props) {
+  async send(props) {
 
     const {
       url,
@@ -93,7 +64,7 @@ module.exports = {
       headers,
       rejectUnauthorized
     } = typeof props === 'string'
-      ? { path: props, method: 'get' }
+      ? { url: props, method: 'GET' }
       : (props || {});
 
     // SSL verification is enabled by default; pass rejectUnauthorized: false to disable
@@ -101,63 +72,60 @@ module.exports = {
 
     const optHeaders = {
       'Content-Type': 'application/json',
-      Accept: 'application/json'
+      Accept: 'application/json',
+      ...(headers || {})
     };
 
     const options = {
-      url,
-      method: (method || 'GET').toLowerCase(),
-      headers: Object.assign(optHeaders, headers || {}),
-      httpAgent: new http.Agent({ keepAlive: true, rejectUnauthorized: sslVerify }),
-      httpsAgent: new https.Agent({ keepAlive: true, rejectUnauthorized: sslVerify }),
-      responseType: responseType || 'json'
+      method: (method || 'GET').toUpperCase(),
+      headers: optHeaders,
+      dispatcher: new Agent({ connect: { rejectUnauthorized: sslVerify } })
     };
 
     if (body) {
-      // convert body into just one line of json.
-      options.data = JSON.parse(JSON.stringify(body || {}));
+      options.body = JSON.stringify(body);
     }
 
-    return axios(options)
-      .then( (response) => {
+    const target = `${options.method} ${url}`;
 
-        const {
-          data
-        } = response;
+    try {
 
-        return data || {};
+      const response = await fetch(url, options);
 
-      })
-      .catch( (err) => {
+      if (!response.ok) {
 
-        const {
-          response
-        } = err || {};
+        let errorData = {};
+        try { errorData = await response.json(); } catch (_) {}
 
-        const {
-          data: errorData,
-          status: statusCode
-        } = response || {};
+        const { msg, message: errorMessage, error: errorMessage2 } = errorData || {};
+        const message = msg || errorMessage || errorMessage2 || 'Unable to connect to the Request Service';
 
-        const target = options.baseURL ? `${options.method} ${options.baseURL}/${options.url}` : `${options.method} ${options.url}`;
-
-        console.log('');
         console.log('');
         console.log('---------------------');
         console.log('ApiClient', target);
         console.log('---------------------');
 
-        const {
-          msg,
-          message: errorMessage,
-          error: errorMessage2
-        } = errorData || {};
+        return VSError.reject(message, response.status || 500);
 
-        const message = msg || errorMessage || errorMessage2 || 'Unable to connect to the Request Service';
+      }
 
-        return VSError.reject(message, statusCode || 500);
+      if (responseType === 'arraybuffer') return response.arrayBuffer();
+      if (responseType === 'text') return response.text();
+      if (responseType === 'stream') return response.body;
 
-      });
+      const data = await response.json();
+      return data || {};
+
+    } catch (err) {
+
+      console.log('');
+      console.log('---------------------');
+      console.log('ApiClient', target);
+      console.log('---------------------');
+
+      return VSError.reject(err.message || 'Unable to connect to the Request Service', 500);
+
+    }
 
   }
 

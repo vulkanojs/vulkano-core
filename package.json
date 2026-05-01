@@ -32,7 +32,6 @@
   "dependencies": {
     "@socket.io/mongo-adapter": "^0.3.2",
     "@socket.io/redis-adapter": "^8.3.0",
-    "axios": "^1.8.1",
     "compression": "^1.8.0",
     "connect-timeout": "^1.9.0",
     "cookie-parser": "^1.4.7",
@@ -54,7 +53,8 @@
     "multer": "^1.4.5-lts.1",
     "nunjucks": "^3.2.4",
     "redis": "^5.12.1",
-    "socket.io": "^4.8.1"
+    "socket.io": "^4.8.1",
+    "undici": "^8.1.0"
   },
   "devDependencies": {
     "@babel/core": "^7.26.9",

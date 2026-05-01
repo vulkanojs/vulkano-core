@@ -3,10 +3,7 @@
  * Tests: response shape, error handling, edge cases from bug fixes
  */
 
-const axios = require('axios').create({
-  baseURL: process.env.TEST_SERVER_URL,
-  validateStatus: () => true  // never throw on any HTTP status
-});
+const axios = require('./helpers/http')(process.env.TEST_SERVER_URL);
 
 describe('VSR — Vulkano Standard Response', () => {
 
