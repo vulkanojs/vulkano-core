@@ -56,6 +56,10 @@ module.exports = function loadServer() {
 
       const vulkano = express();
 
+      // Expose the Express instance early so that custom() initializers in
+      // config/routes.js can register routes via app.vulkano.get(), app.vulkano.post(), etc.
+      app.vulkano = vulkano;
+
       // Settings
       vulkano.enable('trust proxy');
 
@@ -440,10 +444,15 @@ module.exports = function loadServer() {
         next();
       });
 
-      // Middleware Folder
+      // Middleware Folder — routes.js always loads first if present
       const middlewares = app.config.middlewares || {};
 
+      if (middlewares.routes && typeof middlewares.routes === 'function') {
+        vulkano.use(middlewares.routes);
+      }
+
       Object.keys(middlewares).forEach( (item) => {
+        if (item === 'routes') return;
         const middlewareFunction = middlewares[item];
         if (typeof middlewareFunction === 'function') {
           vulkano.use(middlewareFunction);
@@ -497,6 +506,19 @@ module.exports = function loadServer() {
       Object.keys(this.routes || {}).forEach((i) => {
 
         const current = this.routes[i];
+
+        // Initializer functions: keys that are not path-based ('/...') and not
+        // 'METHOD path' pairs are treated as startup hooks that register routes
+        // directly via app.vulkano.get(), app.vulkano.post(), etc.
+        const keyParts = i.split(' ');
+        const isPathRoute = i.includes('/');
+        const isMethodRoute = ['get', 'post', 'put', 'delete', 'patch'].includes(keyParts[0].toLowerCase()) && keyParts.length > 1;
+
+        if (!isPathRoute && !isMethodRoute && typeof current === 'function') {
+          current();
+          return;
+        }
+
         const parts = i.split(' ');
         let pathToRun = parts.pop();
 
