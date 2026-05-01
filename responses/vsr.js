@@ -82,6 +82,10 @@ module.exports = function VSRPromise(promiseToRun, httpStatusCode) {
       };
 
     })
-    .finally( () => res.status(code).jsonp(output) );
+    .finally( () => {
+      if (!res.headersSent) {
+        res.status(code).jsonp(output);
+      }
+    });
 
 };
