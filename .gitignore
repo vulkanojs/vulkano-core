@@ -1,6 +1,7 @@
 # Local Files #
 ###############
 local.js
+.env.test
 
 # NodeJS & Bower Components #
 #############################

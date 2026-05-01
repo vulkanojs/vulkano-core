@@ -21,14 +21,14 @@ module.exports = function VSRPromise(promiseToRun, httpStatusCode) {
     statusCode: code
   };
 
-  if (!promiseToRun || !promiseToRun.then) {
+  if (!promiseToRun || typeof promiseToRun.then !== 'function') {
 
-    // Log error to console
-    console.log('The response is not a promise');
+    console.error('[VSR] The response is not a Promise. Got:', typeof promiseToRun);
     return res.status(500).jsonp({
       success: false,
+      statusCode: 500,
       error: {
-        detail: 'The response is not a promise.'
+        detail: 'Internal error: controller must return a Promise.'
       }
     });
 
@@ -68,8 +68,8 @@ module.exports = function VSRPromise(promiseToRun, httpStatusCode) {
         console.log(e);
       }
 
-      const message = e.message !== undefined && typeof e.message === 'object' ? e.message : e;
-      code = message.statusCode || e.statusCode || 400;
+      const message = (e.message !== undefined && typeof e.message !== 'object') ? e : (e.message || e);
+      code = e.statusCode || message.statusCode || 400;
 
       // Output
       output.success = false;

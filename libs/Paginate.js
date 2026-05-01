@@ -77,12 +77,16 @@ module.exports = {
 
         if (type === String) {
 
+          const safeSearch = this.accentToRegex(
+            search.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&')
+          );
+
           if (searchType === 'startwith' || searchType === 'start') {
-            row[item] = new RegExp(['^', this.accentToRegex(search), '*.'].join(''), 'i');
+            row[item] = new RegExp(`^${safeSearch}`, 'i');
           } else if (searchType === 'endwith' || searchType === 'end') {
-            row[item] = new RegExp(['.*', this.accentToRegex(search)].join(''), 'i');
+            row[item] = new RegExp(`${safeSearch}$`, 'i');
           } else {
-            row[item] = new RegExp(['.*', this.accentToRegex(search), '*.'].join(''), 'i');
+            row[item] = new RegExp(safeSearch, 'i');
           }
 
         } else if (type === Number) {
@@ -282,7 +286,7 @@ module.exports = {
 
     let cursor = (page > 1) ? ((page * perPage) - (perPage - 1)) : 1;
 
-    const tmpNext = (((perPage * (page - 1)) + perPage) <= total);
+    const tmpNext = (((perPage * (page - 1)) + perPage) < total);
     const next = tmpNext ? (page + 1) : false;
     let prev = (page > 1) ? (page - 1) : false;
     const totalPages = Math.ceil(total / perPage);

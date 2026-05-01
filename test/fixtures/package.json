@@ -1,0 +1,6 @@
+{
+  "name": "vulkano-test-fixture",
+  "version": "1.0.0",
+  "description": "Minimal app for Vulkano core integration tests",
+  "author": "Vulkano Team"
+}
