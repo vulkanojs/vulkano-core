@@ -2,13 +2,10 @@
  * Database connection
  */
 
-const Promise = require('bluebird');
 const paginate = require('mongoose-paginate-v2');
 const merge = require('deepmerge');
 
 const mongoose = require('mongoose');
-
-mongoose.Promise = Promise;
 
 global.mongoose = mongoose;
 global.Virtual = 'Virtual';

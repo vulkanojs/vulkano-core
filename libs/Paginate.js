@@ -1,34 +1,45 @@
 const _ = require('underscore');
 
+// Built once when the module loads: maps each base letter to a character class
+// containing all its accented variants. Pre-compiling the RegExp objects avoids
+// rebuilding them on every accentToRegex() call.
+const _ACCENT_MAP = (() => {
+
+  const from = 'ŠŒŽšœžŸ¥µÀÁÂÃÄÅÆÇÈÉÊËẼÌÍÎÏĨÐÑÒÓÔÕÖØÙÚÛÜÝßàáâãäåæçèéêëẽìíîïĩðñòóôõöøùúûüýÿ'.split('');
+  const to   = 'SOZsozYYuAAAAAAACEEEEEIIIIIDNOOOOOOUUUUYsaaaaaaaceeeeeiiiiionoooooouuuuyy'.split('');
+
+  const groups = [];
+
+  to.forEach((letter, key) => {
+    const exist = groups.indexOf(letter);
+    if (exist >= 0) {
+      groups[exist] += from[key];
+    } else {
+      groups.push(letter);
+    }
+  });
+
+  return groups.map((rg, key) => ({
+    charClass:   new RegExp(`[${rg}]`),
+    placeholder: new RegExp(`_${key}_`),
+    expanded:    `[${rg}]`,
+    key
+  }));
+
+})();
+
 module.exports = {
 
   accentToRegex(_text) {
 
-    const ACCENT_STRINGS = 'ŠŒŽšœžŸ¥µÀÁÂÃÄÅÆÇÈÉÊËẼÌÍÎÏĨÐÑÒÓÔÕÖØÙÚÛÜÝßàáâãäåæçèéêëẽìíîïĩðñòóôõöøùúûüýÿ';
-    const NO_ACCENT_STRINGS = 'SOZsozYYuAAAAAAACEEEEEIIIIIDNOOOOOOUUUUYsaaaaaaaceeeeeiiiiionoooooouuuuyy';
-
-    const from = ACCENT_STRINGS.split('');
-    const to = NO_ACCENT_STRINGS.split('');
-    const result = [];
     let text = _text;
 
-    to.forEach( (letter, key) => {
-      const exist = result.indexOf(letter);
-      if (exist >= 0) {
-        result[exist] += from[key];
-      } else {
-        result.push(letter);
-      }
+    _ACCENT_MAP.forEach(({ charClass, key }) => {
+      text = text.replace(charClass, `_${key}_`);
     });
 
-    result.forEach( (rg, key) => {
-      const regex = new RegExp(`[${rg}]`);
-      text = text.replace(regex, `_${key}_`);
-    });
-
-    result.forEach( (rg, key) => {
-      const regex = new RegExp(`_${key}_`);
-      text = text.replace(regex, `[${rg}]`);
+    _ACCENT_MAP.forEach(({ placeholder, expanded }) => {
+      text = text.replace(placeholder, expanded);
     });
 
     return text;

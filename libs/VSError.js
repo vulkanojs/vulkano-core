@@ -1,5 +1,3 @@
-const Promise = require('bluebird');
-
 function VSError(msg, code, props) {
 
   Error.captureStackTrace(this, this.constructor);

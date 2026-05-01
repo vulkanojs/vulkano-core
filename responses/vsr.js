@@ -2,8 +2,6 @@
  * VULKANO STANDARD RESPONSE (VSR)
  */
 
-const Promise = require('bluebird');
-
 module.exports = function VSRPromise(promiseToRun, httpStatusCode) {
 
   const {

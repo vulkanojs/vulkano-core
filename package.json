@@ -33,7 +33,6 @@
     "@socket.io/mongo-adapter": "^0.3.2",
     "@socket.io/redis-adapter": "^8.3.0",
     "axios": "^1.8.1",
-    "bluebird": "^3.7.2",
     "body-parser": "^1.20.3",
     "compression": "^1.8.0",
     "connect-timeout": "^1.9.0",
