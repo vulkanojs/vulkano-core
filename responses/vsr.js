@@ -76,7 +76,7 @@ module.exports = function VSRPromise(promiseToRun, httpStatusCode) {
         errorCode: message.code || '001',
         errorName: message.name || 'BadRequest',
         detail: message.message || message.error || message.invalidAttributes || message.toString(),
-        output: message
+        ...(app.PRODUCTION ? {} : { output: message })
       };
 
     })
