@@ -36,7 +36,7 @@ module.exports = async function loadDatabaseApplication() {
     return;
   }
 
-  const toConnect = connection in connections
+  const toConnect = (connections && connection in connections)
     ? connections[connection]
     : (connection || null);
 
