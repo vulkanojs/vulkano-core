@@ -2,6 +2,8 @@
 ###############
 local.js
 .env.test
+.claude
+.graphify
 
 # NodeJS & Bower Components #
 #############################
