@@ -9,6 +9,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const readline = require('readline');
 
 // npm sets INIT_CWD to the directory where `npm install` was invoked.
 // npm_config_local_prefix is the project root (directory containing node_modules).
@@ -23,7 +24,7 @@ if (projectRoot === coreRoot) {
   process.exit(0);
 }
 
-const appDir    = path.join(projectRoot, 'app');
+const appDir = path.join(projectRoot, 'app');
 const vulkanoDir = path.join(projectRoot, 'vulkano');
 
 if (fs.existsSync(appDir) || fs.existsSync(vulkanoDir)) {
@@ -32,51 +33,30 @@ if (fs.existsSync(appDir) || fs.existsSync(vulkanoDir)) {
 }
 
 // ─────────────────────────────────────────────
-// Prompt
-// ─────────────────────────────────────────────
-
-const readline = require('readline');
-
-const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
-
-rl.question('\n  🌋 Vulkano: Would you like to scaffold a new project? (Y/n) ', (answer) => {
-
-  rl.close();
-
-  if (answer.trim().toLowerCase() === 'n') {
-    console.log('\n  Skipped. You can scaffold manually at any time.\n');
-    process.exit(0);
-  }
-
-  scaffold();
-
-});
-
-// ─────────────────────────────────────────────
 // Scaffold
 // ─────────────────────────────────────────────
 
 function scaffold() {
 
-function write(relPath, content) {
-  const abs = path.join(appDir, relPath);
-  fs.mkdirSync(path.dirname(abs), { recursive: true });
-  if (!fs.existsSync(abs)) {
-    fs.writeFileSync(abs, content, 'utf8');
+  function write(relPath, content) {
+    const abs = path.join(appDir, relPath);
+    fs.mkdirSync(path.dirname(abs), { recursive: true });
+    if (!fs.existsSync(abs)) {
+      fs.writeFileSync(abs, content, 'utf8');
+    }
   }
-}
 
-function dir(relPath) {
-  const abs = path.join(appDir, relPath);
-  fs.mkdirSync(abs, { recursive: true });
-  const keep = path.join(abs, '.gitkeep');
-  if (!fs.existsSync(keep)) fs.writeFileSync(keep, '', 'utf8');
-}
+  function dir(relPath) {
+    const abs = path.join(appDir, relPath);
+    fs.mkdirSync(abs, { recursive: true });
+    const keep = path.join(abs, '.gitkeep');
+    if (!fs.existsSync(keep)) fs.writeFileSync(keep, '', 'utf8');
+  }
 
-// ─────────────────────────────────────────────
-// app/config/bootstrap.js  (required by Vulkano)
-// ─────────────────────────────────────────────
-write('config/bootstrap.js', `/**
+  // ─────────────────────────────────────────────
+  // app/config/bootstrap.js  (required by Vulkano)
+  // ─────────────────────────────────────────────
+  write('config/bootstrap.js', `/**
  * Bootstrap — called once the server is ready to start.
  * @param {Function} cb  Call cb() to finish startup
  */
@@ -89,10 +69,10 @@ module.exports = (cb) => {
 };
 `);
 
-// ─────────────────────────────────────────────
-// app/config/settings.js
-// ─────────────────────────────────────────────
-write('config/settings.js', `/**
+  // ─────────────────────────────────────────────
+  // app/config/settings.js
+  // ─────────────────────────────────────────────
+  write('config/settings.js', `/**
  * Application settings
  */
 module.exports = {
@@ -112,10 +92,10 @@ module.exports = {
 };
 `);
 
-// ─────────────────────────────────────────────
-// app/config/connections.js
-// ─────────────────────────────────────────────
-write('config/connections.js', `/**
+  // ─────────────────────────────────────────────
+  // app/config/connections.js
+  // ─────────────────────────────────────────────
+  write('config/connections.js', `/**
  * Database connections
  * The key here is referenced from settings.js → database.connection
  */
@@ -126,10 +106,10 @@ module.exports = {
 };
 `);
 
-// ─────────────────────────────────────────────
-// app/config/routes.js
-// ─────────────────────────────────────────────
-write('config/routes.js', `/**
+  // ─────────────────────────────────────────────
+  // app/config/routes.js
+  // ─────────────────────────────────────────────
+  write('config/routes.js', `/**
  * Explicit routes (optional)
  * Format: 'METHOD /path': 'ControllerName.action'
  *
@@ -153,10 +133,10 @@ module.exports = {
 };
 `);
 
-// ─────────────────────────────────────────────
-// app/config/express/settings.js
-// ─────────────────────────────────────────────
-write('config/express/settings.js', `/**
+  // ─────────────────────────────────────────────
+  // app/config/express/settings.js
+  // ─────────────────────────────────────────────
+  write('config/express/settings.js', `/**
  * Express server settings
  */
 module.exports = {
@@ -177,10 +157,10 @@ module.exports = {
 };
 `);
 
-// ─────────────────────────────────────────────
-// app/config/express/cors.js
-// ─────────────────────────────────────────────
-write('config/express/cors.js', `/**
+  // ─────────────────────────────────────────────
+  // app/config/express/cors.js
+  // ─────────────────────────────────────────────
+  write('config/express/cors.js', `/**
  * CORS configuration
  */
 module.exports = {
@@ -200,10 +180,10 @@ module.exports = {
 };
 `);
 
-// ─────────────────────────────────────────────
-// app/config/express/jwt.js
-// ─────────────────────────────────────────────
-write('config/express/jwt.js', `/**
+  // ─────────────────────────────────────────────
+  // app/config/express/jwt.js
+  // ─────────────────────────────────────────────
+  write('config/express/jwt.js', `/**
  * JWT authentication middleware
  */
 module.exports = {
@@ -265,10 +245,10 @@ module.exports = {
 };
 `);
 
-// ─────────────────────────────────────────────
-// app/config/express/cookies.js
-// ─────────────────────────────────────────────
-write('config/express/cookies.js', `/**
+  // ─────────────────────────────────────────────
+  // app/config/express/cookies.js
+  // ─────────────────────────────────────────────
+  write('config/express/cookies.js', `/**
  * Cookie parser
  */
 module.exports = {
@@ -287,10 +267,10 @@ module.exports = {
 };
 `);
 
-// ─────────────────────────────────────────────
-// app/config/encryption.js
-// ─────────────────────────────────────────────
-write('config/encryption.js', `/**
+  // ─────────────────────────────────────────────
+  // app/config/encryption.js
+  // ─────────────────────────────────────────────
+  write('config/encryption.js', `/**
  * Encryption settings (used by Encrypter)
  */
 module.exports = {
@@ -307,10 +287,10 @@ module.exports = {
 };
 `);
 
-// ─────────────────────────────────────────────
-// app/controllers/HomeController.js
-// ─────────────────────────────────────────────
-write('controllers/HomeController.js', `/**
+  // ─────────────────────────────────────────────
+  // app/controllers/HomeController.js
+  // ─────────────────────────────────────────────
+  write('controllers/HomeController.js', `/**
  * HomeController
  * Convention-based routes → GET /home/, GET /home/:id, POST /home/save, etc.
  *
@@ -327,21 +307,21 @@ module.exports = {
 };
 `);
 
-// ─────────────────────────────────────────────
-// Empty placeholder directories
-// ─────────────────────────────────────────────
-dir('models');
-dir('services');
-dir('responses');
+  // ─────────────────────────────────────────────
+  // Empty placeholder directories
+  // ─────────────────────────────────────────────
+  dir('models');
+  dir('services');
+  dir('responses');
 
-// ─────────────────────────────────────────────
-// app/views structure
-// ─────────────────────────────────────────────
-dir('views/home');
-dir('views/_shared/errors');
-dir('views/_shared/templates');
+  // ─────────────────────────────────────────────
+  // app/views structure
+  // ─────────────────────────────────────────────
+  dir('views/home');
+  dir('views/_shared/errors');
+  dir('views/_shared/templates');
 
-write('views/_shared/templates/default.html', `<!DOCTYPE html>
+  write('views/_shared/templates/default.html', `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -358,7 +338,7 @@ write('views/_shared/templates/default.html', `<!DOCTYPE html>
 </html>
 `);
 
-write('views/home/index.html', `{% extends "_shared/templates/default.html" %}
+  write('views/home/index.html', `{% extends "_shared/templates/default.html" %}
 
 {% block title %}Home — Vulkano{% endblock %}
 
@@ -367,7 +347,7 @@ write('views/home/index.html', `{% extends "_shared/templates/default.html" %}
 {% endblock %}
 `);
 
-write('views/_shared/errors/404.html', `<!DOCTYPE html>
+  write('views/_shared/errors/404.html', `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -379,7 +359,7 @@ write('views/_shared/errors/404.html', `<!DOCTYPE html>
 </html>
 `);
 
-write('views/_shared/errors/500.html', `<!DOCTYPE html>
+  write('views/_shared/errors/500.html', `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -391,59 +371,78 @@ write('views/_shared/errors/500.html', `<!DOCTYPE html>
 </html>
 `);
 
-// public/files for multer uploads
-const publicFiles = path.join(projectRoot, 'public', 'files');
-fs.mkdirSync(publicFiles, { recursive: true });
+  // public/files for multer uploads
+  const publicFiles = path.join(projectRoot, 'public', 'files');
+  fs.mkdirSync(publicFiles, { recursive: true });
 
-// public/css for css files
-const publicCss = path.join(projectRoot, 'public', 'css');
-fs.mkdirSync(publicCss, { recursive: true });
+  // public/css for css files
+  const publicCss = path.join(projectRoot, 'public', 'css');
+  fs.mkdirSync(publicCss, { recursive: true });
 
-// public/js for js files
-const publicJs = path.join(projectRoot, 'public', 'js');
-fs.mkdirSync(publicJs, { recursive: true });
+  // public/js for js files
+  const publicJs = path.join(projectRoot, 'public', 'js');
+  fs.mkdirSync(publicJs, { recursive: true });
 
-// public/img for image files
-const publicImg = path.join(projectRoot, 'public', 'img');
-fs.mkdirSync(publicImg, { recursive: true });
+  // public/img for image files
+  const publicImg = path.join(projectRoot, 'public', 'img');
+  fs.mkdirSync(publicImg, { recursive: true });
 
-// public/fonts for font files
-const publicFonts = path.join(projectRoot, 'public', 'fonts');
-fs.mkdirSync(publicFonts, { recursive: true });
+  // public/fonts for font files
+  const publicFonts = path.join(projectRoot, 'public', 'fonts');
+  fs.mkdirSync(publicFonts, { recursive: true });
 
-// .env example
-const envExample = path.join(projectRoot, '.env');
-if (!fs.existsSync(envExample)) {
-  fs.writeFileSync(envExample, [
-    '# Copy to .env and fill in your values',
-    'PORT=8000',
-    'MONGO_URI=',
-    'JWT_SECRET=',
-    'COOKIE_SECRET=',
-    'ENCRYPTION_KEY=',
-    'ENCRYPTION_SALT=salt',
-    'ENCRYPTION_ALGORITHM=aes-256-cbc',
-    ''
-  ].join('\n'), 'utf8');
-}
+  // .env example
+  const envExample = path.join(projectRoot, '.env');
+  if (!fs.existsSync(envExample)) {
+    fs.writeFileSync(envExample, [
+      '# Copy to .env and fill in your values',
+      'PORT=8000',
+      'MONGO_URI=',
+      'JWT_SECRET=',
+      'COOKIE_SECRET=',
+      'ENCRYPTION_KEY=',
+      'ENCRYPTION_SALT=salt',
+      'ENCRYPTION_ALGORITHM=aes-256-cbc',
+      ''
+    ].join('\n'), 'utf8');
+  }
 
-console.log([
-  '',
-  '  ✔  Vulkano scaffold created:',
-  '     app/config/         ← settings, connections, routes, express, jwt…',
-  '     app/controllers/    ← HomeController.js',
-  '     app/models/         ← (empty — add your models here)',
-  '     app/services/       ← (empty — add your services here)',
-  '     app/views/          ← home/index.html, _shared/templates/default.html, errors/404, 500',
-  '     public/css/         ← css files',
-  '     public/js/          ← js files',
-  '     public/img/         ← image files',
-  '     public/fonts/       ← font files',
-  '     .env                ← fill in values',
-  '',
-  '  Next steps:',
-  '     1. Set MONGO_URI, JWT_SECRET, etc.',
-  '',
-].join('\n'));
+  console.log([
+    '',
+    '  ✔  Vulkano scaffold created:',
+    '     app/config/         ← settings, connections, routes, express, jwt…',
+    '     app/controllers/    ← HomeController.js',
+    '     app/models/         ← (empty — add your models here)',
+    '     app/services/       ← (empty — add your services here)',
+    '     app/views/          ← home/index.html, _shared/templates/default.html, errors/404, 500',
+    '     public/css/         ← css files',
+    '     public/js/          ← js files',
+    '     public/img/         ← image files',
+    '     public/fonts/       ← font files',
+    '     .env                ← fill in values',
+    '',
+    '  Next steps:',
+    '     1. Set MONGO_URI, JWT_SECRET, etc.',
+    '',
+  ].join('\n'));
 
 } // end scaffold()
+
+// ─────────────────────────────────────────────
+// Prompt
+// ─────────────────────────────────────────────
+
+const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+
+rl.question('\n  🌋 Vulkano: Would you like to scaffold a new project? (Y/n) ', (answer) => {
+
+  rl.close();
+
+  if (answer.trim().toLowerCase() === 'n') {
+    console.log('\n  Skipped. You can scaffold manually at any time.\n');
+    process.exit(0);
+  }
+
+  scaffold();
+
+});
