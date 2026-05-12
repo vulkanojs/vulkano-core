@@ -2,10 +2,14 @@ const crypto = require('crypto');
 
 class Encrypter {
 
-  constructor(encryptionKey) {
+  constructor(encryptionKey, opts = {}) {
 
-    this.algorithm = 'aes-256-cbc';
-    this.key = crypto.scryptSync(encryptionKey, 'salt', 32);
+    const { encryption } = app.config || {};
+    const salt = opts.salt || (encryption && encryption.salt) || process.env.ENCRYPTION_SALT || 'vulkano-salt-v1';
+    const algorithm = opts.algorithm || (encryption && encryption.algorithm) || process.env.ENCRYPTION_ALGORITHM || 'aes-256-cbc';
+
+    this.algorithm = algorithm;
+    this.key = crypto.scryptSync(encryptionKey, salt, 32);
 
   }
 
