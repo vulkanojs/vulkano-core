@@ -4,7 +4,7 @@ class Encrypter {
 
   constructor(encryptionKey, opts = {}) {
 
-    const { encryption } = app.config || {};
+    const { encryption } = (typeof app !== 'undefined' && app.config) ? app.config : {};
     const salt = opts.salt || (encryption && encryption.salt) || process.env.ENCRYPTION_SALT || 'vulkano-salt-v1';
     const algorithm = opts.algorithm || (encryption && encryption.algorithm) || process.env.ENCRYPTION_ALGORITHM || 'aes-256-cbc';
 
