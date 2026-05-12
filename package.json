@@ -1,6 +1,6 @@
 {
   "name": "@vulkano/core",
-  "version": "1.17.1",
+  "version": "1.17.2",
   "description": "A MVC framework using Express 4",
   "license": "MIT",
   "author": "Vulkano Team",
@@ -54,6 +54,7 @@
     "nunjucks": "^3.2.4",
     "redis": "^5.12.1",
     "socket.io": "^4.8.1",
+    "socket.io-adapter": "^2.5.6",
     "undici": "^6.25.0"
   },
   "devDependencies": {
