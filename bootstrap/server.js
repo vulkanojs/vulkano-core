@@ -148,7 +148,7 @@ module.exports = function loadServer() {
       vulkano.use( (req, res, next) => {
 
         const proto = req.secure ? 'https' : 'http';
-        const forwarded = req.headers['x-forwaded-proto'] || null;
+        const forwarded = req.headers['x-forwarded-proto'] || null;
         const currentProtocol = (forwarded || proto).split('://')[0];
         req.protocol = currentProtocol;
 
