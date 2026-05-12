@@ -175,12 +175,10 @@ module.exports = function loadServer() {
           tmpCustomHeaders = tmpCustomHeaders.concat(expressConfig.cors.headers || []);
           res.header('Access-Control-Allow-Origin', expressConfig.cors.origin);
           res.header('Access-Control-Allow-Headers', tmpCustomHeaders.join(', '));
-        } else {
-          res.header('Access-Control-Allow-Origin', '*');
-          res.header('Access-Control-Allow-Headers', 'X-Requested-With, X-HTTP-Method-Override, Content-Type, Accept');
+          res.header('Access-Control-Allow-Methods', 'GET,PUT,PATCH,POST,DELETE,OPTIONS');
         }
+
         res.header('Allow', 'GET,PUT,PATCH,POST,DELETE,OPTIONS');
-        res.header('Access-Control-Allow-Methods', 'GET,PUT,PATCH,POST,DELETE,OPTIONS');
 
         res.status(200).end();
 
