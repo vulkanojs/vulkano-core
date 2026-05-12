@@ -5,7 +5,7 @@
   "license": "MIT",
   "author": "Vulkano Team",
   "engines": {
-    "node": "^22"
+    "node": ">=20"
   },
   "main": "app.js",
   "scripts": {
@@ -53,7 +53,7 @@
     "nunjucks": "^3.2.4",
     "redis": "^5.12.1",
     "socket.io": "^4.8.1",
-    "undici": "^8.1.0"
+    "undici": "^6.25.0"
   },
   "devDependencies": {
     "@babel/core": "^7.26.9",
