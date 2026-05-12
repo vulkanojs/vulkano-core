@@ -231,6 +231,41 @@ describe('Sequential CRUD', () => {
 });
 
 // ─────────────────────────────────────────────
+// Mass-assignment protection
+// ─────────────────────────────────────────────
+describe('Mass-assignment protection', () => {
+
+  let id;
+
+  beforeAll(async () => {
+    const { data } = await http.post('/', { name: 'MassAssign Test', value: 10 });
+    id = data.data._id;
+  });
+
+  it('PUT cannot overwrite _id', async () => {
+    const fakeId = '000000000000000000000099';
+    const { data } = await http.put(`/${id}`, { _id: fakeId, name: 'Hack' });
+    expect(data.data._id).toBe(id);
+  });
+
+  it('PUT cannot overwrite createdAt', async () => {
+    const original = (await http.get(`/${id}`)).data.data.createdAt;
+    const pastDate = '2000-01-01T00:00:00.000Z';
+    await http.put(`/${id}`, { createdAt: pastDate, name: 'Hack2' });
+    const { data } = await http.get(`/${id}`);
+    expect(data.data.createdAt).toBe(original);
+  });
+
+  it('PUT cannot overwrite __v', async () => {
+    const original = (await http.get(`/${id}`)).data.data.__v;
+    await http.put(`/${id}`, { __v: 999, name: 'Hack3' });
+    const { data } = await http.get(`/${id}`);
+    expect(data.data.__v).toBe(original);
+  });
+
+});
+
+// ─────────────────────────────────────────────
 // Search — ReDoS protection (bug fix)
 // ─────────────────────────────────────────────
 describe('Search — ReDoS protection', () => {
