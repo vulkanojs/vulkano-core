@@ -9,6 +9,7 @@
 .claude
 .graphify
 .nvmrc
+.graphifyignore
 
 # Lock files
 *.lockb
