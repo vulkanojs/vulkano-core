@@ -80,13 +80,30 @@ module.exports = {
    */
   update(_id, data) {
 
+    // Blocklist: these fields are never writable from outside
+    const BLOCKED = ['_id', 'createdAt', '__v'];
+    const sanitized = { ...data };
+    BLOCKED.forEach((field) => delete sanitized[field]);
+
+    // Allowlist: if fillable is defined and non-empty, only those fields pass through
+    const { fillable } = this;
+    let filtered = sanitized;
+    if (Array.isArray(fillable) && fillable.length > 0) {
+      filtered = {};
+      fillable.forEach((field) => {
+        if (sanitized[field] !== undefined) {
+          filtered[field] = sanitized[field];
+        }
+      });
+    }
+
     return this.getByField(_id)
       .then( (record) => {
 
         // Merge current info with incoming values
         const merged = {
           ...record,
-          ...data,
+          ...filtered,
           updatedAt: Date.now()
         };
 
