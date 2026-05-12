@@ -61,7 +61,9 @@ module.exports = function loadServer() {
       app.vulkano = vulkano;
 
       // Settings
-      vulkano.enable('trust proxy');
+      // trustProxy: true = trust all proxies, 1 = trust one hop (recommended behind a single LB)
+      const trustProxy = expressConfig.trustProxy !== undefined ? expressConfig.trustProxy : 1;
+      vulkano.set('trust proxy', trustProxy);
 
       // ---------------
       // PORT - File: app/config/express/settings.js

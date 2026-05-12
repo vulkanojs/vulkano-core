@@ -38,6 +38,7 @@ module.exports = function getExpressConfiguration() {
   const expressDefaultConfig = {
     timeout: 120000,
     poweredBy: false,
+    trustProxy: 1,
     port: ENV_NODE_PORT || ENV_PORT || expressUserPort || expressSettingsPort || 8000,
     cors: {},
     cookies: {},
