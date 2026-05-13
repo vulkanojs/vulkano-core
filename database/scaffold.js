@@ -97,10 +97,12 @@ module.exports = {
       });
     }
 
+    // Two queries by design: fetch the full document first so subdocument arrays
+    // and nested fields are preserved in the write — a bare $set would drop
+    // any subdoc entries not included in the incoming payload.
     return this.getByField(_id)
       .then( (record) => {
 
-        // Merge current info with incoming values
         const merged = {
           ...record,
           ...filtered,
