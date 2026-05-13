@@ -122,12 +122,16 @@ module.exports = {
    */
   decode(token, customKey) {
 
+    if (!token) {
+      return null;
+    }
+
     const {
       key,
       expiration: allowExpiration
     } = this.getConfig();
 
-    let data = {};
+    let data = null;
 
     try {
 
@@ -135,12 +139,16 @@ module.exports = {
       data = this.decrypt(payload);
 
     } catch (e) {
-      console.log('Invalid Token');
+      // invalid token
+    }
+
+    if (!data) {
+      return null;
     }
 
     const {
       expiration
-    } = data || {};
+    } = data;
 
     const now = String(Date.now());
 
@@ -149,14 +157,13 @@ module.exports = {
       return null;
     }
 
-    // Ignore expiration field
+    // Ignore expiration requirement
     if (allowExpiration === false) {
       return data;
     }
 
-    // Expiration must be required
+    // Expiration field is required
     if (!expiration) {
-      console.log('JWT Without expiration date');
       return null;
     }
 
