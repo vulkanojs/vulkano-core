@@ -10,7 +10,7 @@ module.exports = {
 
   // Request timeout in milliseconds
   // @type Number
-  timeout: 120000,
+  timeout: process.env.TEST_TIMEOUT ? parseInt(process.env.TEST_TIMEOUT, 10) : 120000,
 
   // Folder to upload files
   // @type String

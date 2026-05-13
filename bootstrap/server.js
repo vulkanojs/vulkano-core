@@ -190,9 +190,10 @@ module.exports = function loadServer() {
       vulkano.use(timeout( expressConfig.timeout || 120000 ));
 
       vulkano.use( (req, res, next) => {
-        if (!req.timedout) {
-          next();
+        if (req.timedout) {
+          return res.status(503).json({ success: false, statusCode: 503, error: { detail: 'Request timeout' } });
         }
+        next();
       });
 
       // ---------------
@@ -660,6 +661,11 @@ module.exports = function loadServer() {
           return;
         }
 
+        // Timeout — always respond with JSON regardless of request type
+        if (req.timedout || (err && err.timeout)) {
+          return res.status(503).json({ success: false, statusCode: 503, error: { detail: 'Request timeout' } });
+        }
+
         const status = err ? (err.status || 500) : (res.statusCode || 500);
 
         res.status(status);
@@ -871,6 +877,9 @@ module.exports = function loadServer() {
           (pubClient ? pubClient.connect() : null),
           (subClient ? subClient.connect() : null)
         ])
+        .catch((err) => {
+          throw new Error(`Socket Redis adapter failed to connect: ${err.message}`);
+        })
         .then(() => {
 
           io.on('connection', (socket) => {

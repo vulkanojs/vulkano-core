@@ -63,6 +63,11 @@ module.exports = {
     res.vsr(Promise.resolve({ uploaded: files.length, files }));
   },
 
+  // GET /test/slow — never resolves, used to trigger request timeout
+  'get slow': function onSlow(req, res) {
+    res.vsr(new Promise(() => {}));
+  },
+
   // GET /test/:id — single route param (after specific routes to avoid shadowing)
   'get :id': function onGetById(req, res) {
     const { id } = req.params;
