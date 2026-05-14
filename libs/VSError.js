@@ -26,6 +26,6 @@ VSError.notFound = (n) => {
 VSError.reject = (text, status, props) => Promise.reject(new VSError(text, status, props));
 
 // Extending of native error object
-require('util').inherits(VSError, Error);
+require('node:util').inherits(VSError, Error);
 
 module.exports = VSError;

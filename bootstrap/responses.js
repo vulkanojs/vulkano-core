@@ -1,4 +1,4 @@
-const path = require('path');
+const path = require('node:path');
 
 // Include all user's responses
 const VulkanoResponses = require('include-all')({

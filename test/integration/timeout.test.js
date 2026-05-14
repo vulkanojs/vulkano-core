@@ -2,8 +2,8 @@
  * Request timeout — server responds 503 when a request exceeds the configured limit
  */
 
-const { spawn } = require('child_process');
-const path = require('path');
+const { spawn } = require('node:child_process');
+const path = require('node:path');
 const dotenv = require('dotenv');
 
 dotenv.config({ path: path.join(__dirname, '../../.env.test'), quiet: true });

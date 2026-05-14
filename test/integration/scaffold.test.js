@@ -6,7 +6,7 @@
  */
 
 const mongoose = require('mongoose');
-const path = require('path');
+const path = require('node:path');
 
 require('dotenv').config({ path: path.join(__dirname, '../../.env.test'), quiet: !process.env.DOTENV_VERBOSE });
 

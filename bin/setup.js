@@ -7,9 +7,9 @@
  * creates the minimal folder structure and config files needed to start.
  */
 
-const fs = require('fs');
-const path = require('path');
-const readline = require('readline');
+const fs = require('node:fs');
+const path = require('node:path');
+const readline = require('node:readline');
 
 // npm sets INIT_CWD to the directory where `npm install` was invoked.
 // npm_config_local_prefix is the project root (directory containing node_modules).

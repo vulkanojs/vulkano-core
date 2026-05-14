@@ -1,4 +1,4 @@
-const path = require('path');
+const path = require('node:path');
 
 // Include all filters
 const coreFilters = require('include-all')({
@@ -28,18 +28,13 @@ const appHelpers = require('include-all')({
 });
 
 module.exports = {
-
   path: path.join(APP_PATH, 'views'),
 
   engine: 'nunjucks',
 
   ext: '.html',
 
-  filters: [
-    coreFilters || {},
-    appFilters || {}
-  ],
+  filters: [coreFilters || {}, appFilters || {}],
 
   helpers: [coreHelpers || {}, appHelpers || {}]
-
 };

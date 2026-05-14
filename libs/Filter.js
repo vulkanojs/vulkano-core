@@ -5,7 +5,7 @@
  * return 'custom
  *
  */
-const path = require('path');
+const path = require('node:path');
 
 // Load built-in core filters and app-level custom filters
 const coreFilters = require('include-all')({

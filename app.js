@@ -10,9 +10,9 @@
 global.START_TIME = Date.now();
 
 const dotenv = require('dotenv');
-const path = require('path');
-const v8 = require('v8');
-const fs = require('fs');
+const path = require('node:path');
+const v8 = require('node:v8');
+const fs = require('node:fs');
 
 global.app = {};
 
@@ -149,7 +149,9 @@ async function startVulkano() {
   console.log('');
   console.log(`${colors.fg.cyan}${showCenteredText('🌋')}${colors.reset}`);
   console.log(`${colors.fg.cyan}${showCenteredText(`${appName} ${appVersion}`)}${colors.reset}`);
-  console.log(`${colors.fg.cyan}${showCenteredText(`${pkg.name} ${pkg.version}`.toUpperCase())}${colors.reset}`);
+  console.log(
+    `${colors.fg.cyan}${showCenteredText(`${pkg.name} ${pkg.version}`.toUpperCase())}${colors.reset}`
+  );
   console.log('');
   console.log(`${colors.fg.blue}🔗 github.com/vulkanojs/vulkano${colors.reset}`);
   console.log(`${colors.fg.cyan}☕ buymeacoffee.com/argordmel${colors.reset}`);
@@ -193,9 +195,7 @@ async function startVulkano() {
 
       const nodeVersion = process.version.match(/^v(\d+\.\d+\.\d+)/)[1];
       const portText = String(app.vulkano.get('port') || 8000);
-      const socketText = sockets.enabled
-        ? String(sockets.adapter || 'memory').toUpperCase()
-        : 'NO';
+      const socketText = sockets.enabled ? String(sockets.adapter || 'memory').toUpperCase() : 'NO';
 
       serverConfig.push(`🚀 PORT: ${colors.fg.green}${showColumn(portText, 7)}${colors.reset}`);
       serverConfig.push(' | ');
@@ -238,7 +238,9 @@ async function startVulkano() {
 
       const startupMs = ((Date.now() - global.START_TIME) / 1000).toFixed(3);
       console.log(`${colors.fg.magenta}${cutLine}${colors.reset}`);
-      console.log(`${colors.bright}${colors.fg.cyan}${showCenteredText(`⚡ Ready in ${startupMs}s`)}${colors.reset}`);
+      console.log(
+        `${colors.bright}${colors.fg.cyan}${showCenteredText(`⚡ Ready in ${startupMs}s`)}${colors.reset}`
+      );
       console.log(`${colors.fg.magenta}${cutLine}${colors.reset}`);
 
       if (vite?.enabled) {

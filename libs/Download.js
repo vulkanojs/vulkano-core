@@ -1,6 +1,6 @@
-const https = require('https');
-const http = require('http');
-const fs = require('fs');
+const https = require('node:https');
+const http = require('node:http');
+const fs = require('node:fs');
 
 module.exports = (url, dest) => {
 

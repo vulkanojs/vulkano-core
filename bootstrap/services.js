@@ -2,7 +2,7 @@
  * Services
  */
 
-const path = require('path');
+const path = require('node:path');
 
 // Include all libs & services
 const coreLibs = require('include-all')({

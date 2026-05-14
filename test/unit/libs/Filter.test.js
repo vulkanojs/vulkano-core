@@ -7,7 +7,7 @@
  * global.Filter is still needed for trim.js, which calls Filter.get() internally.
  */
 
-const path = require('path');
+const path = require('node:path');
 
 // Set globals required by Filter.js before requiring it
 global.CORE_PATH = path.join(__dirname, '../../../');

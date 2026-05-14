@@ -3,7 +3,7 @@
  * Verifies that multipart/form-data uploads reach the controller via upload.any()
  */
 
-const path = require('path');
+const path = require('node:path');
 require('dotenv').config({ path: path.join(__dirname, '../../.env.test'), quiet: !process.env.DOTENV_VERBOSE });
 
 const BASE_URL = `${process.env.TEST_SERVER_URL}/test/upload`;

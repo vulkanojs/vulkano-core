@@ -1,7 +1,7 @@
-const { spawn } = require('child_process');
-const path = require('path');
-const fs = require('fs');
-const os = require('os');
+const { spawn } = require('node:child_process');
+const path = require('node:path');
+const fs = require('node:fs');
+const os = require('node:os');
 const dotenv = require('dotenv');
 
 dotenv.config({ path: path.join(__dirname, '../.env.test'), quiet: !process.env.DOTENV_VERBOSE });
