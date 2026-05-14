@@ -1,4 +1,5 @@
 /* eslint-disable import/no-dynamic-require */
+/* global Vite */
 
 /**
  * Bootstrap.js
@@ -68,7 +69,6 @@ const config = require('include-all')({
 });
 
 const merge = require('./libs/Merge');
-const Vite = require('./libs/Vite');
 
 //
 // Get package.json information
