@@ -68,6 +68,7 @@ const config = require('include-all')({
 });
 
 const merge = require('./libs/Merge');
+const Vite = require('./libs/Vite');
 
 //
 // Get package.json information
@@ -196,7 +197,8 @@ async function startVulkano() {
 
       const {
         sockets,
-        settings: configSettings
+        settings: configSettings,
+        vite
       } = app.config || {};
 
       const {
@@ -244,6 +246,10 @@ async function startVulkano() {
       console.log(dbConfig.join(''));
 
       console.log(`${colors.fg.magenta}${cutLine}`, colors.reset);
+
+      if (vite && vite.enabled) {
+        app.vite = Vite.init(vite.buildPath || 'public/.vite');
+      }
 
       // Run custom callback after init vulkano
       if (callbackAfterInitVulkano && typeof callbackAfterInitVulkano === 'function') {

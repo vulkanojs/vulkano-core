@@ -15,6 +15,12 @@ const appFilters = require('include-all')({
 });
 
 // Include all helpers
+const coreHelpers = require('include-all')({
+  dirname: path.join(CORE_PATH, 'views/helpers'),
+  filter: /(.+)\.js$/,
+  optional: true
+});
+
 const appHelpers = require('include-all')({
   dirname: path.join(APP_PATH, 'config/views/helpers'),
   filter: /(.+)\.js$/,
@@ -32,6 +38,6 @@ module.exports = {
     appFilters || {}
   ],
 
-  helpers: [appHelpers || {}]
+  helpers: [coreHelpers || {}, appHelpers || {}]
 
 };
