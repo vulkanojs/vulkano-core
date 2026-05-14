@@ -1,0 +1,6 @@
+{
+  "name": "vulkano-test-fixture-hbs",
+  "version": "1.0.0",
+  "description": "Handlebars fixture for Vulkano core integration tests",
+  "author": "Vulkano Team"
+}

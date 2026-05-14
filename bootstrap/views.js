@@ -33,6 +33,8 @@ module.exports = {
 
   engine: 'nunjucks',
 
+  ext: '.html',
+
   filters: [
     coreFilters || {},
     appFilters || {}

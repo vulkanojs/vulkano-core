@@ -7,7 +7,6 @@
 const express = require('express');
 const frameguard = require('frameguard');
 const { Server } = require('socket.io');
-const nunjucks = require('nunjucks');
 const morgan = require('morgan');
 const compression = require('compression');
 const multer = require('multer');
@@ -41,18 +40,12 @@ const expressConfig = require('./express')();
 const responses = require('./responses');
 
 module.exports = function loadServer() {
-
   return {
-
     routes: {},
 
     start: async function startServerApplication(cb) {
-
       // Get ENV Vars
-      const {
-        JWT_SECRET_KEY,
-        COOKIES_SECRET_KEY
-      } = process.env || {};
+      const { JWT_SECRET_KEY, COOKIES_SECRET_KEY } = process.env || {};
 
       const vulkano = express();
 
@@ -88,27 +81,26 @@ module.exports = function loadServer() {
       // ---------------
       // COMPRESSION - File: app/config/express/compression.js
       // ---------------
-      vulkano.use(compression( expressConfig.compression || {} ));
+      vulkano.use(compression(expressConfig.compression || {}));
 
       // ---------------
       // COOKIES - File: app/config/express/cookies.js
       // ---------------
-      const {
-        enabled: cookiesEnabled
-      } = expressConfig.cookies || {};
+      const { enabled: cookiesEnabled } = expressConfig.cookies || {};
 
       let cookiesSecretKey = null;
 
       if (cookiesEnabled) {
-
-        cookiesSecretKey = COOKIES_SECRET_KEY || expressConfig.cookies.key || expressConfig.cookies.secret || '';
+        cookiesSecretKey =
+          COOKIES_SECRET_KEY || expressConfig.cookies.key || expressConfig.cookies.secret || '';
 
         if (!cookiesSecretKey) {
-          console.log(' \x1b[33mWARNING\x1b[0m: Set the secret key in the config/express/cookie.js file or COOKIES_SECRET_KEY in the .env file.');
+          console.log(
+            ' \x1b[33mWARNING\x1b[0m: Set the secret key in the config/express/cookie.js file or COOKIES_SECRET_KEY in the .env file.'
+          );
         }
 
         vulkano.use(cookieParser(cookiesSecretKey));
-
       }
 
       // ---------------
@@ -136,7 +128,7 @@ module.exports = function loadServer() {
       // ---------------
       if (expressConfig.frameguard) {
         if (Array.isArray(expressConfig.frameguard)) {
-          expressConfig.frameguard.forEach( (frame) => {
+          expressConfig.frameguard.forEach((frame) => {
             vulkano.use(frameguard(frame));
           });
         } else {
@@ -147,8 +139,7 @@ module.exports = function loadServer() {
       // ---------------
       // PROTOCOL & POWERED BY - File: app/config/settings.js
       // ---------------
-      vulkano.use( (req, res, next) => {
-
+      vulkano.use((req, res, next) => {
         const proto = req.secure ? 'https' : 'http';
         const forwarded = req.headers['x-forwarded-proto'] || null;
         const currentProtocol = (forwarded || proto).split('://')[0];
@@ -159,19 +150,22 @@ module.exports = function loadServer() {
         }
 
         next();
-
       });
 
       // ---------------
       // REQUEST OPTIONS - File: app/config/express/cors.js
       // ---------------
       vulkano.options('*', (req, res) => {
-
         // ---------------
         // CORS
         // ---------------
         if (expressConfig.cors && expressConfig.cors.enabled) {
-          let tmpCustomHeaders = ['X-Requested-With', 'X-HTTP-Method-Override', 'Content-Type', 'Accept'];
+          let tmpCustomHeaders = [
+            'X-Requested-With',
+            'X-HTTP-Method-Override',
+            'Content-Type',
+            'Accept'
+          ];
           tmpCustomHeaders = tmpCustomHeaders.concat(expressConfig.cors.headers || []);
           res.header('Access-Control-Allow-Origin', expressConfig.cors.origin);
           res.header('Access-Control-Allow-Headers', tmpCustomHeaders.join(', '));
@@ -181,17 +175,18 @@ module.exports = function loadServer() {
         res.header('Allow', 'GET,PUT,PATCH,POST,DELETE,OPTIONS');
 
         res.status(200).end();
-
       });
 
       // ---------------
       // TIMEOUT - File: app/config/settings.js
       // ---------------
-      vulkano.use(timeout( expressConfig.timeout || 120000 ));
+      vulkano.use(timeout(expressConfig.timeout || 120000));
 
-      vulkano.use( (req, res, next) => {
+      vulkano.use((req, res, next) => {
         if (req.timedout) {
-          res.status(503).json({ success: false, statusCode: 503, error: { detail: 'Request timeout' } });
+          res
+            .status(503)
+            .json({ success: false, statusCode: 503, error: { detail: 'Request timeout' } });
           return;
         }
         next();
@@ -201,17 +196,22 @@ module.exports = function loadServer() {
       // JWT - File: app/config/express/jwt.js
       // ---------------
       if (expressConfig.jwt && expressConfig.jwt.enabled) {
-
-        const jwtSecretKey = JWT_SECRET_KEY || expressConfig.jwt.key || expressConfig.jwt.secret || '';
+        const jwtSecretKey =
+          JWT_SECRET_KEY || expressConfig.jwt.key || expressConfig.jwt.secret || '';
         if (!jwtSecretKey) {
-          console.log(' \x1b[41mERROR\x1b[0m: Can not get key in config/express/jwt.js file or JWT_SECRET_KEY in .env file');
+          console.log(
+            ' \x1b[41mERROR\x1b[0m: Can not get key in config/express/jwt.js file or JWT_SECRET_KEY in .env file'
+          );
           return;
         }
 
         // JWT (secret key)
-        vulkano.use(expressConfig.jwt.path || '*', jwtMiddleware.init().unless({
-          path: expressConfig.jwt.ignore || []
-        }));
+        vulkano.use(
+          expressConfig.jwt.path || '*',
+          jwtMiddleware.init().unless({
+            path: expressConfig.jwt.ignore || []
+          })
+        );
 
         // JWT  Handler error
         vulkano.use((err, req, res, next) => {
@@ -221,18 +221,20 @@ module.exports = function loadServer() {
             next();
           }
         });
-
       }
 
       // ---------------
       // CORS - File: app/config/express/cors.js
       // ---------------
       if (expressConfig.cors && expressConfig.cors.enabled) {
-
         vulkano.use(expressConfig.cors.path, (req, res, next) => {
-
           // Enable CORS.
-          let tmpCorsHeaders = ['X-Requested-With', 'X-HTTP-Method-Override', 'Content-Type', 'Accept'];
+          let tmpCorsHeaders = [
+            'X-Requested-With',
+            'X-HTTP-Method-Override',
+            'Content-Type',
+            'Accept'
+          ];
           tmpCorsHeaders = tmpCorsHeaders.concat(expressConfig.cors.headers || []);
 
           res.header('Access-Control-Allow-Origin', expressConfig.cors.origin);
@@ -245,52 +247,41 @@ module.exports = function loadServer() {
           res.header('Expires', '0'); // Proxies.
 
           next();
-
         });
       }
 
       // ---------------
       // Express Session  - File: app/config/express/session.js
       // ---------------
-      const {
-        enabled: sessionEnabled
-      } = expressConfig.session || {};
+      const { enabled: sessionEnabled } = expressConfig.session || {};
 
       if (sessionEnabled) {
-
         if (!cookiesEnabled) {
-          console.log(' \x1b[41mERROR\x1b[0m: Can not load the Express Session because the Cookies aren\'t enabled');
+          console.log(
+            " \x1b[41mERROR\x1b[0m: Can not load the Express Session because the Cookies aren't enabled"
+          );
           return;
         }
 
         delete expressConfig.session.enabled;
 
         vulkano.use(expressSession({ ...expressConfig.session, secret: cookiesSecretKey }));
-
       }
 
       // ---------------
       // Content Security Policy  - File: app/config/express/csp.js
       // ---------------
-      const {
-        enabled: cspEnabled,
-        report: cspReportTo,
-        rules: cspRules
-      } = expressConfig.csp || {};
+      const { enabled: cspEnabled, report: cspReportTo, rules: cspRules } = expressConfig.csp || {};
 
       if (cspEnabled && cspRules) {
-
         const cspRulesHeader = [];
 
         if (Array.isArray(cspRules) && cspRules.length > 0) {
-
-          for ( let i = 0; i < cspRules.length; i += 1) {
+          for (let i = 0; i < cspRules.length; i += 1) {
             cspRulesHeader.push(cspRules[i]);
           }
-
         } else if (typeof cspRules === 'object') {
-
-          Object.keys(cspRules).forEach( (r) => {
+          Object.keys(cspRules).forEach((r) => {
             const tmpValues = cspRules[r];
             if (Array.isArray(tmpValues)) {
               cspRulesHeader.push(`${r} ${tmpValues.join(' ')}`);
@@ -298,18 +289,13 @@ module.exports = function loadServer() {
               cspRulesHeader.push(`${r} ${tmpValues}`);
             }
           });
-
         } else if (typeof cspRules === 'string') {
-
           cspRulesHeader.push(cspRules);
-
         }
 
         // Has Rules
         if (cspRulesHeader.length > 0) {
-
-          vulkano.use( (req, res, next) => {
-
+          vulkano.use((req, res, next) => {
             if (cspReportTo) {
               res.setHeader('Report-To', JSON.stringify(cspReportTo));
             }
@@ -317,62 +303,45 @@ module.exports = function loadServer() {
             res.setHeader('Content-Security-Policy', cspRulesHeader.join('; '));
 
             next();
-
           });
-
         }
-
       }
 
       // ---------------
       // Permission Policy - File: app/config/express/permissionPolicy.js
       // ---------------
-      const {
-        enabled: ppEnabled,
-        permissions: ppPermissions
-      } = expressConfig.permissionPolicy || {};
+      const { enabled: ppEnabled, permissions: ppPermissions } =
+        expressConfig.permissionPolicy || {};
 
       if (ppEnabled) {
-
         if (!Array.isArray(ppPermissions)) {
           console.error('Vulkano Error: ', 'The Permission Policy values must be an array');
           return;
         }
 
         if (ppPermissions.length > 0) {
-
-          vulkano.use( (req, res, next) => {
-
+          vulkano.use((req, res, next) => {
             res.setHeader('Permissions-Policy', ppPermissions.join(', '));
 
             next();
-
           });
-
         }
-
       }
 
       // ---------------
       // REDIS - File: app/config/redis.js
       // ---------------
-      const {
-        enabled: redisEnabled
-      } = app.config.redis || {};
+      const { enabled: redisEnabled } = app.config.redis || {};
 
       app.redisClient = null;
 
       if (redisEnabled === true) {
-
-        const {
-          redis
-        } = app.config || {};
+        const { redis } = app.config || {};
 
         const rClient = socketRedis(redis);
         rClient.on('error', (err) => console.log('Redis Client Error', err));
 
         app.redisClient = await rClient.connect();
-
       }
 
       // ---------------
@@ -380,71 +349,124 @@ module.exports = function loadServer() {
       // ---------------
 
       const views = {
+        ext: '.html',
         ...viewsConfig,
         ...(app.server.views || {})
       };
 
+      const viewsEngine = views.engine || 'nunjucks';
+      const viewsExt = views.ext || '.html';
+
       vulkano.set('views', views.path);
 
-      const {
-        settings: nunjucksSettingsUser
-      } = views || {};
+      if (viewsEngine === 'handlebars') {
+        const { create: hbsCreate } = require('express-handlebars');
 
-      const nunjucksSettings = {
-        autoescape: true,
-        watch: !app.PRODUCTION,
-        ...(nunjucksSettingsUser || {}),
-        express: vulkano
-      };
-
-      const envNunjucks = nunjucks.configure([views.path, CORE_PATH], nunjucksSettings);
-
-      app.server.views._engine = envNunjucks;
-
-      envNunjucks.addGlobal('app', app);
-
-      if (views.globals && Array.isArray(views.globals)) {
-        views.globals.forEach((global) => {
-          Object.keys(global || []).forEach((i) => {
-            envNunjucks.addGlobal(i, global[i]);
-          });
+        const hbs = hbsCreate({
+          extname: viewsExt,
+          defaultLayout: false,
+          ...(views.settings || {})
         });
-      }
 
-      if (views.helpers && Array.isArray(views.helpers)) {
-        views.helpers.forEach((helper) => {
-          Object.keys(helper || []).forEach((i) => {
-            envNunjucks.addGlobal(i, helper[i]);
+        if (views.filters && Array.isArray(views.filters)) {
+          views.filters.forEach((filter) => {
+            Object.keys(filter || []).forEach((i) => {
+              hbs.handlebars.registerHelper(i, filter[i]);
+            });
           });
-        });
-      }
+        }
 
-      if (views.filters && Array.isArray(views.filters)) {
-        views.filters.forEach((filter) => {
-          Object.keys(filter || []).forEach((i) => {
-            envNunjucks.addFilter(i, filter[i]);
+        if (views.helpers && Array.isArray(views.helpers)) {
+          views.helpers.forEach((helper) => {
+            Object.keys(helper || []).forEach((i) => {
+              hbs.handlebars.registerHelper(i, helper[i]);
+            });
           });
-        });
-      }
+        }
 
-      if (views.extensions && Array.isArray(views.extensions)) {
-        views.extensions.forEach((extension) => {
-          Object.keys(extension || []).forEach((i) => {
-            envNunjucks.addExtension(i, extension[i]);
+        if (views.globals && Array.isArray(views.globals)) {
+          vulkano.use((req, res, next) => {
+            views.globals.forEach((global) => {
+              Object.assign(res.locals, global || {});
+            });
+            res.locals.app = app;
+            next();
           });
-        });
-      }
+        } else {
+          vulkano.use((req, res, next) => {
+            res.locals.app = app;
+            next();
+          });
+        }
 
-      app.nunjucks = nunjucks;
+        vulkano.engine(viewsExt, hbs.engine);
+        vulkano.set('view engine', viewsExt);
+
+        app.server.views._engine = hbs;
+        app.handlebars = hbs;
+      } else {
+        const nunjucks = require('nunjucks');
+
+        const { settings: nunjucksSettingsUser } = views || {};
+
+        const nunjucksSettings = {
+          autoescape: true,
+          watch: !app.PRODUCTION,
+          ...(nunjucksSettingsUser || {}),
+          express: vulkano
+        };
+
+        const envNunjucks = nunjucks.configure([views.path, CORE_PATH], nunjucksSettings);
+
+        app.server.views._engine = envNunjucks;
+
+        envNunjucks.addGlobal('app', app);
+
+        if (views.globals && Array.isArray(views.globals)) {
+          views.globals.forEach((global) => {
+            Object.keys(global || []).forEach((i) => {
+              envNunjucks.addGlobal(i, global[i]);
+            });
+          });
+        }
+
+        if (views.helpers && Array.isArray(views.helpers)) {
+          views.helpers.forEach((helper) => {
+            Object.keys(helper || []).forEach((i) => {
+              envNunjucks.addGlobal(i, helper[i]);
+            });
+          });
+        }
+
+        if (views.filters && Array.isArray(views.filters)) {
+          views.filters.forEach((filter) => {
+            Object.keys(filter || []).forEach((i) => {
+              envNunjucks.addFilter(i, filter[i]);
+            });
+          });
+        }
+
+        if (views.extensions && Array.isArray(views.extensions)) {
+          views.extensions.forEach((extension) => {
+            Object.keys(extension || []).forEach((i) => {
+              envNunjucks.addExtension(i, extension[i]);
+            });
+          });
+        }
+
+        app.nunjucks = nunjucks;
+      }
 
       // ---------------
       // Middlewares
       // ---------------
 
       // Middleware File (compatibility)
-      const middleware = app.config.middleware || ((req, res, next) => {
-        next();
-      });
+      const middleware =
+        app.config.middleware ||
+        ((req, res, next) => {
+          next();
+        });
 
       // Middleware Folder — routes.js always loads first if present
       const middlewares = app.config.middlewares || {};
@@ -453,8 +475,10 @@ module.exports = function loadServer() {
         vulkano.use(middlewares.routes);
       }
 
-      Object.keys(middlewares).forEach( (item) => {
-        if (item === 'routes') return;
+      Object.keys(middlewares).forEach((item) => {
+        if (item === 'routes') {
+          return;
+        }
         const middlewareFunction = middlewares[item];
         if (typeof middlewareFunction === 'function') {
           vulkano.use(middlewareFunction);
@@ -470,9 +494,7 @@ module.exports = function loadServer() {
       // ROUTES
       // ---------------
 
-      const {
-        routes
-      } = app;
+      const { routes } = app;
 
       let method;
       let pathToRoute;
@@ -480,13 +502,9 @@ module.exports = function loadServer() {
 
       // Routes from convention (controller name & method = route)
       Object.keys(routes).forEach((route) => {
-
         const parts = route.split(' ');
 
-        const [
-          methodToRun,
-          pathToRun
-        ] = parts;
+        const [methodToRun, pathToRun] = parts;
 
         method = methodToRun;
 
@@ -501,12 +519,10 @@ module.exports = function loadServer() {
         } else {
           vulkano[method](pathToRoute, middleware, handler);
         }
-
       });
 
       // Routes from config/routes.js
       Object.keys(this.routes || {}).forEach((i) => {
-
         const current = this.routes[i];
 
         // Initializer functions: keys that are not path-based ('/...') and not
@@ -514,7 +530,9 @@ module.exports = function loadServer() {
         // directly via app.vulkano.get(), app.vulkano.post(), etc.
         const keyParts = i.split(' ');
         const isPathRoute = i.includes('/');
-        const isMethodRoute = ['get', 'post', 'put', 'delete', 'patch'].includes(keyParts[0].toLowerCase()) && keyParts.length > 1;
+        const isMethodRoute =
+          ['get', 'post', 'put', 'delete', 'patch'].includes(keyParts[0].toLowerCase()) &&
+          keyParts.length > 1;
 
         if (!isPathRoute && !isMethodRoute && typeof current === 'function') {
           current();
@@ -525,9 +543,15 @@ module.exports = function loadServer() {
         let pathToRun = parts.pop();
 
         // Capture the HTTP Method
-        let option = (parts[0] !== undefined) ? String(parts[0]).toLowerCase() : 'get';
+        let option = parts[0] !== undefined ? String(parts[0]).toLowerCase() : 'get';
 
-        if (option !== 'get' && option !== 'post' && option !== 'put' && option !== 'patch' && option !== 'delete') {
+        if (
+          option !== 'get' &&
+          option !== 'post' &&
+          option !== 'put' &&
+          option !== 'patch' &&
+          option !== 'delete'
+        ) {
           option = 'get';
         }
 
@@ -538,24 +562,18 @@ module.exports = function loadServer() {
         let toExecute = null;
 
         if (typeof current === 'function') {
-
           toExecute = current;
-
         } else {
-
           const fullPath = this.routes[i].split('.');
 
-          const [
-            moduleToRun,
-            controllerToRun,
-            actionToRun
-          ] = fullPath;
+          const [moduleToRun, controllerToRun, actionToRun] = fullPath;
 
           let module;
           let controller;
           let action;
 
-          if (actionToRun) { // Has folder
+          if (actionToRun) {
+            // Has folder
             module = moduleToRun;
             controller = controllerToRun;
             action = actionToRun;
@@ -567,16 +585,20 @@ module.exports = function loadServer() {
 
           try {
             toExecute = module
-              ? (AllControllers[module][controller][action])
+              ? AllControllers[module][controller][action]
               : AllControllers[controller][action];
           } catch (e) {
             toExecute = null;
           }
 
           if (!toExecute) {
-            console.error('\x1b[31mError:', 'Controller not found in', (module) ? `${module}.${controller}.${action}` : `${controller}.${action}`, '\x1b[0m');
+            console.error(
+              '\x1b[31mError:',
+              'Controller not found in',
+              module ? `${module}.${controller}.${action}` : `${controller}.${action}`,
+              '\x1b[0m'
+            );
           }
-
         }
 
         if (toExecute) {
@@ -586,7 +608,6 @@ module.exports = function loadServer() {
             vulkano[option](pathToRun || '/', middleware, toExecute);
           }
         }
-
       });
 
       const server = await vulkano.listen(expressConfig.port);
@@ -605,7 +626,6 @@ module.exports = function loadServer() {
       // ERROR 404
       // ---------------
       vulkano.use((req, res) => {
-
         if (+res.statusCode >= 500 && +res.statusCode < 600) {
           throw new Error();
         }
@@ -617,46 +637,41 @@ module.exports = function loadServer() {
           return;
         }
 
+        const errFolder = viewsEngine === 'handlebars' ? 'handlebars/' : '';
+
         // Verify if the error is a controller
-        const isController = routesRegistered.filter( (r) => {
+        const isController = routesRegistered.filter((r) => {
+          const { path: routePath } = r || {};
 
-          const {
-            path: routePath
-          } = r || {};
-
-          const routerControllerToCheck = (typeof Filter !== 'undefined')
-            ? Filter.get(req.path, 'trim', '/').split('/')[0]
-            : req.path.replace(/^\/+|\/+$/g, '').split('/')[0];
+          const routerControllerToCheck =
+            typeof Filter !== 'undefined'
+              ? Filter.get(req.path, 'trim', '/').split('/')[0]
+              : req.path.replace(/^\/+|\/+$/g, '').split('/')[0];
 
           return routePath.startsWith(`/${routerControllerToCheck}`);
-
         });
 
         if (isController.length === 0) {
-
-          res.render(`${CORE_PATH}/views/errors/no_controller.html`, {
+          res.render(`${CORE_PATH}/views/errors/${errFolder}no_controller.html`, {
             method: req.method,
             controller: req.path.split('/')[1]
           });
 
           return;
-
         }
 
         // Show the action name error
-        res.render(`${CORE_PATH}/views/errors/no_action.html`, {
+        res.render(`${CORE_PATH}/views/errors/${errFolder}no_action.html`, {
           method: req.method,
           controller: req.path.split('/')[1],
           action: req.path.split('/')[2]
         });
-
       });
 
       // ---------------
       // ERROR 5XX
       // ---------------
       vulkano.use((err, req, res, next) => {
-
         if (res.headersSent) {
           next(err);
           return;
@@ -664,32 +679,36 @@ module.exports = function loadServer() {
 
         // Timeout — always respond with JSON regardless of request type
         if (req.timedout || (err && err.timeout)) {
-          res.status(503).json({ success: false, statusCode: 503, error: { detail: 'Request timeout' } });
+          res
+            .status(503)
+            .json({ success: false, statusCode: 503, error: { detail: 'Request timeout' } });
           return;
         }
 
-        const status = err ? (err.status || 500) : (res.statusCode || 500);
+        const status = err ? err.status || 500 : res.statusCode || 500;
 
         res.status(status);
 
         // AJAX Response
         if (req.xhr) {
-
           res.jsonp({
             success: false,
             statusCode: status,
             error: {
-              detail: err.message || err.error || err.invalidAttributes || err.toString() || 'Object Not Found',
-              stack: (app.PRODUCTION) ? {} : (err.stack || {})
+              detail:
+                err.message ||
+                err.error ||
+                err.invalidAttributes ||
+                err.toString() ||
+                'Object Not Found',
+              stack: app.PRODUCTION ? {} : err.stack || {}
             }
           });
 
           return;
-
         }
 
         if (app.PRODUCTION) {
-
           if (+status > 400 && +status < 500) {
             res.render(`${vulkano.get('views')}/_shared/errors/404.html`);
           } else {
@@ -697,10 +716,9 @@ module.exports = function loadServer() {
           }
 
           return;
-
         }
 
-        const errStack = (err && err.stack) ? String(err.stack) : '';
+        const errStack = err && err.stack ? String(err.stack) : '';
         const isMissingTemplate = errStack.includes('template not found');
 
         let missingView = '';
@@ -709,9 +727,11 @@ module.exports = function loadServer() {
           missingView = `${afterNotFound.split('.')[0].trim()}.html`;
         }
 
+        const errFolder2 = viewsEngine === 'handlebars' ? 'handlebars/' : '';
+
         const errorViewToShow = isMissingTemplate
-          ? `${CORE_PATH}/views/errors/no_view.html`
-          : `${CORE_PATH}/views/errors/exception.html`;
+          ? `${CORE_PATH}/views/errors/${errFolder2}no_view.html`
+          : `${CORE_PATH}/views/errors/${errFolder2}exception.html`;
 
         res.render(errorViewToShow, {
           statusCode: status,
@@ -721,7 +741,6 @@ module.exports = function loadServer() {
           view: missingView,
           stack: errStack
         });
-
       });
 
       app.vulkano = vulkano;
@@ -730,19 +749,14 @@ module.exports = function loadServer() {
       // ---------------
       // SOCKETS
       // ---------------
-      const {
-        sockets
-      } = expressConfig || {};
+      const { sockets } = expressConfig || {};
 
       if (!sockets || (sockets && !sockets.enabled)) {
         cb();
         return;
       }
 
-      const {
-        config: socketsConfig,
-        middlewares: socketsMiddlewares
-      } = sockets;
+      const { config: socketsConfig, middlewares: socketsMiddlewares } = sockets;
 
       const socketProps = {
         ...(socketsConfig || {}),
@@ -759,41 +773,31 @@ module.exports = function loadServer() {
         }
       }
 
-      const {
-        adapter
-      } = sockets;
+      const { adapter } = sockets;
 
-      const {
-        redis: redisAdapter,
-        mongodb: mongodbAdapter
-      } = sockets.adapters || {};
+      const { redis: redisAdapter, mongodb: mongodbAdapter } = sockets.adapters || {};
 
-      if ( String(adapter).toLocaleLowerCase() === 'redis') {
+      if (String(adapter).toLocaleLowerCase() === 'redis') {
+        const { socket: socketRedisConfig } = redisAdapter || {};
 
-        const {
-          socket: socketRedisConfig
-        } = redisAdapter || {};
-
-        const {
-          host,
-          port
-        } = socketRedisConfig || redisAdapter || {};
+        const { host, port } = socketRedisConfig || redisAdapter || {};
 
         if (!host || !port) {
-          throw new Error('Unable to connect to Redis. File: "app/config/sockets/adapters/redis.js" to connect the sockets');
+          throw new Error(
+            'Unable to connect to Redis. File: "app/config/sockets/adapters/redis.js" to connect the sockets'
+          );
         }
 
         if (socketProps.transports.includes('polling')) {
-          throw new Error('To enable Sockets with Redis support, the transports must be set ¨websocket¨ only');
+          throw new Error(
+            'To enable Sockets with Redis support, the transports must be set ¨websocket¨ only'
+          );
         }
-
-      } else if ( String(adapter).toLocaleLowerCase() === 'mongodb') {
-
+      } else if (String(adapter).toLocaleLowerCase() === 'mongodb') {
         // if (socketProps.transports.includes('polling')) {
         // eslint-disable-next-line max-len
         //   console.log('To enable Sockets with MongoDB support the transports must be set to ["websocket"] only');
         // }
-
       }
 
       const io = new Server(server, socketProps);
@@ -801,58 +805,56 @@ module.exports = function loadServer() {
       let pubClient = null;
       let subClient = null;
 
-      if ( String(adapter).toLocaleLowerCase() === 'redis') {
-
+      if (String(adapter).toLocaleLowerCase() === 'redis') {
         pubClient = socketRedis(redisAdapter);
         pubClient.on('error', (err) => console.log('Socket Redis Client Error', err));
 
         subClient = pubClient.duplicate();
 
         io.adapter(socketRedisAdapter(pubClient, subClient));
+      } else if (String(adapter).toLocaleLowerCase() === 'mongodb') {
+        const { settings: socketsMongoSettings } = mongodbAdapter || {};
 
-      } else if ( String(adapter).toLocaleLowerCase() === 'mongodb') {
-
-        const {
-          settings: socketsMongoSettings
-        } = mongodbAdapter || {};
-
-        const socketsConnection = String(process.env.SOCKETS_MONGO_URI || mongodbAdapter.connection || '').trim();
-        let socketsDatabase = String(process.env.SOCKETS_MONGO_DATABASE || mongodbAdapter.database || '').trim();
-        const socketsCollection = String(process.env.SOCKETS_MONGO_COLLECTION || mongodbAdapter.collection || 'socket.io-adapter-events').trim();
+        const socketsConnection = String(
+          process.env.SOCKETS_MONGO_URI || mongodbAdapter.connection || ''
+        ).trim();
+        let socketsDatabase = String(
+          process.env.SOCKETS_MONGO_DATABASE || mongodbAdapter.database || ''
+        ).trim();
+        const socketsCollection = String(
+          process.env.SOCKETS_MONGO_COLLECTION ||
+            mongodbAdapter.collection ||
+            'socket.io-adapter-events'
+        ).trim();
 
         let socketsMongoCollection = null;
 
         try {
-
           let mongoClientDB = null;
 
           // If no active Mongoose connection, create a dedicated one
           if (!mongoose.connection.readyState) {
-
             if (!socketsConnection) {
-              throw new Error('Unable to connecto to the database for SocketIO. Please check the env var SOCKETS_MONGO_URI and try again.');
+              throw new Error(
+                'Unable to connecto to the database for SocketIO. Please check the env var SOCKETS_MONGO_URI and try again.'
+              );
             }
 
             const socketMongooseConnection = await socketMongoose.connect(socketsConnection);
             mongoClientDB = socketMongooseConnection.connection.getClient();
-
           } else {
-
             // Get current connection
             mongoClientDB = mongoose.connection.getClient();
             socketsDatabase = mongoose.connection.db.s.namespace.db;
 
             // SOCKETS_MONGO_URI
-            if (socketsConnection && ( socketsConnection !== mongoClientDB.s.url )) {
-
+            if (socketsConnection && socketsConnection !== mongoClientDB.s.url) {
               const socketMongoInstance = new socketMongoose.Mongoose();
 
               const socketMongooseConnection = await socketMongoInstance.connect(socketsConnection);
               mongoClientDB = socketMongooseConnection.connection.getClient();
               socketsDatabase = socketMongoInstance.connection.db.s.namespace.db;
-
             }
-
           }
 
           socketsMongoCollection = mongoClientDB.db(socketsDatabase).collection(socketsCollection);
@@ -864,36 +866,27 @@ module.exports = function loadServer() {
           };
 
           socketsMongoCollection.createIndex({ createdAt: 1 }, propsToMongoCollection);
-
         } catch (err) {
           console.log(err);
           throw new Error('To enable Sockets with MongoDB support. Check the connection.');
         }
 
         io.adapter(socketMongoAdapter(socketsMongoCollection, { addCreatedAtField: true }));
-
       }
 
-      Promise
-        .all([
-          (pubClient ? pubClient.connect() : null),
-          (subClient ? subClient.connect() : null)
-        ])
+      Promise.all([pubClient ? pubClient.connect() : null, subClient ? subClient.connect() : null])
         .catch((err) => {
           throw new Error(`Socket Redis adapter failed to connect: ${err.message}`);
         })
         .then(() => {
-
           io.on('connection', (socket) => {
-
-            if ( typeof sockets.onConnect === 'function') {
+            if (typeof sockets.onConnect === 'function') {
               sockets.onConnect(socket);
             }
 
             const socketEvents = sockets.events || sockets.routes || {};
 
-            Object.keys(socketEvents).forEach( (i) => {
-
+            Object.keys(socketEvents).forEach((i) => {
               const checkPath = socketEvents[i] || '';
 
               let toExecute = null;
@@ -902,38 +895,25 @@ module.exports = function loadServer() {
               let action = null;
 
               if (typeof checkPath === 'function') {
-
                 toExecute = checkPath;
-
               } else {
-
                 const fullPath = checkPath.split('.');
 
-                if (fullPath.length > 2) { // Has folder
+                if (fullPath.length > 2) {
+                  // Has folder
 
-                  [
-                    module,
-                    controller,
-                    action
-                  ] = fullPath;
-
+                  [module, controller, action] = fullPath;
                 } else {
-
-                  [
-                    controller,
-                    action
-                  ] = fullPath;
-
+                  [controller, action] = fullPath;
                 }
 
                 try {
                   toExecute = module
-                    ? (AllControllers[module][controller][action])
+                    ? AllControllers[module][controller][action]
                     : AllControllers[controller][action];
                 } catch (e) {
                   toExecute = null;
                 }
-
               }
 
               if (toExecute) {
@@ -941,14 +921,19 @@ module.exports = function loadServer() {
                   toExecute({ socket, body: body || {} }, callback || (() => {}));
                 });
               } else {
-                console.error('\x1b[31mError:', 'Controller not found in', (module) ? `${module}.${controller}.${action}` : `${controller}.${action}`, '\x1b[0m', 'to socket event', i);
+                console.error(
+                  '\x1b[31mError:',
+                  'Controller not found in',
+                  module ? `${module}.${controller}.${action}` : `${controller}.${action}`,
+                  '\x1b[0m',
+                  'to socket event',
+                  i
+                );
               }
-
             });
 
             vulkano.set('socket', socket);
             app.socket = socket;
-
           });
 
           // Expose io globally so controllers can emit events
@@ -960,7 +945,7 @@ module.exports = function loadServer() {
             io.use(sockets.middleware);
           }
 
-          Object.keys(socketsMiddlewares || {}).forEach( (item) => {
+          Object.keys(socketsMiddlewares || {}).forEach((item) => {
             const middlewareFunction = socketsMiddlewares[item];
             if (typeof middlewareFunction === 'function') {
               io.use(middlewareFunction);
@@ -971,11 +956,7 @@ module.exports = function loadServer() {
           app.vulkano = vulkano;
 
           cb();
-
         });
-
     }
-
   };
-
 };

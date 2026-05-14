@@ -14,6 +14,13 @@ module.exports = {
       globalSetup: '<rootDir>/test/global-setup.js',
       globalTeardown: '<rootDir>/test/global-teardown.js',
       testMatch: ['<rootDir>/test/integration/**/*.test.js']
+    },
+    {
+      displayName: 'integration-hbs',
+      testEnvironment: 'node',
+      globalSetup: '<rootDir>/test/global-setup-hbs.js',
+      globalTeardown: '<rootDir>/test/global-teardown-hbs.js',
+      testMatch: ['<rootDir>/test/integration-hbs/**/*.test.js']
     }
   ]
 };
