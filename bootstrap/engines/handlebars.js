@@ -30,7 +30,9 @@ function registerGroup(hbs, groups, method) {
 module.exports = function setupHandlebars(vulkano, views, viewsExt) {
   const hbs = hbsCreate({
     extname: viewsExt,
-    defaultLayout: false,
+    defaultLayout: views.defaultLayout !== undefined ? views.defaultLayout : 'default',
+    layoutsDir: views.layoutsDir || `${views.path}/_shared/templates`,
+    partialsDir: views.partialsDir || `${views.path}/_shared/partials`,
     ...(views.settings || {})
   });
 
@@ -38,7 +40,9 @@ module.exports = function setupHandlebars(vulkano, views, viewsExt) {
   registerGroup(hbs, views.helpers, 'registerHelper');
 
   vulkano.use((req, res, next) => {
-    (views.globals || []).forEach((group) => Object.assign(res.locals, group || {}));
+    (views.globals || []).forEach((group) => {
+      Object.assign(res.locals, group || {});
+    });
     res.locals.app = app;
     next();
   });

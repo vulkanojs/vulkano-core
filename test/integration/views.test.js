@@ -30,6 +30,35 @@ describe('Views (Nunjucks) — res.render()', () => {
 
 });
 
+describe('Views (Nunjucks) — variable flow across layout / view / partial', () => {
+
+  let html;
+
+  beforeAll(async () => {
+    const res = await fetch(`${process.env.TEST_SERVER_URL}/home/three-vars`);
+    html = await res.text();
+  });
+
+  it('layout (default.html) receives and prints pageTitle', () => {
+    expect(html).toContain('<title>My App</title>');
+  });
+
+  it('view (three-vars.html) receives and prints heading', () => {
+    expect(html).toContain('<h1 class="view-heading">Welcome</h1>');
+  });
+
+  it('partial (footer.html) receives and prints footerText', () => {
+    expect(html).toContain('<footer class="site-footer">Vulkano NJK</footer>');
+  });
+
+  it('all three layers are present in the same response', () => {
+    expect(html).toContain('<title>My App</title>');
+    expect(html).toContain('<h1 class="view-heading">Welcome</h1>');
+    expect(html).toContain('<footer class="site-footer">Vulkano NJK</footer>');
+  });
+
+});
+
 describe('Views (Nunjucks) — 404 error pages', () => {
 
   it('GET unknown controller renders no_controller.html with controller name', async () => {
