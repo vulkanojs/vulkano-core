@@ -27,8 +27,8 @@ const AllControllers = require('include-all')({
   optional: true
 });
 
-// Views Config
-const viewsConfig = require('./views');
+// View Engine Setup
+const setupViewEngine = require('./engines');
 
 // JWT Middleware
 const jwtMiddleware = require('../libs/Jwt');
@@ -348,121 +348,7 @@ module.exports = function loadServer() {
       // VIEWS
       // ---------------
 
-      const views = {
-        ext: '.html',
-        ...viewsConfig,
-        ...(app.server.views || {})
-      };
-
-      const viewsEngine = views.engine || 'nunjucks';
-      const viewsExt = views.ext || '.html';
-
-      const SUPPORTED_ENGINES = ['nunjucks', 'handlebars'];
-      if (!SUPPORTED_ENGINES.includes(viewsEngine)) {
-        throw new Error(
-          `Vulkano: unsupported view engine "${viewsEngine}". Supported engines: ${SUPPORTED_ENGINES.join(', ')}.`
-        );
-      }
-
-      vulkano.set('views', views.path);
-
-      if (viewsEngine === 'handlebars') {
-        const { create: hbsCreate } = require('express-handlebars');
-
-        const hbs = hbsCreate({
-          extname: viewsExt,
-          defaultLayout: false,
-          ...(views.settings || {})
-        });
-
-        if (views.filters && Array.isArray(views.filters)) {
-          views.filters.forEach((filter) => {
-            Object.keys(filter || []).forEach((i) => {
-              hbs.handlebars.registerHelper(i, filter[i]);
-            });
-          });
-        }
-
-        if (views.helpers && Array.isArray(views.helpers)) {
-          views.helpers.forEach((helper) => {
-            Object.keys(helper || []).forEach((i) => {
-              hbs.handlebars.registerHelper(i, helper[i]);
-            });
-          });
-        }
-
-        if (views.globals && Array.isArray(views.globals)) {
-          vulkano.use((req, res, next) => {
-            views.globals.forEach((global) => {
-              Object.assign(res.locals, global || {});
-            });
-            res.locals.app = app;
-            next();
-          });
-        } else {
-          vulkano.use((req, res, next) => {
-            res.locals.app = app;
-            next();
-          });
-        }
-
-        vulkano.engine(viewsExt, hbs.engine);
-        vulkano.set('view engine', viewsExt);
-
-        app.server.views._engine = hbs;
-        app.handlebars = hbs;
-      } else {
-        const nunjucks = require('nunjucks');
-
-        const { settings: nunjucksSettingsUser } = views || {};
-
-        const nunjucksSettings = {
-          autoescape: true,
-          watch: !app.PRODUCTION,
-          ...(nunjucksSettingsUser || {}),
-          express: vulkano
-        };
-
-        const envNunjucks = nunjucks.configure([views.path, CORE_PATH], nunjucksSettings);
-
-        app.server.views._engine = envNunjucks;
-
-        envNunjucks.addGlobal('app', app);
-
-        if (views.globals && Array.isArray(views.globals)) {
-          views.globals.forEach((global) => {
-            Object.keys(global || []).forEach((i) => {
-              envNunjucks.addGlobal(i, global[i]);
-            });
-          });
-        }
-
-        if (views.helpers && Array.isArray(views.helpers)) {
-          views.helpers.forEach((helper) => {
-            Object.keys(helper || []).forEach((i) => {
-              envNunjucks.addGlobal(i, helper[i]);
-            });
-          });
-        }
-
-        if (views.filters && Array.isArray(views.filters)) {
-          views.filters.forEach((filter) => {
-            Object.keys(filter || []).forEach((i) => {
-              envNunjucks.addFilter(i, filter[i]);
-            });
-          });
-        }
-
-        if (views.extensions && Array.isArray(views.extensions)) {
-          views.extensions.forEach((extension) => {
-            Object.keys(extension || []).forEach((i) => {
-              envNunjucks.addExtension(i, extension[i]);
-            });
-          });
-        }
-
-        app.nunjucks = nunjucks;
-      }
+      const viewsEngine = setupViewEngine(vulkano);
 
       // ---------------
       // Middlewares

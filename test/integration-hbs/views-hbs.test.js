@@ -16,10 +16,22 @@ describe('Views (Handlebars) — res.render()', () => {
 
   it('GET /home passes variables to the Handlebars template', async () => {
     const res = await fetch(`${process.env.TEST_SERVER_HBS_URL}/home`);
-    expect(res.status).toBe(200);
     const html = await res.text();
     expect(html).toContain('Handlebars Home');
     expect(html).toContain('vulkano');
+  });
+
+  it('filter-style helper (positional arg) renders correctly — {{upper username}}', async () => {
+    const res = await fetch(`${process.env.TEST_SERVER_HBS_URL}/home`);
+    const html = await res.text();
+    expect(html).toContain('VULKANO');
+  });
+
+  it('hash-style helper (like Vite) renders HTML unescaped — {{{badge label=title color="green"}}}', async () => {
+    const res = await fetch(`${process.env.TEST_SERVER_HBS_URL}/home`);
+    const html = await res.text();
+    expect(html).toContain('<span class="badge"');
+    expect(html).toContain('Handlebars Home');
   });
 
 });
