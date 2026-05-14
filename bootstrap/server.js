@@ -191,7 +191,8 @@ module.exports = function loadServer() {
 
       vulkano.use( (req, res, next) => {
         if (req.timedout) {
-          return res.status(503).json({ success: false, statusCode: 503, error: { detail: 'Request timeout' } });
+          res.status(503).json({ success: false, statusCode: 503, error: { detail: 'Request timeout' } });
+          return;
         }
         next();
       });
@@ -663,7 +664,8 @@ module.exports = function loadServer() {
 
         // Timeout — always respond with JSON regardless of request type
         if (req.timedout || (err && err.timeout)) {
-          return res.status(503).json({ success: false, statusCode: 503, error: { detail: 'Request timeout' } });
+          res.status(503).json({ success: false, statusCode: 503, error: { detail: 'Request timeout' } });
+          return;
         }
 
         const status = err ? (err.status || 500) : (res.statusCode || 500);
