@@ -1,6 +1,6 @@
 const logger = {
 
-  lineWidth: 39,
+  lineWidth: 41,
 
   colors: {
     reset: '\x1b[0m',
@@ -36,7 +36,7 @@ const logger = {
 
   showCenteredText(text) {
 
-    const colSize = (logger.lineWidth / 2) - 3;
+    const colSize = logger.lineWidth / 2;
     const textLength = (text || '').length;
     const textLeftSize = Math.trunc(textLength / 2);
     const textRightSize = textLength - textLeftSize;

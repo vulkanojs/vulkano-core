@@ -81,11 +81,7 @@ const NODE_ENV = (process.env.NODE_ENV || 'development').toLowerCase();
 
 app.PRODUCTION = NODE_ENV === 'production' ? true : false;
 
-const {
-  views,
-  local,
-  env
-} = config || {};
+const { views, local, env } = config || {};
 
 // NODE_ENV
 const environmentConfig = env ? env[NODE_ENV] || {} : {};
@@ -121,12 +117,7 @@ app.config = allConfig;
 app.pkg = appPkg;
 
 // Include all components
-const {
-  lineWidth,
-  colors,
-  showCenteredText,
-  showColumn
-} = require('./bootstrap/logger');
+const { lineWidth, colors, showCenteredText, showColumn } = require('./bootstrap/logger');
 
 // Include all components
 const loadDatabase = require('./database/mongodb');
@@ -135,7 +126,6 @@ const loadControllers = require('./controllers/controllers');
 const loadServer = require('./bootstrap/server');
 
 async function startVulkano() {
-
   // Load Services
   loadServices();
 
@@ -155,17 +145,17 @@ async function startVulkano() {
   const cutLine = '-'.padEnd(lineWidth, '-');
 
   console.log('');
-  console.log(`${colors.fg.magenta}${cutLine}`, colors.reset);
+  console.log(`${colors.fg.magenta}${cutLine}${colors.reset}`);
   console.log('');
-  console.log(colors.fg.cyan, showCenteredText('🌋'), colors.reset);
-  console.log(colors.fg.cyan, showCenteredText(`${appName} ${appVersion}`), colors.reset);
-  console.log(colors.fg.cyan, showCenteredText(`${pkg.name} ${pkg.version}`.toUpperCase()), colors.reset);
+  console.log(`${colors.fg.cyan}${showCenteredText('🌋')}${colors.reset}`);
+  console.log(`${colors.fg.cyan}${showCenteredText(`${appName} ${appVersion}`)}${colors.reset}`);
+  console.log(`${colors.fg.cyan}${showCenteredText(`${pkg.name} ${pkg.version}`.toUpperCase())}${colors.reset}`);
   console.log('');
-  console.log(colors.fg.blue, '🔗 github.com/vulkanojs/vulkano', colors.reset);
-  console.log(colors.fg.cyan, '☕ buymeacoffee.com/argordmel', colors.reset);
+  console.log(`${colors.fg.blue}🔗 github.com/vulkanojs/vulkano${colors.reset}`);
+  console.log(`${colors.fg.cyan}☕ buymeacoffee.com/argordmel${colors.reset}`);
   console.log('');
   console.log(` Author: ${colors.fg.green}${author}${colors.reset}`);
-  console.log(`${colors.fg.magenta}${cutLine}`, colors.reset);
+  console.log(`${colors.fg.magenta}${cutLine}${colors.reset}`);
 
   // Routes
   app.routes = controllers;
@@ -181,33 +171,21 @@ async function startVulkano() {
     ...app.config.routes
   };
 
-  const {
-    bootstrap
-  } = config;
+  const { bootstrap } = config;
 
   if (!bootstrap || typeof bootstrap !== 'function') {
     console.log('Missing the boostrap file to start app: app/config/bootstrap.js');
     return;
   }
 
-  bootstrap( (callbackAfterInitVulkano) => {
-
+  bootstrap((callbackAfterInitVulkano) => {
     // Start Express
-    app.server.start( () => {
+    app.server.start(() => {
+      const { sockets, settings: configSettings, vite } = app.config || {};
 
-      const {
-        sockets,
-        settings: configSettings,
-        vite
-      } = app.config || {};
+      const { database } = configSettings || {};
 
-      const {
-        database
-      } = configSettings || {};
-
-      const {
-        connection
-      } = database || {};
+      const { connection } = database || {};
 
       const connectionToShow = connection && process.env.MONGO_URI ? 'MONGO_URI' : connection;
 
@@ -215,12 +193,15 @@ async function startVulkano() {
 
       const nodeVersion = process.version.match(/^v(\d+\.\d+\.\d+)/)[1];
       const portText = String(app.vulkano.get('port') || 8000);
-      const socketText = sockets.enabled ? 'YES' : 'NO';
-      const adapterText = sockets.enabled ? String(sockets.adapter || 'memory').toUpperCase() : 'NO';
+      const socketText = sockets.enabled
+        ? String(sockets.adapter || 'memory').toUpperCase()
+        : 'NO';
 
-      serverConfig.push(` PORT: ${colors.fg.green}${showColumn(portText, 7)}${colors.reset}`);
+      serverConfig.push(`🚀 PORT: ${colors.fg.green}${showColumn(portText, 7)}${colors.reset}`);
       serverConfig.push(' | ');
-      serverConfig.push(` ENV: ${app.PRODUCTION ? colors.fg.red : colors.fg.green}${showColumn(NODE_ENV, 0)}${colors.reset}`);
+      serverConfig.push(
+        `🌿 ENV: ${app.PRODUCTION ? colors.fg.red : colors.fg.green}${showColumn(NODE_ENV, 0)}${colors.reset}`
+      );
 
       console.log(serverConfig.join(''));
 
@@ -228,26 +209,39 @@ async function startVulkano() {
       const totalHeapSizeGb = (totalHeapSize / 1024 / 1024 / 1024).toFixed(2);
 
       const nodeConfig = [];
-      nodeConfig.push(` NODE: ${colors.fg.green}${showColumn(nodeVersion, 7)}${colors.reset}`);
+      nodeConfig.push(`📦 NODE: ${colors.fg.green}${showColumn(nodeVersion, 7)}${colors.reset}`);
       nodeConfig.push(' | ');
-      nodeConfig.push(' MAX MEM: ', `${colors.fg.green}${totalHeapSizeGb} GB${colors.reset}`);
+      nodeConfig.push(`🧠 MAX MEM: `, `${colors.fg.green}${totalHeapSizeGb} GB${colors.reset}`);
       console.log(nodeConfig.join(''));
 
       const startUpConfig = [];
-      startUpConfig.push(' SOCKETS: ', `${colors.fg.green}${showColumn(socketText, 10)}${colors.reset}`);
+      startUpConfig.push(
+        `🔌 SOCKETS: `,
+        `${sockets.enabled ? colors.fg.green : colors.fg.blue}${showColumn(socketText, 10)}${colors.reset}`
+      );
       startUpConfig.push(' | ');
-      startUpConfig.push(` STARTUP: ${colors.fg.green}${((Date.now() - global.START_TIME) / 1000).toFixed(3)}s${colors.reset}`);
+      startUpConfig.push(
+        `🍃 DB: `,
+        connection
+          ? `${colors.fg.green}${connectionToShow}${colors.reset}`
+          : `${colors.fg.blue}NO DATABASE${colors.reset}`
+      );
       console.log(startUpConfig.join(''));
 
-      const dbConfig = [];
-      dbConfig.push(' ADAPTER: ', `${colors.fg.green}${showColumn(adapterText, 10)}${colors.reset}`);
-      dbConfig.push(' | ');
-      dbConfig.push(' DB: ', connection ? `${colors.fg.green}${connectionToShow}${colors.reset}` : `${colors.fg.blue}NO DATABASE${colors.reset}`);
-      console.log(dbConfig.join(''));
+      if (vite?.enabled) {
+        console.log(
+          `${colors.fg.yellow}⚡ VITE${colors.reset}`,
+          `${colors.fg.green}${showColumn('ENABLED', 5)}${colors.reset}`,
+          `${colors.dim}${vite.buildPath || 'public/.vite'}${colors.reset}`
+        );
+      }
 
-      console.log(`${colors.fg.magenta}${cutLine}`, colors.reset);
+      const startupMs = ((Date.now() - global.START_TIME) / 1000).toFixed(3);
+      console.log(`${colors.fg.magenta}${cutLine}${colors.reset}`);
+      console.log(`${colors.bright}${colors.fg.cyan}${showCenteredText(`⚡ Ready in ${startupMs}s`)}${colors.reset}`);
+      console.log(`${colors.fg.magenta}${cutLine}${colors.reset}`);
 
-      if (vite && vite.enabled) {
+      if (vite?.enabled) {
         app.vite = Vite.init(vite.buildPath || 'public/.vite');
       }
 
@@ -255,11 +249,8 @@ async function startVulkano() {
       if (callbackAfterInitVulkano && typeof callbackAfterInitVulkano === 'function') {
         callbackAfterInitVulkano();
       }
-
     });
-
   });
-
 }
 
 module.exports = startVulkano;
