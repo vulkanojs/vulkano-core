@@ -1,3 +1,5 @@
+const path = require('path');
+
 const merge = require('../libs/Merge');
 
 module.exports = function getExpressConfiguration() {
@@ -49,7 +51,7 @@ module.exports = function getExpressConfiguration() {
     sockets: {},
     redis: {},
     multer: {
-      dest: 'public/files'
+      dest: global.PUBLIC_PATH ? path.join(global.PUBLIC_PATH, 'files') : 'public/files'
     },
     morgan: {
       format: 'dev',
