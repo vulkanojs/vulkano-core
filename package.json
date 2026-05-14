@@ -8,11 +8,14 @@
     "node": ">=20"
   },
   "main": "app.js",
+  "bin": {
+    "vulkano": "./bin/vulkano.js"
+  },
   "scripts": {
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    "postinstall": "node bin/postinstall.js"
+    "init": "node bin/setup.js"
   },
   "preferGlobal": true,
   "homepage": "https://github.com/vulkanojs/vulkano-core",
