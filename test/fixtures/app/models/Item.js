@@ -2,6 +2,7 @@
 
 module.exports = {
 
+  // Fields
   attributes: {
     name:  { type: String, required: true },
     value: { type: Number, default: 0 },

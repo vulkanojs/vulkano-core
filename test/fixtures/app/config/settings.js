@@ -1,6 +1,34 @@
+/**
+ * Server Config
+ *
+ */
+
 module.exports = {
-  port: parseInt(process.env.TEST_PORT, 10) || 9877,
+
+  // Port
+  port: process.env.PORT || 8000,
+
+  // Connection to Database
   database: {
-    connection: 'MONGO_URI'
+
+    // MONGO_URI connection or connetion key (development, production)
+    connection: process.env.MONGO_URI || null,
+
+    // Settings before to connect
+    settings: {
+      strictQuery: false,
+      debug: false
+    },
+
+    // Additional config to mongoose
+    config: {
+      // useNewUrlParser: true,
+      // useUnifiedTopology: true,
+      // family: 4 // 4 (IPv4), 6 (IPv6), or null (default: OS family)
+      // useFindAndModify: false,
+      // useCreateIndex: true
+    }
+
   }
+
 };
