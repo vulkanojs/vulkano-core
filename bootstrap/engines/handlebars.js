@@ -39,7 +39,7 @@ module.exports = function setupHandlebars(vulkano, views, viewsExt) {
   registerGroup(hbs, views.filters, 'registerHelper');
   registerGroup(hbs, views.helpers, 'registerHelper');
 
-  vulkano.use((req, res, next) => {
+  vulkano.use((_req, res, next) => {
     (views.globals || []).forEach((group) => {
       Object.assign(res.locals, group || {});
     });
