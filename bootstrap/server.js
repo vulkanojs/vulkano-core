@@ -357,6 +357,13 @@ module.exports = function loadServer() {
       const viewsEngine = views.engine || 'nunjucks';
       const viewsExt = views.ext || '.html';
 
+      const SUPPORTED_ENGINES = ['nunjucks', 'handlebars'];
+      if (!SUPPORTED_ENGINES.includes(viewsEngine)) {
+        throw new Error(
+          `Vulkano: unsupported view engine "${viewsEngine}". Supported engines: ${SUPPORTED_ENGINES.join(', ')}.`
+        );
+      }
+
       vulkano.set('views', views.path);
 
       if (viewsEngine === 'handlebars') {
