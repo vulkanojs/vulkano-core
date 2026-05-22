@@ -1,0 +1,7 @@
+{
+  "verbose": true,
+  "ignore": [".git/", ".claude/", ".graphify/"],
+  "env": {
+    "NODE_ENV": "development"
+  }
+}
