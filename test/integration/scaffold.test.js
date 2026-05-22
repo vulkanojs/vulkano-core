@@ -1,29 +1,23 @@
 /**
  * Scaffold Controller — CRUD + Pagination
  *
- * Setup: drops the collection, creates 30 records in parallel.
+ * Setup: resets the item collection via the fixture server, then creates 30 records.
  * Pagination: per_page=15 → 2 full pages, the 3rd is empty.
  */
 
-const mongoose = require('mongoose');
-const path = require('node:path');
-
-require('dotenv').config({ path: path.join(__dirname, '../../.env.test'), quiet: !process.env.DOTENV_VERBOSE });
-
+const testHttp = require('./helpers/http')(process.env.TEST_SERVER_URL);
 const http = require('./helpers/http')(`${process.env.TEST_SERVER_URL}/api/item`);
 
 const TOTAL    = 30;
 const PER_PAGE = 15;
 
 // ─────────────────────────────────────────────
-// Setup: drop collection + create 30 records
+// Setup: reset item collection + create 30 records
 // ─────────────────────────────────────────────
 beforeAll(async () => {
 
-  // Direct mongoose connection to drop the collection before tests start
-  const conn = await mongoose.connect(process.env.TEST_DB_URI);
-  await conn.connection.db.collection('item').drop().catch(() => {});
-  await conn.connection.close();
+  // Reset via the fixture server so the same mongoose connection handles it
+  await testHttp.delete('/test/reset');
 
   // Create 30 records in parallel via scaffold API
   const results = await Promise.all(

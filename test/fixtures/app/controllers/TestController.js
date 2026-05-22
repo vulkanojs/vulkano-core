@@ -68,6 +68,15 @@ module.exports = {
     res.vsr(new Promise(() => {}));
   },
 
+  // DELETE /test/reset — hard-deletes all items (test helper, test env only)
+  'delete reset': function onReset(req, res) {
+    const db = mongoose.connection.db;
+    const promise = db
+      ? db.collection('item').deleteMany({}).then(() => ({ reset: true }))
+      : Promise.resolve({ reset: true });
+    res.vsr(promise);
+  },
+
   // GET /test/:id — single route param (after specific routes to avoid shadowing)
   'get :id': function onGetById(req, res) {
     const { id } = req.params;

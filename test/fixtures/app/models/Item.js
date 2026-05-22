@@ -4,9 +4,13 @@ module.exports = {
 
   // Fields
   attributes: {
-    name:  { type: String, required: true },
-    value: { type: Number, default: 0 },
-    tags:  { type: [String], default: [] }
+    name:     { type: String, required: true },
+    value:    { type: Number, default: 0 },
+    tags:     { type: [String], default: [] },
+    comments: [{
+      text:   { type: String, trim: true },
+      author: { type: String, trim: true }
+    }]
   },
 
   // Override scaffold getAll to enable search by name

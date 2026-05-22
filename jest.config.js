@@ -2,6 +2,7 @@ module.exports = {
   verbose: true,
   forceExit: true,
   testTimeout: 30000,
+  maxWorkers: 1,
   projects: [
     {
       displayName: 'unit',
