@@ -1,5 +1,6 @@
 allowBuilds:
   fsevents: set this to true or false
+  unrs-resolver: set this to true or false
 catalog:
   vite: npm:@voidzero-dev/vite-plus-core@latest
   vitest: npm:@voidzero-dev/vite-plus-test@latest
