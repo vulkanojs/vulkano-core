@@ -4,10 +4,16 @@ allowBuilds:
 catalog:
   vite: npm:@voidzero-dev/vite-plus-core@latest
   vitest: npm:@voidzero-dev/vite-plus-test@latest
-  vite-plus: latest
+  vite-plus: ^0.2.4
 overrides:
   vite: "catalog:"
   vitest: "catalog:"
+  # Safety floor for the real "vite" package pnpm auto-installs to satisfy
+  # @voidzero-dev/vite-plus-test / @vitest/mocker's peerDependency (they
+  # require actual vite, not the vite-plus-core alias). Keeps it above the
+  # server.fs.deny bypass (GHSA-v6wh-96g9-6wx3), fixed in 8.0.16.
+  "@vitest/mocker>vite": ^8.1.4
+  "@voidzero-dev/vite-plus-test>vite": ^8.1.4
 peerDependencyRules:
   allowAny:
     - vite
