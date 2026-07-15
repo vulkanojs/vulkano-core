@@ -51,7 +51,12 @@ module.exports = function getExpressConfiguration() {
     sockets: {},
     redis: {},
     multer: {
-      dest: global.PUBLIC_PATH ? path.join(global.PUBLIC_PATH, 'files') : 'public/files'
+      dest: global.PUBLIC_PATH ? path.join(global.PUBLIC_PATH, 'files') : 'public/files',
+      limits: {
+        // Prevents DoS via deeply nested field names (e.g. a[b][c][d]...),
+        // which multer forwards to append-field's unbounded recursive parser.
+        fieldNestingDepth: 5
+      }
     },
     morgan: {
       format: 'dev',

@@ -79,7 +79,7 @@ importers:
         specifier: ^1.10.0
         version: 1.10.1
       multer:
-        specifier: ^2.1.1
+        specifier: ^2.2.0
         version: 2.2.0
       nunjucks:
         specifier: ^3.2.4
@@ -3938,7 +3938,7 @@ snapshots:
       tinyexec: 1.2.4
       tinyglobby: 0.2.17
       vite: 8.0.13(@types/node@25.8.0)
-      ws: 8.21.1
+      ws: 8.18.3
     optionalDependencies:
       '@types/node': 25.8.0
     transitivePeerDependencies:
