@@ -8,7 +8,7 @@ module.exports = (req, callback) => {
   const realOrigin = origin || host;
 
   const allowedOrigin = [
-    'localhost:3000',
+    'localhost',
     'yourdomain.com'
   ];
 

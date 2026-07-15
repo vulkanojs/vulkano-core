@@ -7,4 +7,6 @@ module.exports = {
   // 'chat:message': 'sockets.ChatController.save',
   // 'chat:history': 'sockets.ChatController.get'
 
+  'echo': 'sockets.EchoController.echo'
+
 };

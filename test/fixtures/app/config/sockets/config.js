@@ -7,7 +7,7 @@
 module.exports = {
 
   // Enable sockets
-  enabled: false,
+  enabled: true,
 
   // Socket IO Adapter (redis|mongodb|memory)
   adapter: 'memory',

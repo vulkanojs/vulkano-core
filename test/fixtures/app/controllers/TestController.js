@@ -1,10 +1,16 @@
-/* global VSError */
+/* global VSError, Jwt */
 
 module.exports = {
 
   // GET /test/
   get(req, res) {
     res.vsr(Promise.resolve({ message: 'hello' }));
+  },
+
+  // GET /test/sockettoken — issues a JWT used to authenticate Socket.IO connections
+  'get sockettoken': function onSocketToken(req, res) {
+    const token = Jwt.encode({ _id: 'socket-test-user', expiration: String(Date.now() + 60000) });
+    res.vsr(Promise.resolve({ token }));
   },
 
   // POST /test/save

@@ -37,6 +37,7 @@
   "devDependencies": {
     "jest": "^30.4.2",
     "nodemon": "^3.1.14",
+    "socket.io-client": "^4.8.3",
     "vite-plus": "catalog:"
   },
   "packageManager": "pnpm@11.1.2",
