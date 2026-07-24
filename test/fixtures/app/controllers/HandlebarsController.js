@@ -1,6 +1,7 @@
 module.exports = {
 
-  // GET /home/
+  // GET /handlebars/ — consumes pageTitle/heading/footerText across layout+view+partial,
+  // plus the {{upper heading}} filter-style helper
   get(req, res) {
     res.render('home/index.html', {
       pageTitle: 'My App',       // consumed by layout (default.html)
@@ -9,7 +10,7 @@ module.exports = {
     });
   },
 
-  // GET /home/layout — renders using the default layout automatically
+  // GET /handlebars/layout — renders using the default layout automatically
   'get layout'(req, res) {
     res.render('home/layout-content.html', {
       pageTitle: 'Layout Test',
@@ -17,7 +18,7 @@ module.exports = {
     });
   },
 
-  // GET /home/throw — triggers the 500 exception view
+  // GET /handlebars/throw — triggers the 500 exception view
   'get throw'(req, res) {
     throw new Error('Test crash 500');
   }

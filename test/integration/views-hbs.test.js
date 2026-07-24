@@ -7,7 +7,7 @@ describe('Views (Handlebars) — variable flow across layout / view / partial', 
   let html;
 
   beforeAll(async () => {
-    const res = await fetch(`${process.env.TEST_SERVER_HBS_URL}/home`);
+    const res = await fetch(`${process.env.TEST_SERVER_HBS_URL}/handlebars`);
     html = await res.text();
   });
 
@@ -33,24 +33,24 @@ describe('Views (Handlebars) — variable flow across layout / view / partial', 
 
 describe('Views (Handlebars) — res.render()', () => {
 
-  it('GET /home renders and returns 200', async () => {
-    const res = await fetch(`${process.env.TEST_SERVER_HBS_URL}/home`);
+  it('GET /handlebars renders and returns 200', async () => {
+    const res = await fetch(`${process.env.TEST_SERVER_HBS_URL}/handlebars`);
     expect(res.status).toBe(200);
   });
 
-  it('GET /home Content-Type is text/html', async () => {
-    const res = await fetch(`${process.env.TEST_SERVER_HBS_URL}/home`);
+  it('GET /handlebars Content-Type is text/html', async () => {
+    const res = await fetch(`${process.env.TEST_SERVER_HBS_URL}/handlebars`);
     expect(res.headers.get('content-type')).toMatch(/text\/html/);
   });
 
   it('filter-style helper (positional arg) — {{upper value}}', async () => {
-    const res = await fetch(`${process.env.TEST_SERVER_HBS_URL}/home`);
+    const res = await fetch(`${process.env.TEST_SERVER_HBS_URL}/handlebars`);
     const h = await res.text();
     expect(h).toContain('WELCOME');
   });
 
-  it('GET /home/layout renders using default layout automatically', async () => {
-    const res = await fetch(`${process.env.TEST_SERVER_HBS_URL}/home/layout`);
+  it('GET /handlebars/layout renders using default layout automatically', async () => {
+    const res = await fetch(`${process.env.TEST_SERVER_HBS_URL}/handlebars/layout`);
     expect(res.status).toBe(200);
     const h = await res.text();
     expect(h).toContain('<title>Layout Test</title>');
@@ -71,7 +71,7 @@ describe('Views (Handlebars) — 404 error pages', () => {
   });
 
   it('GET unknown action renders no_action.html with action name', async () => {
-    const res = await fetch(`${process.env.TEST_SERVER_HBS_URL}/home/badaction`);
+    const res = await fetch(`${process.env.TEST_SERVER_HBS_URL}/handlebars/badaction`);
     expect(res.status).toBe(404);
     const h = await res.text();
     expect(h).toContain('Action Not Found');
@@ -82,8 +82,8 @@ describe('Views (Handlebars) — 404 error pages', () => {
 
 describe('Views (Handlebars) — 500 error page', () => {
 
-  it('GET /home/throw renders exception.html with status code', async () => {
-    const res = await fetch(`${process.env.TEST_SERVER_HBS_URL}/home/throw`);
+  it('GET /handlebars/throw renders exception.html with status code', async () => {
+    const res = await fetch(`${process.env.TEST_SERVER_HBS_URL}/handlebars/throw`);
     expect(res.status).toBe(500);
     const h = await res.text();
     expect(h).toContain('Internal Error');

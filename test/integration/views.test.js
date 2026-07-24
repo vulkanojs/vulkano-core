@@ -4,24 +4,24 @@
 
 describe('Views (Nunjucks) — res.render()', () => {
 
-  it('GET /home renders and returns 200', async () => {
-    const res = await fetch(`${process.env.TEST_SERVER_URL}/home`);
+  it('GET /nunjucks renders and returns 200', async () => {
+    const res = await fetch(`${process.env.TEST_SERVER_URL}/nunjucks`);
     expect(res.status).toBe(200);
   });
 
-  it('GET /home Content-Type is text/html', async () => {
-    const res = await fetch(`${process.env.TEST_SERVER_URL}/home`);
+  it('GET /nunjucks Content-Type is text/html', async () => {
+    const res = await fetch(`${process.env.TEST_SERVER_URL}/nunjucks`);
     expect(res.headers.get('content-type')).toMatch(/text\/html/);
   });
 
-  it('GET /home HTML body contains "Welcome to VulkanoJS"', async () => {
-    const res = await fetch(`${process.env.TEST_SERVER_URL}/home`);
+  it('GET /nunjucks HTML body contains "Welcome to VulkanoJS"', async () => {
+    const res = await fetch(`${process.env.TEST_SERVER_URL}/nunjucks`);
     const html = await res.text();
     expect(html).toContain('Welcome to VulkanoJS');
   });
 
-  it('GET /home/vars passes variables to the Nunjucks template', async () => {
-    const res = await fetch(`${process.env.TEST_SERVER_URL}/home/vars`);
+  it('GET /nunjucks/vars passes variables to the Nunjucks template', async () => {
+    const res = await fetch(`${process.env.TEST_SERVER_URL}/nunjucks/vars`);
     expect(res.status).toBe(200);
     const html = await res.text();
     expect(html).toContain('Test Title');
@@ -35,7 +35,7 @@ describe('Views (Nunjucks) — variable flow across layout / view / partial', ()
   let html;
 
   beforeAll(async () => {
-    const res = await fetch(`${process.env.TEST_SERVER_URL}/home/three-vars`);
+    const res = await fetch(`${process.env.TEST_SERVER_URL}/nunjucks/three-vars`);
     html = await res.text();
   });
 
@@ -70,7 +70,7 @@ describe('Views (Nunjucks) — 404 error pages', () => {
   });
 
   it('GET unknown action renders no_action.html with action name', async () => {
-    const res = await fetch(`${process.env.TEST_SERVER_URL}/home/badaction`);
+    const res = await fetch(`${process.env.TEST_SERVER_URL}/nunjucks/badaction`);
     expect(res.status).toBe(404);
     const html = await res.text();
     expect(html).toContain('Action Not Found');
@@ -81,8 +81,8 @@ describe('Views (Nunjucks) — 404 error pages', () => {
 
 describe('Views (Nunjucks) — 500 error page', () => {
 
-  it('GET /home/throw renders exception.html with status code', async () => {
-    const res = await fetch(`${process.env.TEST_SERVER_URL}/home/throw`);
+  it('GET /nunjucks/throw renders exception.html with status code', async () => {
+    const res = await fetch(`${process.env.TEST_SERVER_URL}/nunjucks/throw`);
     expect(res.status).toBe(500);
     const html = await res.text();
     expect(html).toContain('Internal Error');
