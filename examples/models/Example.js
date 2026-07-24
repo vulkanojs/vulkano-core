@@ -147,15 +147,44 @@ module.exports = {
   },
 
   /**
+   * Before validate callback — runs before beforeSave, as part of obj.save()
+   * (create() above). Does NOT run for update()/delete(): Mongoose's update
+   * validators (runValidators) validate each changed path directly and never
+   * go through this callback, even when a validator rejects the value.
+   * @param {Callback} cb
+   */
+  beforeValidate(cb) {
+
+    console.log('Running callback before validate');
+
+    // All good!
+    cb();
+
+  },
+
+  /**
+   * Callback after validate
+   * @param {Callback} cb
+   */
+  afterValidate(cb) {
+
+    console.log('Running callback after validate');
+
+    // All good!
+    cb();
+
+  },
+
+  /**
    * Before save callback
    * @param {Callback} cb
    */
   beforeSave(cb) {
 
-    const data = this;
+    const doc = this;
 
     console.log('Running callback before save');
-    console.log(data);
+    console.log(doc);
 
     // All good!
     cb();
@@ -166,10 +195,40 @@ module.exports = {
    * Callback after save
    * @param {Callback} cb
    */
-  afterSave(data, cb) {
+  afterSave(doc, cb) {
 
     console.log('Running callback after save');
-    console.log(data);
+    console.log(doc);
+
+    // All good!
+    cb();
+
+  },
+
+  /**
+   * Before findOneAndUpdate callback — runs on update() and delete() above,
+   * since both call Example.findOneAndUpdate() directly. `this` is the Query,
+   * not the document.
+   * @param {Callback} cb
+   */
+  beforeFindOneAndUpdate(cb) {
+
+    console.log('Running callback before findOneAndUpdate');
+
+    // All good!
+    cb();
+
+  },
+
+  /**
+   * Callback after findOneAndUpdate
+   * @param {Object} doc Updated document
+   * @param {Callback} cb
+   */
+  afterFindOneAndUpdate(doc, cb) {
+
+    console.log('Running callback after findOneAndUpdate');
+    console.log(doc);
 
     // All good!
     cb();

@@ -175,12 +175,17 @@ module.exports = async function loadDatabaseApplication() {
       }
 
       // Update
+      // Bound to "updateOne" (the Mongoose 8 document method) rather than the
+      // legacy "update" hook name: Mongoose no longer fires "update" middleware,
+      // and that name collides with the scaffold's own `Model.update()` static
+      // (schema.statics.update), which Mongoose auto-wraps with any hook whose
+      // name matches an existing static method.
       if (current.beforeUpdate) {
-        schema.pre('update', current.beforeUpdate);
+        schema.pre('updateOne', { document: true, query: false }, current.beforeUpdate);
         delete schema.statics.beforeUpdate;
       }
       if (current.afterUpdate) {
-        schema.post('update', current.afterUpdate);
+        schema.post('updateOne', { document: true, query: false }, current.afterUpdate);
         delete schema.statics.afterUpdate;
       }
 
@@ -195,12 +200,14 @@ module.exports = async function loadDatabaseApplication() {
       }
 
       // Remove
+      // Bound to "deleteOne" (the Mongoose 8 document method): `doc.remove()`
+      // and the legacy "remove" hook name were both removed upstream.
       if (current.beforeRemove) {
-        schema.pre('remove', current.beforeRemove);
+        schema.pre('deleteOne', { document: true, query: false }, current.beforeRemove);
         delete schema.statics.beforeRemove;
       }
       if (current.afterRemove) {
-        schema.post('remove', current.afterRemove);
+        schema.post('deleteOne', { document: true, query: false }, current.afterRemove);
         delete schema.statics.afterRemove;
       }
 
