@@ -39,6 +39,15 @@ npm install @vulkano/core
 
 ---
 
+## Environment variables
+
+```
+PORT=8000
+MONGO_URI=mongodb://localhost:27017/myapp
+SALT_KEY=random-string
+JWT_SECRET=supersecret
+```
+
 ## Quick Start
 
 ### 1. Entry point — `app.js`
@@ -100,12 +109,20 @@ module.exports = {
     res.vsr(Promise.resolve({ users: [] }));
   },
 
-  'get :id': function (req, res) {
+  'get :id': (req, res) => {
     res.vsr(Promise.resolve({ id: req.params.id }));
   },
 
-  'post save': function (req, res) {
-    res.vsr(Promise.resolve({ saved: true }));
+  post(req, res) {
+    res.vsr(Promise.resolve({ data: req.body }));
+  },
+
+  'put :id': (req, res) => {
+    res.vsr(Promise.resolve({ updated: req.params.id, data: req.body }));
+  },
+
+  'delete :id': (req, res) => {
+    res.vsr(Promise.resolve({ deleted: req.params.id }));
   }
 
 };
@@ -200,6 +217,15 @@ Models use [`mongoose-paginate-v2`](https://github.com/aravindnc/mongoose-pagina
 
 ---
 
+## Key conventions
+
+### Naming: controllers in plural (recommended but not mandatory), models in singular
+`@vulkano/core` pairs each model with a controller by name, so the naming convention is what makes the auto-routing work:
+- **Model** → singular PascalCase (e.g., `Product.js` → `global.Product`)
+- **Controller** → plural PascalCase + `Controller` suffix (e.g., `ProductsController.js`)
+
+---
+
 ## Built-in Global Libs
 
 All files in `vulkano/services/` are auto-loaded as globals. The framework also exposes:
@@ -260,11 +286,19 @@ const token = Jwt.encode({ userId: user._id });
 ## Cron Jobs
 
 ```js
-// vulkano/services/Jobs.js
+// vulkano/libs/Crontab.js
 module.exports = {
   init() {
-    Crontab.add('cleanup', '0 3 * * *', async () => {
-      await Report.deleteMany({ active: false });
+    Crontab.schedule({
+      time: '0 0 11 * * 5',
+      timeZone: 'America/New_York',
+      task: () => {
+        console.log('Crontab every Friday (5) at 11');
+        Weekly.report().catch( () => {});
+      },
+      onComplete: () => {
+        console.log(`Weekly report job completed at ${new Date()}`);
+      }
     });
   }
 };
