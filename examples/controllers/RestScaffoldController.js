@@ -9,13 +9,10 @@
 
 module.exports = {
 
-  // Extend methods of Scaffold Controller and Scaffold Model
-  scaffold: true,
+  // Model to CRUD (create, read, update, and delete) records — must exist as global.ExampleWithScaffold
+  scaffold: 'ExampleWithScaffold',
 
   // Allowed methods
-  allowedMethods: ['get', 'post', 'put', 'delete'],
-
-  // Model to CRUD (create, read, update, and delete) records
-  model: 'ExampleWithScaffold'
+  allowedMethods: ['get', 'post', 'put', 'delete']
 
 };

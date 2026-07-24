@@ -21,6 +21,8 @@ Vulkano is a lightweight MVC framework for building web applications and APIs wi
 
 Inspired by [KumbiaPHP](https://www.kumbiaphp.com).
 
+For the full project generator/scaffolding (frontend + backend structure), see the framework: [https://github.com/vulkanojs/vulkano](https://github.com/vulkanojs/vulkano)
+
 ---
 
 ## Requirements
@@ -237,10 +239,17 @@ Point a controller at a model and get a full REST API for free:
 ```js
 // vulkano/controllers/api/ProductController.js
 module.exports = {
-  scaffold: 'Product',           // Mongoose model name
+  scaffold: 'Product',            // Mongoose model name — must exist as global.Product
   allowedMethods: ['get', 'post', 'put', 'patch', 'delete']
 };
 ```
+
+`scaffold` is the model name directly, so no separate `model` field is needed. If the string
+doesn't match a loaded model (`global.Product` in this example), Vulkano throws at startup instead
+of silently registering an empty controller.
+
+> You may also see `scaffold: true` paired with a separate `model: 'Product'` field — both forms are
+> supported and behave identically, but `scaffold: 'Product'` is the recommended, shorter form.
 
 This automatically exposes:
 

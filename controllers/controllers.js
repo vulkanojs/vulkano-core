@@ -26,9 +26,17 @@ module.exports = function loadControllersApplication() {
       model
     } = current;
 
-    if (scaffold && model) {
+    // `scaffold` can be `true` + a separate `model` field, or the model
+    // name given directly as the `scaffold` string (no `model` needed).
+    const scaffoldModel = typeof scaffold === 'string' ? scaffold : model;
 
-      const scaffoldingCurrent = scaffoldController(model, allowedMethods);
+    if (scaffold && scaffoldModel) {
+
+      if (!global[scaffoldModel]) {
+        throw new Error(`Scaffold model "${scaffoldModel}" not found in global scope for controller "${controller}". Make sure the model exists in app/models.`);
+      }
+
+      const scaffoldingCurrent = scaffoldController(scaffoldModel, allowedMethods);
 
       Object.keys(scaffoldingCurrent).forEach( (m) => {
 
@@ -66,9 +74,15 @@ module.exports = function loadControllersApplication() {
             model: subcurrentModel
           } = subcurrent || {};
 
-          if (subcurrentScaffold && subcurrentModel) {
+          const subScaffoldModel = typeof subcurrentScaffold === 'string' ? subcurrentScaffold : subcurrentModel;
 
-            const scaffoldingSubcurrent = scaffoldController(subcurrentModel, subAllowedMethods);
+          if (subcurrentScaffold && subScaffoldModel) {
+
+            if (!global[subScaffoldModel]) {
+              throw new Error(`Scaffold model "${subScaffoldModel}" not found in global scope for controller "${subcontroller}". Make sure the model exists in app/models.`);
+            }
+
+            const scaffoldingSubcurrent = scaffoldController(subScaffoldModel, subAllowedMethods);
 
             Object.keys(scaffoldingSubcurrent).forEach( (m) => {
 
