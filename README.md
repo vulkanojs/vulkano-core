@@ -265,7 +265,7 @@ This automatically exposes:
 Query string params supported on list: `page`, `per_page`, `sort`, `search`, `fields`.
 
 A scaffold controller wires each allowed HTTP method to the matching standard CRUD method on the model
-(`getAll`, `get<ModelName>`, `create`, `update`, `delete` — see [Models](#models) below), so the model
+(`getAll`, `get<ModelName>`, `create`, `update`, `delete` — see [Models](#models-business-logic-lives-here) below), so the model
 still needs those methods implemented or auto-generated.
 
 NOTE: To find examples with the best practices, look in `examples/controllers` to find a well-structured controller for server side rendering, like `ExampleController.js`, REST API like `RestExampleController.js` and Scaffold REST API like `RestScaffoldController.js`.
@@ -402,6 +402,8 @@ const { _id } = Jwt.decode(Jwt.getToken(req)) || {};
 
 ## Cron Jobs
 
+When Vulkano starts, you can configure your own tasks to run at a given time.
+
 ```js
 // app/config/bootstrap.js
 module.exports = (start) => {
@@ -465,7 +467,113 @@ active language at runtime, call `i18n.changeLanguage('es')`.
 
 ## Socket.io
 
-Enabled via `app/config/settings.js`. Adapters for MongoDB and Redis are included out of the box.
+Enabled via `app/config/sockets/config.js`. Adapters for Redis and MongoDB are included out of the box (default is in-memory).
+
+```js
+// app/config/sockets/config.js
+module.exports = {
+
+  // Enable sockets
+  enabled: true,
+
+  // Socket IO Adapter (redis|mongodb|memory)
+  adapter: 'memory',
+
+  // Socket configuration
+  config: {
+    transports: ['websocket', 'polling'],
+    timeout: 4000,
+    interval: 2000,
+  },
+
+  // Connections
+  connections: {
+    users: 0,
+    clients: {}
+  }
+
+};
+```
+
+Events map socket event names to a controller action, the same `folder.<Name>Controller.method` convention used by `routes.js`:
+
+```js
+// app/config/sockets/events.js
+module.exports = {
+  'echo': 'sockets.EchoController.echo'
+};
+```
+
+```js
+// app/controllers/sockets/EchoController.js
+module.exports = {
+  echo({ socket, body }, callback) {
+    callback({
+      echo: body,
+      userId: (socket.request.user || {})._id || null
+    });
+  }
+};
+```
+
+Handler signature is always `({ socket, body }, callback)`.
+
+Optional CORS check (`app/config/sockets/cors.js`):
+
+```js
+module.exports = (req, callback) => {
+  const { origin, host } = req.headers || {};
+  const realOrigin = origin || host;
+  const allowedOrigin = ['localhost', 'yourdomain.com'];
+
+  const found = allowedOrigin.some((o) => (realOrigin || '').indexOf(o) !== -1);
+
+  if (found) {
+    callback(null, true);
+  } else {
+    callback(new Error(`Invalid origin ${realOrigin} - Socket CORS`));
+  }
+};
+```
+
+Optional auth middleware, run before a socket connection is accepted (`app/config/sockets/middlewares/auth.js`):
+
+```js
+module.exports = (socket, next) => {
+  const user = Jwt.socket(socket);
+  const { _id } = user || {};
+
+  if (!_id) {
+    next(new Error(`Invalid user ${_id || 'or token'}`));
+  }
+
+  socket.request.user = user || {};
+  next();
+};
+```
+
+Redis/MongoDB adapter settings live in `app/config/sockets/adapters/redis.js` and `app/config/sockets/adapters/mongodb.js`:
+
+```js
+// app/config/sockets/adapters/redis.js
+module.exports = {
+  host: process.env.REDIS_HOST || 'localhost',
+  port: process.env.REDIS_PORT || '6379',
+  password: process.env.REDIS_PASSWORD || ''
+};
+```
+
+```js
+// app/config/sockets/adapters/mongodb.js
+module.exports = {
+  connection: process.env.SOCKETS_MONGO_URI || null,
+  collection: process.env.SOCKETS_MONGO_COLLECTION || 'socket.io-adapter-events'
+};
+```
+
+Available globally as `io` (the Socket.io server instance) and `app.socket` (the current socket).
+
+See `test/fixtures/app/config/sockets` and `test/fixtures/app/controllers/sockets` for the full working example used by the integration tests.
 
 ---
 
