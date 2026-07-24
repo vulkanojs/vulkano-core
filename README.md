@@ -64,23 +64,23 @@ vulkano();
 ```
 your-app/
 ├── app.js                  # Entry point
-├── public/                 # Static files served over HTTP
+├── app/                    # Your application
+│   ├── config/
+│   │   ├── settings.js     # App-wide settings (port, database, JWT…)
+│   │   ├── routes.js       # Explicit route overrides (optional)
+│   │   ├── env/            # Per-environment config overrides
+│   │   ├── express/        # Express middleware customization
+│   │   ├── settings.js     # App-wide settings (port, database, JWT…)
+│   │   ├── routes.js       # Explicit route overrides (optional)
+│   │   └── locales/        # i18n translation files (en.js, es.js, etc.)
+│   ├── controllers/        # Request handlers
+│   ├── models/             # Mongoose model definitions
+│   └── services/           # Shared services & libs (auto-loaded as globals)
+└── public/                 # Static files served over HTTP
 │   ├── css/
 │   ├── js/
 │   ├── img/
 │   └── files/              # Uploaded files
-└── vulkano/                # Your application
-    ├── config/
-    │   ├── settings.js     # App-wide settings (port, database, JWT…)
-    │   ├── routes.js       # Explicit route overrides (optional)
-    │   ├── env/            # Per-environment config overrides
-    │   ├── express/        # Express middleware customization
-    │   ├── settings.js     # App-wide settings (port, database, JWT…)
-    │   ├── routes.js       # Explicit route overrides (optional)
-    │   └── locales/        # i18n translation files (en.js, es.js, etc.)
-    ├── controllers/        # Request handlers
-    ├── models/             # Mongoose model definitions
-    └── services/           # Shared services & libs (auto-loaded as globals)
 ```
 
 ---
@@ -102,8 +102,8 @@ GET /users/edit/1
 
 ### Convention-based (automatic)
 
-| HTTP method | URL              | Resolves to                         |
-|-------------|------------------|-------------------------------------|
+| HTTP method | URL               | Resolves to                          |
+|-------------|-------------------|--------------------------------------|
 | `GET`       | `/users`          | `UsersController.get`                |
 | `POST`      | `/users`          | `UsersController.post`               |
 | `PUT`       | `/users/42`       | `UsersController['put :id']`         |
@@ -237,9 +237,9 @@ res.vsr(Promise.reject(new Error('Something went wrong')));
 Point a controller at a model and get a full REST API for free:
 
 ```js
-// vulkano/controllers/api/ProductController.js
+// app/controllers/api/ProductsController.js
 module.exports = {
-  scaffold: 'Product',            // Mongoose model name — must exist as global.Product
+  scaffold: 'Product', // Mongoose model name — must exist as global.Product
   allowedMethods: ['get', 'post', 'put', 'patch', 'delete']
 };
 ```
@@ -274,7 +274,7 @@ NOTE: To find examples with the best practices, look in `examples/controllers` t
 
 ## Models: business logic lives here
 
-Models live in `(vulkano|app)/models/` are auto-loaded as globals. A file `Project.js` becomes `global.Project` (singular).
+Models live in `app/models/` are auto-loaded as globals. A file `Project.js` becomes `global.Project` (singular).
 Every model gets `attributes` (Mongoose schema fields), plus `active`, `createdAt`, `updatedAt` automatically.
 
 Models are where validation, data manipulation, and business rules belong — not just the raw Mongoose schema. Controllers should only ever call methods on the model; they shouldn't reach into `Model.find(...)` or manipulate documents directly.
@@ -282,16 +282,17 @@ Models are where validation, data manipulation, and business rules belong — no
 ### Standard CRUD methods
 Every model is expected to expose this same set of methods, so controllers can call them the same way regardless of the resource:
 
-| Method                | Purpose                                                     |
-|------------------------|--------------------------------------------------------------|
+| Method                 | Purpose                                                            |
+|------------------------|--------------------------------------------------------------------|
 | `getAll(props)`        | List/paginate records. `props` = `{ page, perPage, search, sort }` |
-| `get<ModelName>(id)`   | Get a single record by id (e.g. `getProduct(id)`)            |
-| `create(data)`         | Create a new record                                          |
-| `update(id, data)`     | Update a record by id                                        |
-| `delete(id)`           | Soft-delete a record (sets `active: false`)                  |
+| `get<ModelName>(id)`   | Get a single record by id (e.g. `getProduct(id)`)                  |
+| `create(data)`         | Create a new record                                                |
+| `update(id, data)`     | Update a record by id                                              |
+| `delete(id)`           | Soft-delete a record (sets `active: false`)                        |
 
 ```js
-// vulkano/models/Product.js
+
+// app/models/Product.js
 module.exports = {
   attributes: {
     name:  { type: String, required: true },
@@ -316,7 +317,7 @@ NOTE: To find examples with the best practices for available methods ahd hooks, 
 
 ## Built-in Global Libs
 
-All files in `vulkano/services/` are auto-loaded as globals. The framework also exposes:
+All files in `app/services/` are auto-loaded as globals. The framework also exposes:
 
 | Global      | Description                                                     |
 |-------------|-----------------------------------------------------------------|
@@ -354,19 +355,47 @@ Vulkano uses [Multer](https://github.com/expressjs/multer) v2. Files are availab
 
 ## JWT Authentication
 
-Configure in `vulkano/config/express/jwt.js`:
+Vulkano integrates JWT internally to validate protected routes, using
+[`express-jwt`](https://www.npmjs.com/package/express-jwt) (route middleware) and
+[`jwt-simple`](https://www.npmjs.com/package/jwt-simple) (encode/decode) under the hood. Configured
+in `app/config/express/jwt.js` — see [`examples/config/express/jwt.js`](examples/config/express/jwt.js)
+for a full example configuration.
+
+When `enabled: true`, every request under `path` is checked by an `express-jwt` middleware, which
+calls `Jwt.getToken(req)` to pull the token from the configured header (`x-token-auth` by default),
+cookie, or query parameter, then validates it with `Jwt.decode()`.
+
+### Signing a token
+
+`Jwt.encode(data)` requires an `expiration` field in the payload (a millisecond timestamp) —
+without it, `Jwt.decode()` rejects the token by default:
 
 ```js
+// app/controllers/api/AuthController.js
 module.exports = {
-  secret: process.env.JWT_SECRET,
-  unless: ['/auth/login', '/health']   // Public paths (no token required)
+  'post login'(req, res) {
+    res.vsr(User.login(req.body).then((user) => ({
+      user,
+      token: Jwt.encode({
+        _id: user._id,
+        expiration: String(Date.now() + 24 * 60 * 60 * 1000)   // 24h from now
+      })
+    })));
+  }
 };
 ```
 
-Sign a token anywhere in your app:
+> To issue tokens that never expire, set `expiration: false` in `app/config/express/jwt.js` — this
+> disables the expiration check on `Jwt.decode()`, not just for tokens missing the field.
+
+### Reading the current user
+
+`req.auth` isn't set automatically — decode the token in your own middleware
+(`app/config/middlewares/`) or per-controller. See
+[`examples/config/middlewares/auth.js`](examples/config/middlewares/auth.js) for a full example:
 
 ```js
-const token = Jwt.encode({ userId: user._id });
+const { _id } = Jwt.decode(Jwt.getToken(req)) || {};
 ```
 
 ---
@@ -400,26 +429,53 @@ module.exports = (start) => {
 
 ## i18n
 
-Translation files go in `vulkano/config/locales/`. Use `i18n.t('key')` anywhere in your app.
+Vulkano wires up [i18next](https://www.i18next.com/) automatically. One file per locale in
+`app/config/locales/`, keyed by filename — no manual registration needed:
+
+```js
+// app/config/locales/en.js
+module.exports = {
+  welcome: 'Welcome',
+  goodbye: 'Goodbye'
+};
+
+// app/config/locales/es.js
+module.exports = {
+  welcome: 'Bienvenido',
+  goodbye: 'Adiós'
+};
+```
+
+The global `i18n` is the configured i18next instance — use `i18n.t('key')` anywhere in your app
+(controllers, models, services):
+
+```js
+// app/controllers/HomeController.js
+module.exports = {
+  get(req, res) {
+    res.vsr(Promise.resolve({ message: i18n.t('welcome') }));  // "Welcome"
+  }
+};
+```
+
+Default language is `en`, with `en` as the fallback if a key or locale is missing. To switch the
+active language at runtime, call `i18n.changeLanguage('es')`.
 
 ---
 
 ## Socket.io
 
-Enabled via `vulkano/config/settings.js`. Adapters for MongoDB and Redis are included out of the box.
+Enabled via `app/config/settings.js`. Adapters for MongoDB and Redis are included out of the box.
 
 ---
 
-## Configuration — `vulkano/config/settings.js`
+## Configuration — `app/config/settings.js`
 
 ```js
 module.exports = {
 
   // PORT to listen on
   port: process.env.PORT || 3000,
-
-  // Salt for password
-  salt: process.env.SALT_KEY || '',
 
   // Database configuration
   database: {
@@ -445,6 +501,26 @@ module.exports = {
   }
 };
 ```
+
+---
+
+## Express Configuration
+
+Each file in `app/config/express/` configures one Express middleware. All are optional — omitted
+files fall back to sane defaults — and every file is auto-merged into the final config used by
+`bootstrap/server.js`. Full working examples for every file live in
+[`examples/config/express/`](examples/config/express).
+
+| File                    | Configures                          | Package used                                              |
+|-------------------------|--------------------------------------|-------------------------------------------------------------|
+| [`settings.js`](examples/config/express/settings.js)             | Core server behavior (`poweredBy`, `timeout`, `uploadPath`, `trustProxy`) | — (native Express) |
+| [`cookies.js`](examples/config/express/cookies.js)               | Cookie parsing + session secret     | [`cookie-parser`](https://www.npmjs.com/package/cookie-parser), [`express-session`](https://www.npmjs.com/package/express-session) |
+| [`cors.js`](examples/config/express/cors.js)                     | Cross-Origin Resource Sharing       | — (handled with a custom middleware, no `cors` package) |
+| [`jwt.js`](examples/config/express/jwt.js)                       | JWT authentication middleware       | [`express-jwt`](https://www.npmjs.com/package/express-jwt), [`jwt-simple`](https://www.npmjs.com/package/jwt-simple) |
+| [`csp.js`](examples/config/express/csp.js)                       | Content Security Policy rules       | — (custom header builder) |
+| [`helmet.js`](examples/config/express/helmet.js)                 | Security headers                    | [`helmet`](https://helmetjs.github.io/) |
+| [`permissionPolicy.js`](examples/config/express/permissionPolicy.js) | `Permission-Policy` header       | — (custom header builder) |
+| [`json.js`](examples/config/express/json.js)                     | JSON body parser MIME types         | — (native `express.json()`) |
 
 ---
 
