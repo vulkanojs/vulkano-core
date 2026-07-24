@@ -53,6 +53,7 @@ module.exports = {
     const defaultProps = {
       sort: 'createdAt|DESC',
       searchBy: ['name'],
+      fields: ['name', 'age', 'active', 'createdAt', 'updatedAt'],
       filter: {
         active: true
       },
