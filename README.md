@@ -87,17 +87,66 @@ your-app/
 
 Vulkano resolves routes **by convention** — no route file required for standard CRUD.
 
+The URL segments map to `/:resource/:method?/:param?`, resolving to `<Resource>Controller.<method>(param)`.
+The **resource segment is always the requesting controller's own filename** (`UsersController` → `users`).
+
+```
+GET /users/edit/1
+     │     │    │
+     │     │    └── param  → passed as the method argument
+     │     └─────── method → UsersController.edit
+     └───────────-─ resource ("users") → UsersController
+```
+
 ### Convention-based (automatic)
 
 | HTTP method | URL              | Resolves to                         |
 |-------------|------------------|-------------------------------------|
-| `GET`       | `/user`          | `UserController.get`                |
-| `POST`      | `/user`          | `UserController.post`               |
-| `PUT`       | `/user/42`       | `UserController['put :id']`         |
-| `PATCH`     | `/user/42`       | `UserController['patch :id']`       |
-| `DELETE`    | `/user/42`       | `UserController['delete :id']`      |
-| `POST`      | `/user/save`     | `UserController['post save']`       |
-| `GET`       | `/user/42/info`  | `UserController['get :id/info']`    |
+| `GET`       | `/users`          | `UsersController.get`                |
+| `POST`      | `/users`          | `UsersController.post`               |
+| `PUT`       | `/users/42`       | `UsersController['put :id']`         |
+| `PATCH`     | `/users/42`       | `UsersController['patch :id']`       |
+| `DELETE`    | `/users/42`       | `UsersController['delete :id']`      |
+| `POST`      | `/users/save`     | `UsersController['post save']`       |
+| `GET`       | `/users/42/info`  | `UsersController['get :id/info']`    |
+
+### Method key convention: `'<verb>? <path tail>'`
+
+A controller method key is `<path tail>` on its own, or `'<verb> <path tail>'` when the verb isn't `GET`. The auto-router only reassigns the HTTP method when the key has a space-separated verb prefix — otherwise it defaults to **GET**.
+
+- A **custom action name with no verb prefix** (no space in the key) is still `GET`, e.g. `me(req, res)` on `AuthController` → `GET /auth/me`. Don't write `'get me'`; it's redundant.
+- A **custom action that isn't `GET`** needs the verb spelled out, e.g. `'post login'` → `POST /auth/login`.
+- The path tail can carry arbitrary nested segments and multiple params:
+
+```js
+// controllers/api/UsersController.js
+module.exports = {
+
+  // GET /api/users/123/orders/988
+  'get :id/orders/:orderId': (req, res) => {
+    // req.params → { id: '123', orderId: '988' }
+  }
+
+};
+
+// controllers/api/AuthController.js
+module.exports = {
+
+  // GET /api/auth/me — no verb prefix needed, GET is the default
+  me(req, res) { },
+
+  // POST /api/auth/login
+  'post login': (req, res) => { },
+
+  // POST /api/auth/logout
+  'post logout': (req, res) => { }
+
+};
+```
+
+### Controllers stay thin — business logic lives in the model
+
+Controllers only orchestrate the HTTP request/response cycle: read params, call the model, send the response with `res.vsr(...)` (REST API) or `res.render(...)` (server-side rendering). They should **not** contain business logic, validation rules, or data manipulation — that belongs on the model (instance/static methods, hooks, or virtuals), so it stays reusable outside the HTTP layer (crontabs, sockets, other models, tests).
 
 ### Controller example
 
@@ -130,14 +179,31 @@ module.exports = {
 
 ### Explicit routes — `config/routes.js`
 
-```js
-module.exports = [
-  { method: 'GET',  path: '/health', controller: 'StatusController', action: 'ping' },
-  { method: 'POST', path: '/auth/login', controller: 'AuthController', action: 'login' },
-];
-```
+`routes.js` exists for whatever the convention can't resolve on its own — an absolute path, a catch-all for a frontend router, or breaking the "resource segment = controller filename" rule entirely. For everything else, don't add entries here; a redundant explicit entry just gives the route two sources of truth that can drift apart.
 
-You can also register routes with inline handlers or using `app.vulkano.get/post/…`.
+```js
+module.exports = {
+
+  // Routes as string — simple and easy to use
+  '/about-me': 'AboutController.get',
+
+  // Catch-all for a frontend router (SPA)
+  '/admin*': 'AdminController.get',
+
+  // Routes as definition — most flexible
+  '/test': (req, res) => {
+    res.json({ message: 'Hello, world!' });
+  },
+
+  // Routes as method — more advanced (`app.vulkano` is the Express instance)
+  custom() {
+    app.vulkano.get('/test2', (req, res) => {
+      res.json({ hello: 'world2' });
+    });
+  }
+
+};
+```
 
 ---
 
@@ -178,22 +244,42 @@ module.exports = {
 
 This automatically exposes:
 
-| Method   | Path               | Action           |
-|----------|--------------------|------------------|
-| `GET`    | `/api/product`     | List (paginated) |
-| `GET`    | `/api/product/:id` | Get by ID        |
-| `POST`   | `/api/product`     | Create           |
-| `PUT`    | `/api/product/:id` | Replace          |
-| `PATCH`  | `/api/product/:id` | Partial update   |
-| `DELETE` | `/api/product/:id` | Soft-delete      |
+| Method   | Path                | Action           |
+|----------|---------------------|------------------|
+| `GET`    | `/api/products`     | List (paginated) |
+| `GET`    | `/api/products/:id` | Get by ID        |
+| `POST`   | `/api/products`     | Create           |
+| `PUT`    | `/api/products/:id` | Replace          |
+| `PATCH`  | `/api/products/:id` | Partial update   |
+| `DELETE` | `/api/products/:id` | Soft-delete      |
 
 Query string params supported on list: `page`, `per_page`, `sort`, `search`, `fields`.
 
+A scaffold controller wires each allowed HTTP method to the matching standard CRUD method on the model
+(`getAll`, `get<ModelName>`, `create`, `update`, `delete` — see [Models](#models) below), so the model
+still needs those methods implemented or auto-generated.
+
+NOTE: To find examples with the best practices, look in `examples/controllers` to find a well-structured controller for server side rendering, like `ExampleController.js`, REST API like `RestExampleController.js` and Scaffold REST API like `RestScaffoldController.js`.
+
 ---
 
-## Models
+## Models: business logic lives here
 
-Models live in `vulkano/models/` and are auto-loaded as globals (e.g., `Product`).
+Models live in `(vulkano|app)/models/` are auto-loaded as globals. A file `Project.js` becomes `global.Project` (singular).
+Every model gets `attributes` (Mongoose schema fields), plus `active`, `createdAt`, `updatedAt` automatically.
+
+Models are where validation, data manipulation, and business rules belong — not just the raw Mongoose schema. Controllers should only ever call methods on the model; they shouldn't reach into `Model.find(...)` or manipulate documents directly.
+
+### Standard CRUD methods
+Every model is expected to expose this same set of methods, so controllers can call them the same way regardless of the resource:
+
+| Method                | Purpose                                                     |
+|------------------------|--------------------------------------------------------------|
+| `getAll(props)`        | List/paginate records. `props` = `{ page, perPage, search, sort }` |
+| `get<ModelName>(id)`   | Get a single record by id (e.g. `getProduct(id)`)            |
+| `create(data)`         | Create a new record                                          |
+| `update(id, data)`     | Update a record by id                                        |
+| `delete(id)`           | Soft-delete a record (sets `active: false`)                  |
 
 ```js
 // vulkano/models/Product.js
@@ -203,17 +289,10 @@ module.exports = {
     price: { type: Number, default: 0 },
     tags:  { type: [String] }
   },
-
-  // Lifecycle hooks
-  beforeSave(next) {
-    this.updatedAt = new Date();
-    next();
-  }
 };
 ```
 
-Every model automatically gets `active`, `createdAt`, and `updatedAt` fields.
-Models use [`mongoose-paginate-v2`](https://github.com/aravindnc/mongoose-paginate-v2) for pagination.
+NOTE: To find examples with the best practices for available methods ahd hooks, look in `examples/models` and read the file `Example.js`, and Scaffold Model API `ExampleWithScaffold.js`.
 
 ---
 
@@ -286,9 +365,11 @@ const token = Jwt.encode({ userId: user._id });
 ## Cron Jobs
 
 ```js
-// vulkano/libs/Crontab.js
-module.exports = {
-  init() {
+// app/config/bootstrap.js
+module.exports = (start) => {
+
+  start(() => {
+
     Crontab.schedule({
       time: '0 0 11 * * 5',
       timeZone: 'America/New_York',
@@ -300,7 +381,9 @@ module.exports = {
         console.log(`Weekly report job completed at ${new Date()}`);
       }
     });
-  }
+
+  });
+
 };
 ```
 
