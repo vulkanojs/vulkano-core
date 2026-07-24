@@ -118,6 +118,46 @@ describe('Routing', () => {
 
   });
 
+  describe('Convention-based auto-routing — controller + action', () => {
+
+    it('GET /products/form — resolves to ProductsController.form', async () => {
+      const { status, data } = await axios.get('/products/form');
+      expect(status).toBe(200);
+      expect(data.data.action).toBe('form');
+    });
+
+  });
+
+  describe('Convention-based auto-routing — controller + action + params', () => {
+
+    it('GET /products/edit/123 — resolves to ProductsController["edit :id"] (no method prefix, defaults to GET)', async () => {
+      const { status, data } = await axios.get('/products/edit/123');
+      expect(status).toBe(200);
+      expect(data.data.id).toBe('123');
+    });
+
+  });
+
+  describe('Explicit routes — inline function, custom absolute path', () => {
+
+    it('GET /product/my-custom-path/ returns expected JSON', async () => {
+      const { status, data } = await axios.get('/product/my-custom-path/');
+      expect(status).toBe(200);
+      expect(data.message).toBe('Hello, world!');
+    });
+
+  });
+
+  describe('Explicit routes — custom() registering directly on app.vulkano', () => {
+
+    it('GET /custom-method registered inside custom() via app.vulkano.get is reachable', async () => {
+      const { status, data } = await axios.get('/custom-method');
+      expect(status).toBe(200);
+      expect(data.hello).toBe('world');
+    });
+
+  });
+
   describe('Explicit routes — inline function (definition pattern)', () => {
 
     it('GET with inline handler returns expected JSON', async () => {

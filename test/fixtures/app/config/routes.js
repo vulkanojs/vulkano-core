@@ -12,6 +12,11 @@ module.exports = {
     res.json({ source: 'inline-post', received: req.body });
   },
 
+  // Inline function handler — custom absolute path (definition pattern)
+  '/product/my-custom-path/': (req, res) => {
+    res.json({ message: 'Hello, world!' });
+  },
+
   // Custom initializer: registers routes directly via app.vulkano.get(), etc.
   custom() {
     app.vulkano.get('/explicit/custom', (req, res) => {
@@ -19,6 +24,11 @@ module.exports = {
     });
     app.vulkano.post('/explicit/custom', (req, res) => {
       res.json({ source: 'custom-post', received: req.body });
+    });
+
+    // More advanced — `app` is the global Vulkano object; the Express instance lives at `app.vulkano`
+    app.vulkano.get('/custom-method', (req, res) => {
+      res.json({ hello: 'world' });
     });
   }
 

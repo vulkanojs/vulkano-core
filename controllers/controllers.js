@@ -87,8 +87,15 @@ module.exports = function loadControllersApplication() {
             const [tmpMethod, tmpPath] = parts;
 
             if (tmpPath) {
-              method = tmpMethod.toLowerCase();
-              pathToRun = tmpPath;
+              if (methods.indexOf(tmpMethod.toLowerCase()) >= 0) {
+                method = tmpMethod.toLowerCase();
+                pathToRun = tmpPath;
+              } else {
+                // First token isn't a real HTTP method — default to GET,
+                // treating the whole key as the path (e.g. 'edit :id' → GET .../edit/:id)
+                method = 'get';
+                pathToRun = parts.join('/');
+              }
             } else {
               pathToRun = tmpMethod;
             }
@@ -119,8 +126,15 @@ module.exports = function loadControllersApplication() {
         const [tmpMethod, tmpPath] = parts;
 
         if (tmpPath) {
-          method = tmpMethod.toLowerCase();
-          pathToRun = tmpPath;
+          if (methods.indexOf(tmpMethod.toLowerCase()) >= 0) {
+            method = tmpMethod.toLowerCase();
+            pathToRun = tmpPath;
+          } else {
+            // First token isn't a real HTTP method — default to GET,
+            // treating the whole key as the path (e.g. 'edit :id' → GET .../edit/:id)
+            method = 'get';
+            pathToRun = parts.join('/');
+          }
         } else {
           pathToRun = tmpMethod;
         }
