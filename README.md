@@ -116,7 +116,7 @@ GET /users/edit/1
 
 A controller method key is `<path tail>` on its own, or `'<verb> <path tail>'` when the verb isn't `GET`. The auto-router only reassigns the HTTP method when the key has a space-separated verb prefix — otherwise it defaults to **GET**.
 
-- A **custom action name with no verb prefix** (no space in the key) is still `GET`, e.g. `me(req, res)` on `AuthController` → `GET /auth/me`. Don't write `'get me'`; it's redundant.
+- A **custom action name with no verb prefix** (no space in the key) is still `GET`, e.g. `me(req, res)` on `AuthController` → `GET /auth/current`. Don't write `'get current'`; it's redundant.
 - A **custom action that isn't `GET`** needs the verb spelled out, e.g. `'post login'` → `POST /auth/login`.
 - The path tail can carry arbitrary nested segments and multiple params:
 
@@ -134,8 +134,8 @@ module.exports = {
 // controllers/api/AuthController.js
 module.exports = {
 
-  // GET /api/auth/me — no verb prefix needed, GET is the default
-  me(req, res) { },
+  // GET /api/auth/current — no verb prefix needed, GET is the default
+  current(req, res) { },
 
   // POST /api/auth/login
   'post login': (req, res) => { },
@@ -303,6 +303,10 @@ module.exports = {
 ```
 
 NOTE: To find examples with the best practices for available methods ahd hooks, look in `examples/models` and read the file `Example.js`, and Scaffold Model API `ExampleWithScaffold.js`.
+
+### Vulkano models — don't hand-roll `createdAt` or `updatedAt`
+
+`@vulkano/core`'s `database/mongodb.js` auto-injects `createdAt: Date` and `updatedAt: Date` attributes into every model schema if the model doesn't already define them (`if (!attributes.createdAt) { ... }`, same for `updatedAt`). Never add a manual timestamp field (`at`, `date`, `timestamp`, `createdAt`, `updatedAt`, etc.) to a model's `attributes` — they're already automatic in Vulkano, so a hand-rolled one is redundant, and if named anything other than `createdAt`/`updatedAt` it also fights the framework's own sort/index defaults (`database/scaffold.js` defaults `sort: 'createdAt|DESC'`). Use `createdAt` and `updatedAt` directly in indexes, sort strings, and business logic.
 
 ---
 
