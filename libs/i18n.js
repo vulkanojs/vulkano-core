@@ -1,4 +1,10 @@
 const i18next = require('i18next');
+const merge = require('./Merge');
+
+const coreLocales = {
+  en: require('../config/locales/en'),
+  es: require('../config/locales/es')
+};
 
 module.exports = (() => {
 
@@ -6,15 +12,11 @@ module.exports = (() => {
     config
   } = app || {};
 
-  let {
-    locales: configLocales
+  const {
+    locales: projectLocales
   } = config || {};
 
-  if (!configLocales) {
-    configLocales = {
-      en: {}
-    };
-  }
+  const configLocales = merge.all([coreLocales, projectLocales || {}]);
 
   const locales = Object.keys(configLocales);
   const resources = new Map();

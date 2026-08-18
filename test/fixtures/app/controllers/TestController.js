@@ -1,4 +1,4 @@
-/* global VSError, Jwt */
+/* global VSError, Jwt, Upload */
 
 module.exports = {
 
@@ -67,6 +67,31 @@ module.exports = {
       size: f.size
     }));
     res.vsr(Promise.resolve({ uploaded: files.length, files }));
+  },
+
+  // POST /test/uploadfile — exercises the Upload lib end to end
+  'post uploadfile': function onUploadFile(req, res) {
+    const renameByQuery = {
+      uuid: true,
+      custom: () => 'my-custom-name'
+    };
+    const props = {
+      allowed: ['jpg', 'jpeg', 'png', 'webp', 'svg', 'txt'],
+      maxSize: req.query.maxSize ? Number(req.query.maxSize) : undefined,
+      lang: req.query.lang,
+      rename: renameByQuery[req.query.rename]
+    };
+    res.vsr(Upload.file(req.files || [], props));
+  },
+
+  // POST /test/uploadfiles — exercises Upload.files() (multiple upload)
+  'post uploadfiles': function onUploadFiles(req, res) {
+    const props = {
+      allowed: ['jpg', 'jpeg', 'png', 'webp', 'svg', 'txt'],
+      maxSize: req.query.maxSize ? Number(req.query.maxSize) : undefined,
+      lang: req.query.lang
+    };
+    res.vsr(Upload.files(req.files || [], props));
   },
 
   // GET /test/slow — never resolves, used to trigger request timeout

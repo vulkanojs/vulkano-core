@@ -334,6 +334,7 @@ All files in `app/services/` are auto-loaded as globals. The framework also expo
 | `Crontab`   | Schedule recurring jobs with cron expressions                   |
 | `ApiClient` | HTTP client for calling external APIs (native fetch + undici)   |
 | `Download`  | File download helper                                            |
+| `Upload`    | Validate, save and return the local path of an uploaded file    |
 | `i18n`      | Internationalization via i18next                                |
 | `mongoose`  | Mongoose instance                                               |
 
@@ -341,19 +342,103 @@ All files in `app/services/` are auto-loaded as globals. The framework also expo
 
 ## File Uploads
 
-Vulkano uses [Multer](https://github.com/expressjs/multer) v2. Files are available on `req.files` after a `multipart/form-data` POST:
+Vulkano uses [Multer](https://github.com/expressjs/multer) v2. Files are available on `req.files` after a `multipart/form-data` POST — Multer writes them straight into `PUBLIC_PATH/files` under a temporary name.
+
+### The `Upload` lib
+
+`Upload.file(files, opts)` validates a single uploaded file (mimetype, extension, size, write
+permission) and renames it to its final, safe filename inside `PUBLIC_PATH/files`. It only ever
+touches the local disk — it never uploads anywhere. If your app needs to push the result to a
+cloud provider, chain your own service off the returned `path`:
 
 ```js
-'post upload': function (req, res) {
-  const files = (req.files || []).map((f) => ({
-    fieldname:    f.fieldname,
-    originalname: f.originalname,
-    mimetype:     f.mimetype,
-    size:         f.size
-  }));
-  res.vsr(Promise.resolve({ uploaded: files.length, files }));
-}
+// app/controllers/UploadController.js
+module.exports = {
+
+  'post upload': (req, res) => {
+
+    const props = {
+      allowed: ['jpg', 'jpeg', 'png', 'webp'],
+      maxSize: 10 * 1024 * 1024,
+      lang: req.query.lang   // 'en' (default) or 'es' — controls the error language
+    };
+
+    res.vsr(
+      Upload
+        .file(req.files || [], props)
+        .then((file) => Cloud.upload(file.path).then((url) => ({ ...file, url })))
+    );
+
+  }
+
+};
 ```
+
+`Upload.file()` resolves with `{ name, path }` — `name` is the destination filename, `path` the
+absolute local path. SVGs get their content sanitized regardless of the rename strategy —
+`<script>` tags, inline event handler attributes (`onload`, `onclick`, ...) and `javascript:` URIs
+are stripped before the file is saved, since an SVG is just XML that can otherwise carry
+executable code.
+
+**`opts`:**
+
+| Option    | Description                                                              |
+|-----------|---------------------------------------------------------------------------|
+| `allowed` | Array of allowed extensions (e.g. `['jpg', 'png']`). Skipped if omitted   |
+| `maxSize` | Max size in bytes. Defaults to 10MB                                       |
+| `name`    | Restrict to a specific form fieldname. Defaults to the first file sent    |
+| `lang`    | Language for validation error messages. Defaults to `en`                  |
+| `rename`  | Naming strategy for the saved file — see below. Defaults to none          |
+
+**`rename`** controls the destination filename:
+
+```js
+Upload.file(req.files, { rename: true });                       // uuid, e.g. "3fa2...c9.png"
+Upload.file(req.files, {});                                     // sanitized original name
+Upload.file(req.files, { rename: (file) => `user-${req.auth._id}` }); // custom base name
+```
+
+- `rename: true` → a random uuid (collision-free, extension kept)
+- omitted / `false` → the sanitized original filename, unchanged
+- a function `(file) => string` → its return value becomes the base name (still sanitized —
+  never trusted as-is, since it could carry `../`)
+
+In every case except the uuid one, if the resulting filename already exists in `PUBLIC_PATH/files`
+a short random suffix is appended so the new upload doesn't silently overwrite it — a plain
+upload with no collision keeps a clean name.
+
+Any of the 5 `opts` keys above (`allowed`, `maxSize`, `name`, `lang`, `rename`) can also be set once
+as project-wide defaults in `app/config/upload.js` — it's a plain JS module merged under the
+`opts` passed on each call, so per-call values win:
+
+```js
+// app/config/upload.js
+module.exports = {
+  allowed: ['jpg', 'jpeg', 'png', 'webp'],
+  maxSize: 10 * 1024 * 1024
+  // name, lang and rename are usually left per-call since they tend to
+  // depend on the request, but they're valid here too
+};
+```
+
+Validation errors are `VSError`s translated through the `i18n` keys `upload.notUploaded`,
+`upload.noPermission`, `upload.invalidMimeType`, `upload.extensionNotAllowed` and
+`upload.maxSizeExceeded` — see [i18n](#i18n) below to override their text per locale.
+
+### Multiple files — `Upload.files()`
+
+Same options as `Upload.file()`, but validates and saves every file sent (optionally restricted to
+one fieldname via `opts.name`) and resolves with an array:
+
+```js
+res.vsr(
+  Upload.files(req.files || [], { allowed: ['jpg', 'png'], name: 'gallery' })
+);
+// → [{ name, path }, { name, path }, ...]
+```
+
+If any file fails validation, the whole call rejects (same as `Promise.all`) — no files are
+partially saved.
 
 ---
 
@@ -466,6 +551,10 @@ module.exports = {
 
 Default language is `en`, with `en` as the fallback if a key or locale is missing. To switch the
 active language at runtime, call `i18n.changeLanguage('es')`.
+
+The core also ships its own default `en`/`es` locale files (currently the `upload.*` keys used by
+the `Upload` lib). They're deep-merged under your project's `app/config/locales/`, so any key you
+declare there wins over the core default — you only need to override the keys you want to change.
 
 ---
 
