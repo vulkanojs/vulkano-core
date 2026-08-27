@@ -20,7 +20,7 @@ function sanitizeSvg(content) {
 
 }
 
-const IMAGE_MIME_TYPES = ['image/jpeg', 'image/jpg', 'image/pjpeg', 'image/gif', 'image/png', 'image/webp', 'image/svg+xml'];
+const IMAGE_MIME_TYPES = ['image/jpeg', 'image/jpg', 'image/pjpeg', 'image/gif', 'image/png', 'image/webp', 'image/svg+xml', 'image/heic', 'image/heif'];
 const DOCUMENT_MIME_TYPES = ['application/pdf', 'application/x-pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.ms-powerpoint', 'application/vnd.openxmlformats-officedocument.presentationml.presentation', 'text/csv', 'application/vnd.ms-excel.sheet.binary.macroenabled.12'];
 const ARCHIVE_MIME_TYPES = ['application/zip', 'application/x-rar', 'application/gzip', 'text/plain', 'application/x-zip-compressed'];
 const VIDEO_MIME_TYPES = ['video/quicktime', 'video/ogg', 'video/webm', 'video/mp4', 'video/x-mp4', 'video/3gp', 'video/x-3gp', 'video/mov', 'video/x-mov', 'video/m4v', 'video/x-m4v', 'video/avi', 'video/x-avi', 'video/mpg', 'video/x-mpg'];
@@ -36,6 +36,8 @@ const MIME_EXTENSION_MAP = {
   'image/png': 'png',
   'image/webp': 'webp',
   'image/svg+xml': 'svg',
+  'image/heic': 'heic',
+  'image/heif': 'heif',
   'application/pdf': 'pdf',
   'application/x-pdf': 'pdf',
   'application/msword': 'doc',
@@ -84,6 +86,8 @@ module.exports = {
 
     const {
       allowed,
+      mimeTypes,
+      extensionMap,
       maxSize,
       lang
     } = props;
@@ -99,11 +103,11 @@ module.exports = {
           throw new VSError(t('upload.noPermission'), 500);
         }
 
-        if (!Upload.isValidMimeType(file)) {
+        if (!Upload.isValidMimeType(file, mimeTypes)) {
           throw new VSError(t('upload.invalidMimeType', { mimetype: file.mimetype }), 400);
         }
 
-        const ext = Upload.getExtension(file);
+        const ext = Upload.getExtension(file, extensionMap);
 
         if (allowed && Array.isArray(allowed) && !allowed.includes(ext)) {
           throw new VSError(t('upload.extensionNotAllowed', { ext }), 400);
@@ -245,15 +249,22 @@ module.exports = {
   /**
    * Get the lowercased file extension, falling back to mimetype lookup.
    *
+   * `extensionMap` (from `props.extensionMap`) lets a caller extend the
+   * built-in mimetype→extension fallback with types the core doesn't know
+   * about yet - needed for a nameless upload (e.g. a blob) whose extension
+   * can only be derived from its mimetype, such as
+   * `extensionMap: { 'image/heic': 'heic' }`.
+   *
    * @param {Object} file
+   * @param {Object} [extensionMap] - extra mimetype→extension entries, checked before the built-in map
    * @returns {string}
    */
-  getExtension(file) {
+  getExtension(file, extensionMap) {
 
     let ext = (file.originalname || '').split('.').pop();
 
     if (!ext || ext === 'blob' || ext === file.originalname) {
-      ext = MIME_EXTENSION_MAP[file.mimetype] || '';
+      ext = (extensionMap && extensionMap[file.mimetype]) || MIME_EXTENSION_MAP[file.mimetype] || '';
     }
 
     return ext.toLowerCase();
@@ -263,12 +274,18 @@ module.exports = {
   /**
    * Check if the file's mimetype is in the allowed list.
    *
+   * `mimeTypes` (from `props.mimeTypes`) lets a caller extend the built-in
+   * whitelist with mimetypes the core doesn't know about yet, without
+   * having to fork this file - e.g. `mimeTypes: ['image/heic']`.
+   *
    * @param {Object} file
+   * @param {Array} [mimeTypes] - extra mimetypes to accept, in addition to VALID_MIME_TYPES
    * @returns {boolean}
    */
-  isValidMimeType(file) {
+  isValidMimeType(file, mimeTypes) {
 
-    return VALID_MIME_TYPES.includes(file.mimetype);
+    const extra = Array.isArray(mimeTypes) ? mimeTypes : [];
+    return VALID_MIME_TYPES.includes(file.mimetype) || extra.includes(file.mimetype);
 
   },
 

@@ -359,6 +359,8 @@ module.exports = {
 
     const props = {
       allowed: ['jpg', 'jpeg', 'png', 'webp'],
+      // For custom mimetypes or mime-to-extension mapping
+      // mimeTypes: ['image/jpeg', 'image/png', 'image/webp'],
       maxSize: 10 * 1024 * 1024,
       lang: req.query.lang   // 'en' (default) or 'es' — controls the error language
     };
