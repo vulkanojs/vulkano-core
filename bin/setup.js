@@ -422,7 +422,7 @@ module.exports = {
     '     .env                ← fill in values',
     '',
     '  Next steps:',
-    '     1. Set MONGO_URI, JWT_SECRET, etc.',
+    '     1. Set MONGO_URI, JWT_SECRET_KEY, etc.',
     '',
   ].join('\n'));
 

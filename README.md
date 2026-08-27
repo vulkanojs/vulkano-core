@@ -47,7 +47,7 @@ npm install @vulkano/core
 PORT=8000
 MONGO_URI=mongodb://localhost:27017/myapp
 SALT_KEY=random-string
-JWT_SECRET=supersecret
+JWT_SECRET_KEY=supersecret
 ```
 
 ## Quick Start
