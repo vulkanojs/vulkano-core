@@ -18,6 +18,13 @@ module.exports = {
       type: String,
       required: true
     },
+    school: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'School',
+      // Opts this relation into ?populate=school — a ref field without this
+      // flag is never populated, no matter what the caller asks for
+      autopopulate: true
+    },
     age: {
       type: Number,
       required: false,
@@ -44,7 +51,7 @@ module.exports = {
   /**
    * Method to get all records by page
    *
-   * @param {Object} props (page, perPage, search, sort)
+   * @param {Object} props (page, perPage, search, sort, populate — see _buildPopulate below)
    * @returns {Promise}
    */
   getAll(props) {
@@ -53,14 +60,21 @@ module.exports = {
     const defaultProps = {
       sort: 'createdAt|DESC',
       searchBy: ['name'],
-      fields: ['name', 'age', 'active', 'createdAt', 'updatedAt'],
+      fields: ['name', 'school', 'age', 'active', 'createdAt', 'updatedAt'],
       filter: {
         active: true
       },
     };
 
-    // Populate
-    const populate = [];
+    // Populate: only relations opted in via `autopopulate: true` on the
+    // attribute (see `school` above) ever get expanded, and only when asked
+    // for through ?populate=. Syntax (see database/scaffold.js#_buildPopulate):
+    //   ?populate=school                → full School doc
+    //   ?populate=school:name           → only { _id, name }
+    //   ?populate=school:name|address   → only { _id, name, address }
+    // A relation NOT marked autopopulate can still be opened for one call by
+    // passing it as a second arg: this._buildPopulate(props, ['someRef'])
+    const populate = this._buildPopulate(props);
 
     // Query to Run
     const query = Paginate.serializeQuery(defaultProps, props);
@@ -74,16 +88,22 @@ module.exports = {
    * Method to get a record by id
    *
    * @param {ObjectID} id
+   * @param {Object} _props (populate — see getAll above for the ?populate= syntax)
    * @returns {Promise}
    */
-  getExample(_id) {
+  getExample(_id, _props) {
 
     // This is to prevent error while run the findOne
     if (!(/^[a-fA-F0-9]{24}$/).test(_id)) {
       return VSError.reject('Invalid ID. Record not found', 404);
     }
 
-    return Example.findOne({ _id })
+    const query = Example.findOne({ _id });
+
+    // Populate (only relations marked autopopulate: true in attributes)
+    this._buildPopulate(_props).forEach((p) => query.populate(p));
+
+    return query
       .then( (r) => {
 
         if (!r) {

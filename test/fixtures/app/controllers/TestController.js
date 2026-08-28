@@ -108,6 +108,18 @@ module.exports = {
     res.vsr(promise);
   },
 
+  // DELETE /test/resetexamples — hard-deletes all examples + schools (test helper, test env only)
+  'delete resetexamples': function onResetExamples(req, res) {
+    const db = mongoose.connection.db;
+    const promise = db
+      ? Promise.all([
+        db.collection('example').deleteMany({}),
+        db.collection('school').deleteMany({})
+      ]).then(() => ({ reset: true }))
+      : Promise.resolve({ reset: true });
+    res.vsr(promise);
+  },
+
   // GET /test/:id — single route param (after specific routes to avoid shadowing)
   'get :id': function onGetById(req, res) {
     const { id } = req.params;
