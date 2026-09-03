@@ -354,6 +354,18 @@ All files in `app/services/` are auto-loaded as globals. The framework also expo
 | `Upload`    | Validate, save and return the local path of an uploaded file    |
 | `i18n`      | Internationalization via i18next                                |
 | `mongoose`  | Mongoose instance                                               |
+| `View`      | `View.render(view, data)` → Promise<html>, renders outside the request/response cycle |
+
+`ApiClient` verifies SSL by default. A single call can opt out with `rejectUnauthorized: false`
+(and force it back on with `rejectUnauthorized: true`), and the default itself can be flipped for
+the whole app via `.env`:
+
+```
+# .env — disables SSL verification by default for every ApiClient call
+# (e.g. calling other services on the same server over self-signed certs).
+# A per-call rejectUnauthorized always overrides this, in either direction.
+API_CLIENT_REJECT_UNAUTHORIZED=false
+```
 
 ---
 

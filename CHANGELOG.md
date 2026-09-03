@@ -2,6 +2,22 @@
 
 All notable changes to `@vulkano/core` are documented here.
 
+## [1.28.0]
+
+### Changed
+- `ApiClient` — SSL verification stays enabled (secure) by default, but the default itself can
+  now be flipped app-wide via `.env` with `API_CLIENT_REJECT_UNAUTHORIZED=false` (e.g. same-server
+  calls to other internal services on self-signed certs). A per-call `rejectUnauthorized` still
+  always wins over the env default, in either direction.
+
+### Tests
+- Env-driven default, per-call override in both directions, and non-`"false"` values keeping
+  verification on.
+
+### Docs
+- `AGENTS.md` / `README.md`: documented `API_CLIENT_REJECT_UNAUTHORIZED`; removed the stale
+  "SSL disabled by default" known-issue entry and the outdated "Axios wrapper" description.
+
 ## [1.27.0]
 
 ### Added

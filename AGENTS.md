@@ -2,7 +2,7 @@
 
 ## Overview
 
-`@vulkano/core` (v1.27.0) is the engine of the Vulkano MVC framework. It bootstraps the environment, connects to the database, and auto-loads all models, controllers, services, and responses before starting the Express server. The user app only calls `require('@vulkano/core')`.
+`@vulkano/core` (v1.28.0) is the engine of the Vulkano MVC framework. It bootstraps the environment, connects to the database, and auto-loads all models, controllers, services, and responses before starting the Express server. The user app only calls `require('@vulkano/core')`.
 
 ```
 /**
@@ -39,7 +39,7 @@ core/
 │   ├── models.js                 ← Loads user models, merges lifecycle callbacks and scaffold methods
 │   └── scaffold.js               ← Base CRUD methods: getAll, getByField, create, update, delete, subdocs
 ├── libs/
-│   ├── ApiClient.js              ← Axios wrapper for outbound HTTP requests
+│   ├── ApiClient.js              ← fetch/undici wrapper for outbound HTTP requests (SSL-verified by default)
 │   ├── Crontab.js                ← node-cron wrapper for scheduled tasks
 │   ├── Download.js               ← File download helper
 │   ├── Encrypter.js              ← AES-256-CBC encrypt/decrypt
@@ -618,7 +618,6 @@ Available globally as `io` and `app.socket`.
 
 - **`services.js`** — All libs/services are injected into `global`. Makes unit testing hard without mocking globals.
 - **`bluebird`** — Still imported in a few places. Not needed in Node 18+ where `Promise` is native.
-- **`ApiClient`** — `rejectUnauthorized: false` disables SSL verification by default for all outbound requests.
 - **`Crontab`** — Default timezone is `America/New_York` instead of UTC.
 - **`path` and `fs` npm packages** — These are Node.js built-ins and should not be in `package.json` dependencies.
 

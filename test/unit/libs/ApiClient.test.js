@@ -53,6 +53,44 @@ describe('ApiClient SSL configuration', () => {
     expect(Agent).toHaveBeenCalledWith({ connect: { rejectUnauthorized: true } });
   });
 
+  describe('API_CLIENT_REJECT_UNAUTHORIZED env override', () => {
+
+    const ORIGINAL_ENV = process.env.API_CLIENT_REJECT_UNAUTHORIZED;
+
+    afterEach(() => {
+      if (ORIGINAL_ENV === undefined) {
+        delete process.env.API_CLIENT_REJECT_UNAUTHORIZED;
+      } else {
+        process.env.API_CLIENT_REJECT_UNAUTHORIZED = ORIGINAL_ENV;
+      }
+    });
+
+    it('disables SSL verification by default when API_CLIENT_REJECT_UNAUTHORIZED=false', async () => {
+      process.env.API_CLIENT_REJECT_UNAUTHORIZED = 'false';
+      await ApiClient.get('https://example.com/test');
+      expect(Agent).toHaveBeenCalledWith({ connect: { rejectUnauthorized: false } });
+    });
+
+    it('a per-call rejectUnauthorized: true still forces verification even with the env off', async () => {
+      process.env.API_CLIENT_REJECT_UNAUTHORIZED = 'false';
+      await ApiClient.send({ url: 'https://example.com', method: 'GET', rejectUnauthorized: true });
+      expect(Agent).toHaveBeenCalledWith({ connect: { rejectUnauthorized: true } });
+    });
+
+    it('a per-call rejectUnauthorized: false still disables verification even with the env unset (secure default)', async () => {
+      delete process.env.API_CLIENT_REJECT_UNAUTHORIZED;
+      await ApiClient.send({ url: 'https://example.com', method: 'GET', rejectUnauthorized: false });
+      expect(Agent).toHaveBeenCalledWith({ connect: { rejectUnauthorized: false } });
+    });
+
+    it('any value other than the string "false" keeps SSL verification enabled', async () => {
+      process.env.API_CLIENT_REJECT_UNAUTHORIZED = 'nope';
+      await ApiClient.get('https://example.com/test');
+      expect(Agent).toHaveBeenCalledWith({ connect: { rejectUnauthorized: true } });
+    });
+
+  });
+
 });
 
 describe('ApiClient request building', () => {

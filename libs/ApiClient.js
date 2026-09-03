@@ -67,8 +67,12 @@ module.exports = {
       ? { url: props, method: 'GET' }
       : (props || {});
 
-    // SSL verification is enabled by default; pass rejectUnauthorized: false to disable
-    const sslVerify = rejectUnauthorized !== false;
+    // SSL verification is enabled by default (secure). It can be turned off globally via
+    // API_CLIENT_REJECT_UNAUTHORIZED=false in .env (e.g. internal calls to other services on
+    // the same server using self-signed certs) — a per-call `rejectUnauthorized` always wins
+    // over the env default, in either direction.
+    const envDefault = process.env.API_CLIENT_REJECT_UNAUTHORIZED !== 'false';
+    const sslVerify = rejectUnauthorized !== undefined ? rejectUnauthorized !== false : envDefault;
 
     const optHeaders = {
       'Content-Type': 'application/json',
