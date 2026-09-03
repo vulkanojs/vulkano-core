@@ -373,6 +373,17 @@ API_CLIENT_REJECT_UNAUTHORIZED=false
 
 Vulkano uses [Multer](https://github.com/expressjs/multer) v2. Files are available on `req.files` after a `multipart/form-data` POST — Multer writes them straight into `PUBLIC_PATH/files` under a temporary name.
 
+Multer rejects any single file over **25MB** by default (`limits.fileSize`) — before it's fully
+buffered to disk, unlike `Upload.file()`'s own `maxSize` check which only runs after. Override it
+in `app/config/express/multer.js`:
+
+```js
+// app/config/express/multer.js
+module.exports = {
+  limits: { fileSize: 100 * 1024 * 1024 } // 100MB
+};
+```
+
 ### The `Upload` lib
 
 `Upload.file(files, opts)` validates a single uploaded file (mimetype, extension, size, write

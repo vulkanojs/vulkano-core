@@ -55,7 +55,13 @@ module.exports = function getExpressConfiguration() {
       limits: {
         // Prevents DoS via deeply nested field names (e.g. a[b][c][d]...),
         // which multer forwards to append-field's unbounded recursive parser.
-        fieldNestingDepth: 5
+        fieldNestingDepth: 5,
+        // Rejects an oversized upload mid-stream instead of buffering the
+        // whole file to disk first — Upload.js's own maxSize check only runs
+        // after multer has already written the file. Override via
+        // app/config/express/multer.js (limits.fileSize) if a project needs
+        // a different ceiling.
+        fileSize: 25 * 1024 * 1024
       }
     },
     morgan: {

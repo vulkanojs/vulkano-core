@@ -2,6 +2,22 @@
 
 All notable changes to `@vulkano/core` are documented here.
 
+## [1.30.0]
+
+### Added
+- `bootstrap/express.js` — default multer `limits.fileSize` of **25MB**. Previously unbounded:
+  an upload could buffer to disk in full before `Upload.js`'s own `maxSize` check ever ran,
+  a real DoS surface (disk/memory/bandwidth) for any controller receiving uploads without an
+  explicit limit. Override via `app/config/express/multer.js` (`limits.fileSize`) — deep-merges,
+  doesn't drop the existing `fieldNestingDepth: 5` default.
+
+### Tests
+- `test/unit/bootstrap/express.test.js` — default `fileSize`, override, and that
+  `fieldNestingDepth` survives a partial `limits` override (deep merge).
+
+### Docs
+- `README.md` / `AGENTS.md`: documented the default and the override path.
+
 ## [1.29.0]
 
 ### Changed — BREAKING (default behavior)

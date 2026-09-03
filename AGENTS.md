@@ -2,7 +2,7 @@
 
 ## Overview
 
-`@vulkano/core` (v1.29.0) is the engine of the Vulkano MVC framework. It bootstraps the environment, connects to the database, and auto-loads all models, controllers, services, and responses before starting the Express server. The user app only calls `require('@vulkano/core')`.
+`@vulkano/core` (v1.30.0) is the engine of the Vulkano MVC framework. It bootstraps the environment, connects to the database, and auto-loads all models, controllers, services, and responses before starting the Express server. The user app only calls `require('@vulkano/core')`.
 
 ```
 /**
@@ -589,7 +589,7 @@ All sources are deep-merged with `deepmerge`. Final result is in `app.config`.
 
 **Key config files:**
 - `settings.js` — port, database connection, paths
-- `express/cors.js`, `express/jwt.js`, `express/csp.js`, `express/cookies.js`
+- `express/cors.js`, `express/jwt.js`, `express/csp.js`, `express/cookies.js`, `express/multer.js` (default `limits.fileSize` 25MB)
 - `routes.js` — explicit route mappings
 - `bootstrap.js` — startup hook (**required**)
 - `sockets/` — Socket.io config and adapters

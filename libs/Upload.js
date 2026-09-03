@@ -70,6 +70,10 @@ const MIME_EXTENSION_MAP = {
   'video/x-mpg': 'mpg'
 };
 
+// This only rejects a file after multer has already buffered it to disk —
+// it never runs on an upload multer already rejected via its own
+// limits.fileSize (bootstrap/express.js, default 25MB). Set maxSize below
+// that ceiling for it to ever actually apply.
 const DEFAULT_MAX_SIZE = 10 * 1024 * 1024;
 
 module.exports = {
