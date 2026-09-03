@@ -2,7 +2,7 @@
 
 ## Overview
 
-`@vulkano/core` (v1.26.0) is the engine of the Vulkano MVC framework. It bootstraps the environment, connects to the database, and auto-loads all models, controllers, services, and responses before starting the Express server. The user app only calls `require('@vulkano/core')`.
+`@vulkano/core` (v1.27.0) is the engine of the Vulkano MVC framework. It bootstraps the environment, connects to the database, and auto-loads all models, controllers, services, and responses before starting the Express server. The user app only calls `require('@vulkano/core')`.
 
 ```
 /**
@@ -112,6 +112,7 @@ extension**, PascalCase by convention:
 | `core/libs/ApiClient.js` | `global.ApiClient` |
 | `core/libs/Crontab.js` | `global.Crontab` |
 | `core/libs/i18n.js` | `global.i18n` |
+| `core/libs/View.js` | `global.View` |
 
 > `ActiveRecord` and `AppController` are explicitly excluded from globals even if present.
 
@@ -292,6 +293,7 @@ These are set automatically — never import them manually:
 | `ApiClient` | `services.js` | Outbound HTTP client |
 | `Crontab` | `services.js` | Cron job scheduler |
 | `i18n` | `services.js` | i18next instance |
+| `View` | `services.js` | `View.render(view, data)` → Promise<html>, renders outside the request/response cycle |
 | `_` | `app.js` | Underscore.js |
 
 ---

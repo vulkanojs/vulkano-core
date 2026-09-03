@@ -22,6 +22,13 @@ module.exports = {
   // GET /nunjucks/throw — triggers the 500 exception view
   'get throw'(req, res) {
     throw new Error('Test crash 500');
+  },
+
+  // GET /nunjucks/view-lib — render via the global View lib, outside res.render()
+  'get view-lib'(req, res) {
+    View.render('home/vars.html', { title: 'View Lib Title', username: 'vulkano-view' })
+      .then((html) => res.send(html))
+      .catch((err) => res.status(500).send(err.message));
   }
 
 };

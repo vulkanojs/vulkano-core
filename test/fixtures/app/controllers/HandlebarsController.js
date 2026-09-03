@@ -21,6 +21,17 @@ module.exports = {
   // GET /handlebars/throw — triggers the 500 exception view
   'get throw'(req, res) {
     throw new Error('Test crash 500');
+  },
+
+  // GET /handlebars/view-lib — render via the global View lib, outside res.render()
+  'get view-lib'(req, res) {
+    View.render('home/index.html', {
+      pageTitle: 'View Lib HBS',
+      heading: 'ViaGlobal',
+      footerText: 'Vulkano HBS Lib'
+    })
+      .then((html) => res.send(html))
+      .catch((err) => res.status(500).send(err.message));
   }
 
 };

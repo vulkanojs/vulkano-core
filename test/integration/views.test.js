@@ -59,6 +59,33 @@ describe('Views (Nunjucks) — variable flow across layout / view / partial', ()
 
 });
 
+describe('Views (Nunjucks) — View.render() global lib', () => {
+
+  it('GET /nunjucks/view-lib renders via View.render() and returns 200', async () => {
+    const res = await fetch(`${process.env.TEST_SERVER_URL}/nunjucks/view-lib`);
+    expect(res.status).toBe(200);
+  });
+
+  it('GET /nunjucks/view-lib HTML reflects the data passed to View.render()', async () => {
+    const res = await fetch(`${process.env.TEST_SERVER_URL}/nunjucks/view-lib`);
+    const html = await res.text();
+    expect(html).toContain('View Lib Title');
+    expect(html).toContain('vulkano-view');
+  });
+
+  it('GET /nunjucks/view-lib produces the same markup as res.render() on the same template', async () => {
+    const [libRes, renderRes] = await Promise.all([
+      fetch(`${process.env.TEST_SERVER_URL}/nunjucks/view-lib`),
+      fetch(`${process.env.TEST_SERVER_URL}/nunjucks/vars`)
+    ]);
+    const [libHtml, renderHtml] = await Promise.all([libRes.text(), renderRes.text()]);
+    // Same template, different data — structural markup (non-data parts) must match
+    expect(libHtml.replace(/View Lib Title|vulkano-view/g, ''))
+      .toBe(renderHtml.replace(/Test Title|vulkano/g, ''));
+  });
+
+});
+
 describe('Views (Nunjucks) — 404 error pages', () => {
 
   it('GET unknown controller renders no_controller.html with controller name', async () => {

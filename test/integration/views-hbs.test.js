@@ -60,6 +60,23 @@ describe('Views (Handlebars) — res.render()', () => {
 
 });
 
+describe('Views (Handlebars) — View.render() global lib', () => {
+
+  it('GET /handlebars/view-lib renders via View.render() and returns 200', async () => {
+    const res = await fetch(`${process.env.TEST_SERVER_HBS_URL}/handlebars/view-lib`);
+    expect(res.status).toBe(200);
+  });
+
+  it('GET /handlebars/view-lib reflects layout, view and partial data passed to View.render()', async () => {
+    const res = await fetch(`${process.env.TEST_SERVER_HBS_URL}/handlebars/view-lib`);
+    const h = await res.text();
+    expect(h).toContain('<title>View Lib HBS</title>');
+    expect(h).toContain('<h1 class="view-heading">ViaGlobal</h1>');
+    expect(h).toContain('<footer class="site-footer">Vulkano HBS Lib</footer>');
+  });
+
+});
+
 describe('Views (Handlebars) — 404 error pages', () => {
 
   it('GET unknown controller renders no_controller.html with controller name', async () => {
