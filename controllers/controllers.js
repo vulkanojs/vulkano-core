@@ -11,6 +11,14 @@ const AllControllers = require('include-all')({
 
 const scaffoldController = require('./ScaffoldController');
 
+// PascalCase controller name -> kebab-case URL segment (MyAccount -> my-account)
+function toKebabCase(str) {
+  return str
+    .replace(/([a-z0-9])([A-Z])/g, '$1-$2')
+    .replace(/([A-Z])([A-Z][a-z])/g, '$1-$2')
+    .toLowerCase();
+}
+
 module.exports = function loadControllersApplication() {
 
   const routes = {};
@@ -48,7 +56,7 @@ module.exports = function loadControllersApplication() {
 
     }
 
-    let controllerName = controller.replace('Controller', '').toLowerCase();
+    let controllerName = toKebabCase(controller.replace('Controller', ''));
 
     let parts = [];
     let method = 'get';
@@ -65,7 +73,7 @@ module.exports = function loadControllersApplication() {
 
         Object.keys(submodules || []).forEach( (subcontroller) => {
 
-          controllerName = subcontroller.replace('Controller', '').toLowerCase();
+          controllerName = toKebabCase(subcontroller.replace('Controller', ''));
           const subcurrent = submodules[subcontroller];
 
           const {
@@ -177,3 +185,5 @@ module.exports = function loadControllersApplication() {
   return routes;
 
 };
+
+module.exports.toKebabCase = toKebabCase;

@@ -30,6 +30,22 @@ describe('Routing', () => {
 
   });
 
+  describe('Convention-based auto-routing — kebab-case URL for multi-word controller names', () => {
+
+    it('GET /my-account/ — resolves to MyAccountController.get (multi-word name hyphenated)', async () => {
+      const { status, data } = await axios.get('/my-account/');
+      expect(status).toBe(200);
+      expect(data.data.controller).toBe('MyAccountController');
+    });
+
+    it('GET /inventory/material-receptions/ — nested folder + multi-word controller name hyphenated', async () => {
+      const { status, data } = await axios.get('/inventory/material-receptions/');
+      expect(status).toBe(200);
+      expect(data.data.controller).toBe('MaterialReceptionsController');
+    });
+
+  });
+
   describe('Config-based explicit routes', () => {
 
     it('GET /config/ping — maps to TestController.get via routes.js', async () => {
