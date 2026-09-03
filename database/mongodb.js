@@ -57,6 +57,23 @@ module.exports = async function loadDatabaseApplication() {
     });
   }
 
+  // Node throws an uncaught exception on an EventEmitter's 'error' event when
+  // nothing is listening for it — without this, a connection drop after the
+  // initial connect (network blip, MongoDB restart) crashes the whole
+  // process instead of just failing the queries in flight. Attached before
+  // connect() so it also catches errors emitted during the initial attempt.
+  if (!mongoose.connection.listenerCount('error')) {
+    mongoose.connection.on('error', (err) => {
+      console.log(` \x1b[41mERROR\x1b[0m: MongoDB connection error: ${err.message}`);
+    });
+  }
+
+  if (!mongoose.connection.listenerCount('disconnected')) {
+    mongoose.connection.on('disconnected', () => {
+      console.log(' \x1b[33mWARNING\x1b[0m: MongoDB disconnected.');
+    });
+  }
+
   if (!mongoose.connection.readyState) {
     await mongoose.connect(toConnect, connectionProps);
   }

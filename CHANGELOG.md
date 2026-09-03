@@ -2,6 +2,19 @@
 
 All notable changes to `@vulkano/core` are documented here.
 
+## [1.30.1]
+
+### Fixed
+- `database/mongodb.js` — registered `error`/`disconnected` listeners on `mongoose.connection`
+  before connecting. Node throws an uncaught exception on an EventEmitter `'error'` event with
+  no listener — a MongoDB connection drop after the initial connect (network blip, DB restart)
+  was crashing the entire process instead of just failing the queries in flight. Guarded against
+  duplicate registration if the loader is invoked more than once in the same process.
+
+### Tests
+- `test/unit/database/mongodb.test.js` — listeners registered before connect, no duplicate
+  registration on a second call, and emitting `'error'` on the connection no longer throws.
+
 ## [1.30.0]
 
 ### Added
