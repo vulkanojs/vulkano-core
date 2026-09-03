@@ -2,6 +2,21 @@
 
 All notable changes to `@vulkano/core` are documented here.
 
+## [1.29.0]
+
+### Changed — BREAKING (default behavior)
+- `Crontab.schedule()` default `timeZone` is now `UTC`, was `America/New_York`. Any job that
+  relied on the implicit New York default without passing `timeZone` explicitly now runs on a
+  different schedule relative to wall-clock time in that zone — pass `timeZone: 'America/New_York'`
+  explicitly to keep the old behavior. A job with an explicit `timeZone` is unaffected.
+
+### Tests
+- `test/unit/libs/Crontab.test.js` — default/override timezone, `start: true/false`, manual tick.
+
+### Docs
+- `AGENTS.md` / `README.md`: documented the `UTC` default; removed the now-resolved
+  `Crontab` timezone known-issue entry.
+
 ## [1.28.1]
 
 ### Changed (internal, no runtime/public API impact)

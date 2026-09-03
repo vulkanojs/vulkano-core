@@ -524,6 +524,9 @@ const { _id } = Jwt.decode(Jwt.getToken(req)) || {};
 
 When Vulkano starts, you can configure your own tasks to run at a given time.
 
+`timeZone` defaults to `UTC` when omitted — pass it explicitly (e.g. `'America/New_York'`) for a
+task that should run relative to a specific local time instead.
+
 ```js
 // app/config/bootstrap.js
 module.exports = (start) => {

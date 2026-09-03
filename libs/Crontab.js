@@ -16,7 +16,7 @@ module.exports = {
       cronTime: time,
       onTick: task || ( () => {} ),
       onComplete: onComplete || ( () => {} ),
-      timeZone: timeZone || 'America/New_York',
+      timeZone: timeZone || 'UTC',
       start: typeof start !== 'undefined' ? start : true
     };
 

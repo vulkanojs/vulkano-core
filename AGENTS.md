@@ -2,7 +2,7 @@
 
 ## Overview
 
-`@vulkano/core` (v1.28.1) is the engine of the Vulkano MVC framework. It bootstraps the environment, connects to the database, and auto-loads all models, controllers, services, and responses before starting the Express server. The user app only calls `require('@vulkano/core')`.
+`@vulkano/core` (v1.29.0) is the engine of the Vulkano MVC framework. It bootstraps the environment, connects to the database, and auto-loads all models, controllers, services, and responses before starting the Express server. The user app only calls `require('@vulkano/core')`.
 
 ```
 /**
@@ -291,7 +291,7 @@ These are set automatically — never import them manually:
 | `Jwt` | `services.js` | JWT encode/decode library |
 | `Encrypter` | `services.js` | AES-256-CBC encrypt/decrypt |
 | `ApiClient` | `services.js` | Outbound HTTP client |
-| `Crontab` | `services.js` | Cron job scheduler |
+| `Crontab` | `services.js` | Cron job scheduler (`timeZone` defaults to `UTC`) |
 | `i18n` | `services.js` | i18next instance |
 | `View` | `services.js` | `View.render(view, data)` → Promise<html>, renders outside the request/response cycle |
 | `_` | `app.js` | Underscore.js |
@@ -616,8 +616,7 @@ Available globally as `io` and `app.socket`.
 
 ## Known issues / tech debt
 
-- **`services.js`** — All libs/services are injected into `global`. Makes unit testing hard without mocking globals.
-- **`Crontab`** — Default timezone is `America/New_York` instead of UTC.
+- **`services.js`** — All libs/services are injected into `global`. Makes unit testing hard without mocking globals; core libs also depend on each other via the global instead of `require()`-ing one another directly (e.g. `ApiClient` assumes `global.VSError` exists rather than requiring `./VSError`).
 
 ---
 
