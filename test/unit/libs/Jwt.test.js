@@ -3,26 +3,24 @@
  * Tests encode/decode/decrypt/getToken without spinning up a server.
  */
 
-// Globals required by Jwt.js before requiring it
-global.app = {
-  config: {
-    jwt: {
-      key: 'test-jwt-secret-key-32chars!!!!!',
-      algorithms: ['HS256'],
-      expiration: false,
-      header: 'authorization',
-      queryParameter: 'token',
-      cookieName: 'jwt'
+const { setupGlobals, setupEncrypter } = require('../helpers/globals');
+
+setupGlobals({
+  app: {
+    config: {
+      jwt: {
+        key: 'test-jwt-secret-key-32chars!!!!!',
+        algorithms: ['HS256'],
+        expiration: false,
+        header: 'authorization',
+        queryParameter: 'token',
+        cookieName: 'jwt'
+      }
     }
   }
-};
+});
 
-global.VSError = class VSError extends Error {
-  constructor(msg, code) { super(msg); this.statusCode = code; }
-  static reject(msg, code) { return Promise.reject(new VSError(msg, code)); }
-};
-
-global.Encrypter = require('../../../libs/Encrypter');
+setupEncrypter();
 
 const Jwt = require('../../../libs/Jwt');
 

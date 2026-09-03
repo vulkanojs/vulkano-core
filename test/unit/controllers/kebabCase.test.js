@@ -3,10 +3,8 @@
  * Controller name -> URL segment conversion for multi-word PascalCase names.
  */
 
-const path = require('node:path');
-
-global.CORE_PATH = path.join(__dirname, '../../../');
-global.APP_PATH  = path.join(__dirname, '../../fixtures/app');
+const { setupGlobals } = require('../helpers/globals');
+setupGlobals();
 
 const loadControllersApplication = require('../../../controllers/controllers');
 const { toKebabCase } = loadControllersApplication;

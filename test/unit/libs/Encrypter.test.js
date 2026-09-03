@@ -2,13 +2,8 @@
  * Encrypter — unit tests
  */
 
-// Encrypter calls `new VSError` in dencrypt when the IV is missing
-global.VSError = class VSError extends Error {
-  constructor(msg, code) {
-    super(msg);
-    this.statusCode = code;
-  }
-};
+const { setupGlobals } = require('../helpers/globals');
+setupGlobals(); // Encrypter calls `new VSError` in dencrypt when the IV is missing
 
 const Encrypter = require('../../../libs/Encrypter');
 
@@ -91,20 +86,20 @@ describe('Encrypter — custom opts', () => {
   });
 
   it('opts.salt overrides app.config salt', () => {
-    global.app = { config: { encryption: { salt: 'config-salt' } } };
+    setupGlobals({ app: { config: { encryption: { salt: 'config-salt' } } } });
     const encWithOpts = new Encrypter(KEY, { salt: 'override-salt' });
     const encFromConfig = new Encrypter(KEY);
     const cipher = encWithOpts.encrypt('data');
     expect(() => encFromConfig.dencrypt(cipher)).toThrow();
-    delete global.app;
+    setupGlobals();
   });
 
   it('app.config salt is used when no opts.salt is given', () => {
-    global.app = { config: { encryption: { salt: 'config-salt', algorithm: 'aes-256-cbc' } } };
+    setupGlobals({ app: { config: { encryption: { salt: 'config-salt', algorithm: 'aes-256-cbc' } } } });
     const enc1 = new Encrypter(KEY);
     const enc2 = new Encrypter(KEY);
     expect(enc1.dencrypt(enc2.encrypt('hello'))).toBe('hello');
-    delete global.app;
+    setupGlobals();
   });
 
   it('custom algorithm is applied (aes-256-cbc round-trip)', () => {

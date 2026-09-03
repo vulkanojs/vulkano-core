@@ -2,6 +2,18 @@
 
 All notable changes to `@vulkano/core` are documented here.
 
+## [1.28.1]
+
+### Changed (internal, no runtime/public API impact)
+- `test/unit/` — added `test/unit/helpers/globals.js`, a shared `setupGlobals()` /
+  `setupEncrypter()` / `setupFilter()` bootstrap for unit-testing a core lib in isolation.
+  Replaces 4 duplicated, hand-rolled `VSError` stand-in classes across
+  `ApiClient.test.js` / `Encrypter.test.js` / `Jwt.test.js` with the real `libs/VSError.js`,
+  and a fragile `delete global.app` pattern in `Encrypter.test.js` with restoring the
+  baseline via `setupGlobals()`.
+- Removed two stale `Known issues / tech debt` entries from `AGENTS.md` (`bluebird` and
+  `path`/`fs` as dependencies) — neither is present in the codebase or `package.json` anymore.
+
 ## [1.28.0]
 
 ### Changed

@@ -3,11 +3,8 @@
  * Focuses on option building (SSL config, headers, body) without making real HTTP requests.
  */
 
-global.app = { PRODUCTION: false };
-global.VSError = class VSError extends Error {
-  constructor(msg, code) { super(msg); this.statusCode = code; }
-  static reject(msg, code) { return Promise.reject(new VSError(msg, code)); }
-};
+const { setupGlobals } = require('../helpers/globals');
+setupGlobals();
 
 // Mock undici Agent to capture the connect options passed to it
 jest.mock('undici', () => ({

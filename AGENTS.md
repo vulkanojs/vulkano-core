@@ -2,7 +2,7 @@
 
 ## Overview
 
-`@vulkano/core` (v1.28.0) is the engine of the Vulkano MVC framework. It bootstraps the environment, connects to the database, and auto-loads all models, controllers, services, and responses before starting the Express server. The user app only calls `require('@vulkano/core')`.
+`@vulkano/core` (v1.28.1) is the engine of the Vulkano MVC framework. It bootstraps the environment, connects to the database, and auto-loads all models, controllers, services, and responses before starting the Express server. The user app only calls `require('@vulkano/core')`.
 
 ```
 /**
@@ -617,9 +617,7 @@ Available globally as `io` and `app.socket`.
 ## Known issues / tech debt
 
 - **`services.js`** — All libs/services are injected into `global`. Makes unit testing hard without mocking globals.
-- **`bluebird`** — Still imported in a few places. Not needed in Node 18+ where `Promise` is native.
 - **`Crontab`** — Default timezone is `America/New_York` instead of UTC.
-- **`path` and `fs` npm packages** — These are Node.js built-ins and should not be in `package.json` dependencies.
 
 ---
 
@@ -647,3 +645,22 @@ Requires `core/.env.test` with `TEST_DB_URI`, `TEST_PORT`, and `JWT_SECRET_KEY` 
 - Starts a full Vulkano fixture server as a child process
 - Drops and rebuilds the test database on every run
 - Covers: VSR response format, routing (params + query strings), scaffold CRUD, pagination, model validation, ReDoS protection, file uploads, sockets (handshake auth + event routing)
+
+### Unit tests (`test/unit/`) — testing a core lib in isolation
+
+Core libs (`core/libs/*.js`) read globals (`app`, `VSError`, `CORE_PATH`, `APP_PATH`, …) that are
+normally set by `bootstrap/services.js` at framework boot — a unit test skips that boot to test one
+lib alone, so those globals don't exist yet. Use the shared helper instead of hand-rolling a fake
+per file:
+
+```js
+const { setupGlobals, setupEncrypter, setupFilter } = require('../helpers/globals');
+
+setupGlobals();                                  // app, VSError (the real one), CORE_PATH, APP_PATH
+setupGlobals({ app: { config: { jwt: {...} } } }); // override app (shallow) for lib-specific config
+setupEncrypter();                                // only if the lib under test needs global.Encrypter
+setupFilter();                                   // only if the lib under test needs global.Filter
+```
+
+`setupGlobals()` always installs the real `libs/VSError.js`, not a per-file stand-in — keeps unit
+tests honest about its actual behavior instead of drifting from a hand-copied fake.

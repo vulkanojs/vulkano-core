@@ -2,7 +2,8 @@
  * VSError — unit tests
  */
 
-global.app = { PRODUCTION: false };
+const { setupGlobals } = require('../helpers/globals');
+setupGlobals();
 
 const VSError = require('../../../libs/VSError');
 

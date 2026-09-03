@@ -7,14 +7,10 @@
  * global.Filter is still needed for trim.js, which calls Filter.get() internally.
  */
 
-const path = require('node:path');
+const { setupGlobals, setupFilter } = require('../helpers/globals');
+setupGlobals();
 
-// Set globals required by Filter.js before requiring it
-global.CORE_PATH = path.join(__dirname, '../../../');
-global.APP_PATH  = path.join(__dirname, '../../fixtures/app');
-
-const Filter = require('../../../libs/Filter');
-global.Filter = Filter; // trim.js calls Filter.get() — needs the global
+const Filter = setupFilter(); // trim.js calls Filter.get() — needs the global
 
 describe('Filter.load', () => {
 
