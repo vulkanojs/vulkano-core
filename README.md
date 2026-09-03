@@ -112,6 +112,23 @@ GET /users/edit/1
 | `POST`      | `/users/save`     | `UsersController['post save']`       |
 | `GET`       | `/users/42/info`  | `UsersController['get :id/info']`    |
 
+### Nested module folders — group controllers by domain
+
+Controllers can live in subfolders, at **any nesting depth**, to group them by module. Each folder
+segment becomes a URL namespace, in order, before the controller's own resource segment:
+
+```
+controllers/UsersController.js                        → /users/...
+controllers/api/ProductsController.js                  → /api/products/...
+controllers/api/config/VatTypesController.js            → /api/config/vat-types/...
+controllers/api/config/billing/InvoiceController.js     → /api/config/billing/invoice/...
+```
+
+The same controller filename can exist at several depths at once — `VatTypesController.js` at the
+root, under `api/`, and under `api/config/` resolve to `/vat-types/`, `/api/vat-types/`, and
+`/api/config/vat-types/` respectively, fully independent of each other. No config needed; it's
+purely the folder path on disk.
+
 ### Method key convention: `'<verb>? <path tail>'`
 
 A controller method key is `<path tail>` on its own, or `'<verb> <path tail>'` when the verb isn't `GET`. The auto-router only reassigns the HTTP method when the key has a space-separated verb prefix — otherwise it defaults to **GET**.

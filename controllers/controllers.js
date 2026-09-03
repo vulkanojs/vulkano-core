@@ -19,20 +19,21 @@ function toKebabCase(str) {
     .toLowerCase();
 }
 
+const methods = ['get', 'post', 'put', 'patch', 'delete'];
+
 module.exports = function loadControllersApplication() {
 
   const routes = {};
 
-  Object.keys(AllControllers).forEach( (controller) => {
-
-    const methods = ['get', 'post', 'put', 'patch', 'delete'];
-    const current = AllControllers[controller];
+  // Registers all routes found in a single controller definition object,
+  // namespaced under the given module path segments (possibly empty).
+  function processController(controllerFileName, current, modulePathSegments) {
 
     const {
       scaffold,
       allowedMethods,
       model
-    } = current;
+    } = current || {};
 
     // `scaffold` can be `true` + a separate `model` field, or the model
     // name given directly as the `scaffold` string (no `model` needed).
@@ -41,7 +42,7 @@ module.exports = function loadControllersApplication() {
     if (scaffold && scaffoldModel) {
 
       if (!global[scaffoldModel]) {
-        throw new Error(`Scaffold model "${scaffoldModel}" not found in global scope for controller "${controller}". Make sure the model exists in app/models.`);
+        throw new Error(`Scaffold model "${scaffoldModel}" not found in global scope for controller "${controllerFileName}". Make sure the model exists in app/models.`);
       }
 
       const scaffoldingCurrent = scaffoldController(scaffoldModel, allowedMethods);
@@ -56,131 +57,74 @@ module.exports = function loadControllersApplication() {
 
     }
 
-    let controllerName = toKebabCase(controller.replace('Controller', ''));
-
-    let parts = [];
-    let method = 'get';
-    let pathToRun = '';
-    let moduleName = '';
+    const controllerName = toKebabCase(controllerFileName.replace('Controller', ''));
+    const namespace = modulePathSegments.join('/');
 
     Object.keys(current || []).forEach( (route) => {
 
-      // Is a submodule (like api/TestController)
-      if (route.split('Controller').length > 1) {
+      let method = 'get';
+      let pathToRun = '';
 
-        moduleName = controllerName;
-        const submodules = AllControllers[moduleName];
+      const parts = route.split(' ');
+      const [tmpMethod, tmpPath] = parts;
 
-        Object.keys(submodules || []).forEach( (subcontroller) => {
-
-          controllerName = toKebabCase(subcontroller.replace('Controller', ''));
-          const subcurrent = submodules[subcontroller];
-
-          const {
-            scaffold: subcurrentScaffold,
-            allowedMethods: subAllowedMethods,
-            model: subcurrentModel
-          } = subcurrent || {};
-
-          const subScaffoldModel = typeof subcurrentScaffold === 'string' ? subcurrentScaffold : subcurrentModel;
-
-          if (subcurrentScaffold && subScaffoldModel) {
-
-            if (!global[subScaffoldModel]) {
-              throw new Error(`Scaffold model "${subScaffoldModel}" not found in global scope for controller "${subcontroller}". Make sure the model exists in app/models.`);
-            }
-
-            const scaffoldingSubcurrent = scaffoldController(subScaffoldModel, subAllowedMethods);
-
-            Object.keys(scaffoldingSubcurrent).forEach( (m) => {
-
-              if (!subcurrent[m]) {
-                subcurrent[m] = scaffoldingSubcurrent[m];
-              }
-
-            });
-
-          }
-
-          Object.keys(subcurrent || []).forEach( (subroute) => {
-
-            parts = subroute.split(' ');
-
-            const [tmpMethod, tmpPath] = parts;
-
-            if (tmpPath) {
-              if (methods.indexOf(tmpMethod.toLowerCase()) >= 0) {
-                method = tmpMethod.toLowerCase();
-                pathToRun = tmpPath;
-              } else {
-                // First token isn't a real HTTP method — default to GET,
-                // treating the whole key as the path (e.g. 'edit :id' → GET .../edit/:id)
-                method = 'get';
-                pathToRun = parts.join('/');
-              }
-            } else {
-              pathToRun = tmpMethod;
-            }
-
-            const isAbsolute = (pathToRun.substring(0, 1) === '/') ? true : false;
-
-            if (!isAbsolute) {
-
-              if (methods.indexOf(pathToRun.toLowerCase()) >= 0) {
-                method = pathToRun.toLowerCase();
-                pathToRun = `/${moduleName}/${controllerName}/`;
-              } else {
-                pathToRun = `/${moduleName}/${controllerName}/${pathToRun.replace(/GET|POST|DELETE|PUT|PATCH/i, '')}`;
-              }
-
-            }
-
-            if (typeof subcurrent[subroute] === 'function') {
-              routes[`${method} ${pathToRun}`] = subcurrent[subroute];
-            }
-
-          });
-        });
-
-      } else {
-
-        parts = route.split(' ');
-        const [tmpMethod, tmpPath] = parts;
-
-        if (tmpPath) {
-          if (methods.indexOf(tmpMethod.toLowerCase()) >= 0) {
-            method = tmpMethod.toLowerCase();
-            pathToRun = tmpPath;
-          } else {
-            // First token isn't a real HTTP method — default to GET,
-            // treating the whole key as the path (e.g. 'edit :id' → GET .../edit/:id)
-            method = 'get';
-            pathToRun = parts.join('/');
-          }
+      if (tmpPath) {
+        if (methods.indexOf(tmpMethod.toLowerCase()) >= 0) {
+          method = tmpMethod.toLowerCase();
+          pathToRun = tmpPath;
         } else {
-          pathToRun = tmpMethod;
+          // First token isn't a real HTTP method — default to GET,
+          // treating the whole key as the path (e.g. 'edit :id' → GET .../edit/:id)
+          method = 'get';
+          pathToRun = parts.join('/');
         }
+      } else {
+        pathToRun = tmpMethod;
+      }
 
-        const isAbsolute = (pathToRun.substring(0, 1) === '/') ? true : false;
+      const isAbsolute = (pathToRun.substring(0, 1) === '/') ? true : false;
 
-        if (!isAbsolute) {
-          if (methods.indexOf(pathToRun.toLowerCase()) >= 0) {
-            method = pathToRun.toLowerCase();
-            pathToRun = `/${controllerName}/`;
-          } else {
-            pathToRun = `/${controllerName}/${pathToRun.replace(/GET|POST|DELETE|PUT|PATCH/i, '')}`;
-          }
-        }
+      if (!isAbsolute) {
 
-        if (typeof current[route] === 'function') {
-          routes[`${method} ${pathToRun}`] = current[route];
+        const base = namespace ? `/${namespace}/${controllerName}/` : `/${controllerName}/`;
+
+        if (methods.indexOf(pathToRun.toLowerCase()) >= 0) {
+          method = pathToRun.toLowerCase();
+          pathToRun = base;
+        } else {
+          pathToRun = `${base}${pathToRun.replace(/GET|POST|DELETE|PUT|PATCH/i, '')}`;
         }
 
       }
 
+      if (typeof current[route] === 'function') {
+        routes[`${method} ${pathToRun}`] = current[route];
+      }
+
     });
 
-  });
+  }
+
+  // Walks the (possibly nested) AllControllers tree. A key ending in
+  // "Controller" is a controller file; any other key is a module/namespace
+  // folder whose value is another node to recurse into.
+  function processNode(node, modulePathSegments) {
+
+    Object.keys(node || []).forEach( (key) => {
+
+      const value = node[key];
+
+      if (/Controller$/.test(key)) {
+        processController(key, value, modulePathSegments);
+      } else {
+        processNode(value, [...modulePathSegments, toKebabCase(key)]);
+      }
+
+    });
+
+  }
+
+  processNode(AllControllers, []);
 
   return routes;
 
