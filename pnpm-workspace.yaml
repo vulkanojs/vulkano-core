@@ -1,10 +1,11 @@
 allowBuilds:
+  '@parcel/watcher': true
   fsevents: set this to true or false
-  unrs-resolver: set this to true or false
+  unrs-resolver: true
 catalog:
   vite: npm:@voidzero-dev/vite-plus-core@latest
   vitest: npm:@voidzero-dev/vite-plus-test@latest
-  vite-plus: ^0.2.4
+  vite-plus: ^0.3.0
 overrides:
   vite: "catalog:"
   vitest: "catalog:"

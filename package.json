@@ -35,7 +35,7 @@
     "url": "https://github.com/vulkanojs/vulkano-core/issues"
   },
   "devDependencies": {
-    "jest": "^30.4.2",
+    "jest": "^30.5.1",
     "nodemon": "^3.1.14",
     "socket.io-client": "^4.8.3",
     "vite-plus": "catalog:"
@@ -54,18 +54,18 @@
     "express-handlebars": "^9.0.1",
     "express-jwt": "^8.5.1",
     "express-session": "^1.19.0",
-    "express-useragent": "^2.2.1",
+    "express-useragent": "^2.2.3",
     "frameguard": "^4.0.0",
     "helmet": "^8.3.0",
-    "i18next": "^26.3.6",
+    "i18next": "^26.4.1",
     "include-all": "^4.0.3",
     "jwt-simple": "^0.5.6",
     "mongoose": "^8.12.1",
     "mongoose-paginate-v2": "^1.9.5",
-    "morgan": "^1.11.0",
-    "multer": "^2.2.0",
+    "morgan": "^1.12.0",
+    "multer": "^2.3.0",
     "nunjucks": "^3.2.4",
-    "redis": "^6.1.0",
+    "redis": "^6.2.1",
     "socket.io": "^4.8.3",
     "socket.io-adapter": "^2.5.8",
     "undici": "^7.28.0"
