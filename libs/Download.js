@@ -17,6 +17,8 @@ module.exports = (url, dest) => {
       file.on('error', (error) => {
         reject(error);
       });
+    }).on('error', (error) => {
+      reject(error);
     });
   });
 
