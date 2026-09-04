@@ -37,7 +37,12 @@ module.exports = (props) => {
     version
   } = app.pkg || {};
 
-  const validEntry = Object.keys(inputs).find( (k) => k.indexOf(entry) >= 0 );
+  const validEntry = Object.keys(inputs).find( (k) => {
+    const val = inputs[k];
+    // dev manifest: keys are short names ("app"/"admin") -> exact key match
+    // prod manifest: keys are full paths, each entry carries exact "name" and "isEntry" boolean -> match by name and isEntry
+    return k === entry || (val && val.name === entry && val.isEntry);
+  });
 
   if (!validEntry) {
     return `<!-- Invalid Entry ${entry} -->`;
