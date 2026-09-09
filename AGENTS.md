@@ -589,7 +589,7 @@ All sources are deep-merged with `deepmerge`. Final result is in `app.config`.
 
 **Key config files:**
 - `settings.js` — port, database connection, paths
-- `express/cors.js`, `express/jwt.js`, `express/csp.js`, `express/cookies.js`, `express/multer.js` (default `limits.fileSize` 25MB)
+- `express/cors.js`, `express/jwt.js`, `express/csp.js`, `express/cookies.js`, `express/multer.js` (default `limits.fileSize` 25MB), `express/rateLimit.js` (disabled by default; wraps `express-rate-limit`)
 - `routes.js` — explicit route mappings
 - `bootstrap.js` — startup hook (**required**)
 - `sockets/` — Socket.io config and adapters

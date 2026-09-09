@@ -12,6 +12,7 @@ const compression = require('compression');
 const multer = require('multer');
 const helmet = require('helmet');
 const timeout = require('connect-timeout');
+const { rateLimit } = require('express-rate-limit');
 const useragent = require('express-useragent');
 const cookieParser = require('cookie-parser');
 const expressSession = require('express-session');
@@ -191,6 +192,15 @@ module.exports = function loadServer() {
         }
         next();
       });
+
+      // ---------------
+      // RATE LIMIT - File: app/config/express/rateLimit.js
+      // ---------------
+      const { enabled: rateLimitEnabled, ...rateLimitOptions } = expressConfig.rateLimit || {};
+
+      if (rateLimitEnabled) {
+        vulkano.use(rateLimit(rateLimitOptions));
+      }
 
       // ---------------
       // JWT - File: app/config/express/jwt.js

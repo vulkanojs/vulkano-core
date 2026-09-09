@@ -1,6 +1,6 @@
 {
   "name": "@vulkano/core",
-  "version": "1.31.0",
+  "version": "1.32.0",
   "description": "A MVC framework using Express 4",
   "license": "MIT",
   "author": "Vulkano Team",
@@ -53,6 +53,7 @@
     "express": "^4.21.2",
     "express-handlebars": "^9.0.1",
     "express-jwt": "^8.5.1",
+    "express-rate-limit": "^8.7.0",
     "express-session": "^1.19.0",
     "express-useragent": "^2.2.3",
     "frameguard": "^4.0.0",

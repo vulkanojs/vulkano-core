@@ -48,6 +48,7 @@ module.exports = function getExpressConfiguration() {
     jwt: {},
     session: {},
     permissionPolicy: {},
+    rateLimit: {},
     sockets: {},
     redis: {},
     multer: {
