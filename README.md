@@ -766,6 +766,13 @@ files fall back to sane defaults — and every file is auto-merged into the fina
 | [`csp.js`](examples/config/express/csp.js)                       | Content Security Policy rules       | — (custom header builder) |
 | [`helmet.js`](examples/config/express/helmet.js)                 | Security headers                    | [`helmet`](https://helmetjs.github.io/) |
 | [`permissionPolicy.js`](examples/config/express/permissionPolicy.js) | `Permission-Policy` header       | — (custom header builder) |
+| [`rateLimit.js`](examples/config/express/rateLimit.js)           | Request rate limiting; `path` scopes it to `/api` or a custom set of endpoints (defaults to `'*'`, whole app) | [`express-rate-limit`](https://www.npmjs.com/package/express-rate-limit) |
+| [`session.js`](examples/config/express/session.js)               | Express session (requires `cookies.js` enabled) | [`express-session`](https://www.npmjs.com/package/express-session) |
+| [`multer.js`](examples/config/express/multer.js)                 | File upload destination + limits (default `fileSize` 25MB) | [`multer`](https://www.npmjs.com/package/multer) |
+| [`morgan.js`](examples/config/express/morgan.js)                 | HTTP request logging                | [`morgan`](https://www.npmjs.com/package/morgan) |
+| [`compression.js`](examples/config/express/compression.js)       | Response compression                | [`compression`](https://www.npmjs.com/package/compression) |
+| [`urlencoded.js`](examples/config/express/urlencoded.js)         | URL-encoded body parser options     | — (native `express.urlencoded()`) |
+| [`frameguard.js`](examples/config/express/frameguard.js)         | `X-Frame-Options` header             | [`frameguard`](https://www.npmjs.com/package/frameguard) |
 | [`json.js`](examples/config/express/json.js)                     | JSON body parser MIME types         | — (native `express.json()`) |
 
 ---
