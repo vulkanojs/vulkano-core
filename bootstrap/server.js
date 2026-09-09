@@ -196,10 +196,14 @@ module.exports = function loadServer() {
       // ---------------
       // RATE LIMIT - File: app/config/express/rateLimit.js
       // ---------------
-      const { enabled: rateLimitEnabled, ...rateLimitOptions } = expressConfig.rateLimit || {};
+      const {
+        enabled: rateLimitEnabled,
+        path: rateLimitPath,
+        ...rateLimitOptions
+      } = expressConfig.rateLimit || {};
 
       if (rateLimitEnabled) {
-        vulkano.use(rateLimit(rateLimitOptions));
+        vulkano.use(rateLimitPath || '*', rateLimit(rateLimitOptions));
       }
 
       // ---------------
