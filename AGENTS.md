@@ -549,7 +549,9 @@ Generates las siguientes rutas, cada una delegando al método correspondiente de
 ```js
 module.exports = {
   scaffold: 'Product',
-  subdocs: ['reviews']   // Product.attributes.reviews must be an array of subdocuments
+  subdocs: ['lines', { reviews: ['GET', 'POST'] }]
+  // 'lines'   → Product.attributes.lines must be an array of subdocuments, all methods allowed
+  // reviews:  → same, but only GET/POST routes are registered for this key
 }
 ```
 
@@ -566,9 +568,15 @@ Generates, in addition to the 5 routes above:
 `:key` solo acepta los nombres listados en `subdocs` — cualquier otro valor (incluido un campo
 real pero no-array, como un `String` normal) devuelve 404 en vez de llegar a
 `Model.createSubdoc()` y reventar contra un campo que no es array. `subdocs` ausente o vacío =
-deshabilitado, sin efecto sobre las 5 rutas base. Wiring en `controllers/ScaffoldController.js` +
-`controllers/controllers.js` (que extrae `subdocs` del controller y lo pasa como tercer
-argumento).
+deshabilitado, sin efecto sobre las 5 rutas base.
+
+**Restricción de métodos por key:** cada entrada de `subdocs` puede ser un string (sin
+restricción, todos los métodos) o un objeto `{ key: ['GET', 'POST'] }` para limitar esa key
+a los métodos HTTP listados (mayúsculas o minúsculas, se normalizan). Un método no listado
+devuelve 405 antes de tocar el modelo. Independiente del `allowedMethods` de las 5 rutas base.
+
+Wiring en `controllers/ScaffoldController.js` + `controllers/controllers.js` (que extrae
+`subdocs` del controller y lo pasa como tercer argumento).
 
 ---
 

@@ -322,7 +322,9 @@ array) fields — off by default, same on/off convention as `allowedMethods`:
 module.exports = {
   scaffold: 'Product',
   allowedMethods: ['get', 'post', 'put', 'patch', 'delete'],
-  subdocs: ['reviews'] // Product.attributes.reviews must be an array of subdocuments
+  subdocs: ['lines', { reviews: ['GET', 'POST'] }]
+  // 'lines'  → Product.attributes.lines must be an array of subdocuments, all methods allowed
+  // reviews: → same, but only GET/POST routes are registered for this key
 };
 ```
 
@@ -340,6 +342,11 @@ This generates:
 real but non-array field, like a plain `String` attribute) 404s instead of reaching
 `Model.createSubdoc()` and blowing up on a field that isn't an array. Omit `subdocs` (or leave it
 empty) to disable this entirely — the 5 base CRUD routes above are unaffected either way.
+
+**Per-key method restriction:** each `subdocs` entry can be a plain string (no restriction, all
+methods allowed) or an object `{ key: ['GET', 'POST'] }` to limit that key's subdoc routes to
+the listed HTTP methods (case-insensitive, normalized to uppercase). A method not in the list
+returns 405 before touching the model — independent from the base 5 routes' `allowedMethods`.
 
 A scaffold controller wires each allowed HTTP method to the matching standard CRUD method on the model
 (`getAll`, `get<ModelName>`, `create`, `update`, `delete` — see [Models](#models-business-logic-lives-here) below), so the model
