@@ -4,7 +4,7 @@ module.exports = function setupNunjucks(vulkano, views) {
   const settings = {
     autoescape: true,
     watch: !app.PRODUCTION,
-    ...(views.settings || {}),
+    ...views.settings,
     express: vulkano
   };
 

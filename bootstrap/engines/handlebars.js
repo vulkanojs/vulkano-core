@@ -33,7 +33,7 @@ module.exports = function setupHandlebars(vulkano, views, viewsExt) {
     defaultLayout: views.defaultLayout !== undefined ? views.defaultLayout : 'default',
     layoutsDir: views.layoutsDir || `${views.path}/_shared/templates`,
     partialsDir: views.partialsDir || `${views.path}/_shared/partials`,
-    ...(views.settings || {})
+    ...views.settings
   });
 
   registerGroup(hbs, views.filters, 'registerHelper');

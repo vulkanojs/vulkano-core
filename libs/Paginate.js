@@ -121,7 +121,7 @@ module.exports = {
     let newSearch = {};
 
     const currentFilters = {
-      ...(props.filter || {})
+      ...props.filter
     };
 
     const hasFilters = Object.keys( props.filter || {} ).length > 0 ? true : false;

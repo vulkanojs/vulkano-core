@@ -6,7 +6,7 @@ module.exports = function setupViewEngine(vulkano) {
   const views = {
     ext: '.html',
     ...viewsConfig,
-    ...(app.server.views || {})
+    ...app.server.views
   };
 
   const engine = views.engine || 'nunjucks';

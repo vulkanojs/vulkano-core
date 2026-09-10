@@ -116,7 +116,7 @@ module.exports = function loadControllersApplication() {
 
       const value = node[key];
 
-      if (/Controller$/.test(key)) {
+      if (key.endsWith('Controller')) {
         processController(key, value, modulePathSegments);
       } else {
         processNode(value, [...modulePathSegments, toKebabCase(key)]);

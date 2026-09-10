@@ -106,9 +106,9 @@ module.exports = function getExpressConfiguration() {
 
   // Merge config
   const sockets = {
-    ...(defaultConfig || {}),
-    ...(socketsConfig || {}),
-    ...(rawSockets || {}),
+    ...defaultConfig,
+    ...socketsConfig,
+    ...rawSockets,
     config: {
       ...( socketsConfig ? (socketsConfig.config || {}) : {})
     }

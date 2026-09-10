@@ -679,7 +679,7 @@ module.exports = function loadServer() {
       const { config: socketsConfig, middlewares: socketsMiddlewares } = sockets;
 
       const socketProps = {
-        ...(socketsConfig || {}),
+        ...socketsConfig,
         pingTimeout: +socketsConfig.timeout || 4000,
         pingInterval: +socketsConfig.interval || 2000,
         transports: socketsConfig.transports || ['websocket', 'polling']
@@ -782,7 +782,7 @@ module.exports = function loadServer() {
           const propsToMongoCollection = {
             expireAfterSeconds: 3600,
             background: true,
-            ...(socketsMongoSettings || {})
+            ...socketsMongoSettings
           };
 
           socketsMongoCollection.createIndex({ createdAt: 1 }, propsToMongoCollection);
