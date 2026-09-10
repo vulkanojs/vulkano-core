@@ -1,4 +1,4 @@
-const { Agent } = require('undici');
+const { Agent, fetch } = require('undici');
 
 module.exports = {
 
@@ -77,7 +77,7 @@ module.exports = {
     const optHeaders = {
       'Content-Type': 'application/json',
       Accept: 'application/json',
-      ...(headers || {})
+      ...headers
     };
 
     const options = {
