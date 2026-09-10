@@ -2,6 +2,30 @@
 
 All notable changes to `@vulkano/core` are documented here.
 
+## [2.0.0]
+
+**This is the start of the v2.x line, built on Express 5.** Existing Express 4 projects that
+aren't ready to upgrade should stay on the `1.x` branch (maintenance fixes only, no new
+features from this point on).
+
+### Changed
+- **Requires Node.js `>=24`** (was `>=20`).
+- Migrated from Express 4 to Express 5 (`^5.2.1`). Two Vulkano-owned conventions carry over as
+  framework defaults, not app-code compat: the wildcard route normalizer (`'/admin*'` and bare
+  `'*'`/`'/*'` still work, translated internally to path-to-regexp v8 syntax) and the
+  query-string parser (still `'extended'`, matching Express 4's nested-bracket behavior instead
+  of Express 5's new `'simple'` default). A temporary `bootstrap/legacyApiCompat.js` compatibility layer
+  additionally restores old Express 4 API surface an existing app's *own code* might call —
+  `req.param()`, legacy two-argument `res.send/json/jsonp`, `res.redirect`'s old argument order
+  and `'back'` sentinel, `res.location('back')`, legacy optional-param routes (`':id?'`), and
+  `req.body` defaulting to `{}` instead of `undefined`. That layer is temporary and will be
+  removed in a future major version — see the README's "Express 5 — compatibility layer and
+  residual edge cases" section for the full checklist of what to update, and the handful of
+  genuinely unshimmable residual cases.
+
+### Tests
+- `test/unit/bootstrap/routeCompat.test.js`, `test/unit/bootstrap/legacyApiCompat.test.js` (new).
+
 ## [1.30.1]
 
 ### Fixed

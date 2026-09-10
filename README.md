@@ -23,11 +23,16 @@ Inspired by [KumbiaPHP](https://www.kumbiaphp.com).
 
 For the full project generator/scaffolding (frontend + backend structure), see the framework: [https://github.com/vulkanojs/vulkano](https://github.com/vulkanojs/vulkano)
 
+> **Two supported lines:** `master` (this branch) is **v2.x**, built on **Express 5** — the
+> active line for new projects. The **`1.x`** branch stays on **Express 4** for existing
+> projects that aren't ready to upgrade; it gets maintenance fixes only, no new features.
+> See `1.x`'s own README for its requirements and support policy.
+
 ---
 
 ## Requirements
 
-- **Node.js** `^22`
+- **Node.js** `>=24`
 - **MongoDB** (optional — only needed if you use models)
 - **Redis** (optional — only needed for Socket.io Redis adapter or sessions)
 
@@ -774,6 +779,123 @@ files fall back to sane defaults — and every file is auto-merged into the fina
 | [`urlencoded.js`](examples/config/express/urlencoded.js)         | URL-encoded body parser options     | — (native `express.urlencoded()`) |
 | [`frameguard.js`](examples/config/express/frameguard.js)         | `X-Frame-Options` header             | [`frameguard`](https://www.npmjs.com/package/frameguard) |
 | [`json.js`](examples/config/express/json.js)                     | JSON body parser MIME types         | — (native `express.json()`) |
+
+---
+
+## Express 5 — compatibility layer and residual edge cases
+
+`@vulkano/core` runs on Express 5. The core absorbs the breaking changes that
+matter for real Vulkano usage, so the great majority of apps built on it
+don't need to change anything **right now**.
+
+**Most of this is permanent — Vulkano's own conventions, not a temporary
+shim** (the wildcard route translation and the `'extended'` query parser
+below). **The part that IS temporary** is `bootstrap/legacyApiCompat.js` —
+it restores old Express 4 *API surface* (`req.param()`, legacy `res.*`
+signatures, etc.) that an existing app's own code might call, and it will be
+removed in a future major version. Booting a server with it active prints a
+console warning naming the checklist below. Update your app when
+convenient — none of this is urgent, but plan for it before the next major
+bump:
+
+| If your app uses... | Update to... |
+|---|---|
+| `req.param(name)` | `req.params.name` / `req.body.name` / `req.query.name` (explicit) |
+| `res.send(status, body)` | `res.status(status).send(body)` |
+| `res.send(status)` (shorthand) | `res.sendStatus(status)` |
+| `res.json(status, body)` | `res.status(status).json(body)` |
+| `res.jsonp(status, body)` | `res.status(status).jsonp(body)` |
+| `res.redirect(url, status)` | `res.redirect(status, url)` |
+| `res.redirect('back')` | `res.redirect(req.get('Referrer') \|\| '/')` |
+| `res.location('back')` | `res.location(req.get('Referrer') \|\| '/')` |
+| `req.params[0]` (wildcard tail) | `req.params.splat` (array of path segments) |
+| Relying on `req.body` always being an object | Still true (shimmed to `{}`) — no action needed, but this shim goes away too |
+
+Not in the table above because they're **not going away**: wildcard route
+syntax (`'/admin*'`, `'/*'`) and `':id?'` optional-param syntax both keep
+working forever — Vulkano translates them to native path-to-regexp v8
+syntax internally (`bootstrap/routeCompat.js`), the same way it already
+translates other legacy config shapes. No need to rewrite these in your
+routes.
+
+Everything in the table above keeps working unchanged until the layer is
+removed — this is a heads-up, not a breaking change.
+
+- **Wildcard routes**: bare `'*'`/`'/*'` (whole-app catch-all) and a wildcard
+  glued or slash-separated onto a prefix (`'/admin*'`, `'/admin/*'` — the
+  documented SPA catch-all convention above) are translated automatically to
+  path-to-regexp v8 syntax, in your controllers, `app/config/routes.js`, and
+  the `rateLimit.path`/`jwt.path`/`cors.path` config options (including when
+  those are arrays). The captured tail is also restored at `req.params[0]` as
+  a plain string, matching Express 4 almost exactly — the one gap is a
+  wildcard that matches *nothing* (`GET /admin` against `/admin*`): Express 4
+  gave `req.params[0] === ''`, this gives `req.params[0] === undefined`
+  (Express 5 omits an empty match from `req.params` entirely, so there's
+  nothing to back-fill from) — alongside Express 5's own `req.params.splat`
+  array. `req.params` also enumerates the extra `'0'` key this adds
+  (`Object.keys(req.params)` includes it), harmless in this codebase but
+  worth knowing if your app iterates `req.params`' keys generically.
+- **Legacy optional-param routes** (`'/user/:id?'`): translated to Express 5's
+  `'/user{/:id}'` syntax too — Vulkano's own code never generates this, but
+  Express 5 rejects the raw `?` syntax at **boot time**, so a downstream
+  app's existing controller using it would otherwise fail to start on
+  upgrade, not just at request time.
+- `req.param(name)`, `res.send(status, body)`,
+  `res.send(status)` (single-argument shorthand — sets the status the same
+  way Express 4 did, instead of silently sending the number as a 200 body),
+  `res.json(status, body)`, `res.jsonp(status, body)`,
+  `res.redirect(url, status)`, `res.redirect('back')`, and
+  `res.location('back')` all keep working exactly as in Express 4.
+- `req.body` defaults to `{}` instead of `undefined` when no body-parsing
+  middleware matched the request — scaffold and custom controllers that pass
+  `req.body` straight into a model method don't need a null-check.
+- The query-string parser is set to Express's own `'extended'` mode (native
+  `qs`-based, allows prototype-pollution-guard keys like `constructor` —
+  identical to Express 4's default), so `?a[b]=1` still nests instead of
+  Express 5's new `'simple'` default.
+
+**Verified, not just assumed, to need no action:**
+- `express.static()`'s `dotfiles` default is `'ignore'` in both Express 4's
+  and Express 5's underlying `send` package — no behavior change.
+- `express.urlencoded()`'s `extended` option default flipped from `true` to
+  `false` in Express 5 — but `bootstrap/express.js`'s own defaults already
+  set `urlencoded: { extended: true }` explicitly, so this is a non-issue by
+  design, not by luck. Don't remove that explicit default as "redundant."
+- `res.render()`/Nunjucks rendering works unchanged (Express 5 enforces
+  async view-engine callbacks; Nunjucks's integration already satisfies it).
+- `app.router`/`app._router` (used only for the startup route-listing log)
+  is handled with a fallback for Express 5's renamed lazy getter.
+
+**Residual cases that cannot be shimmed safely** (real ambiguity, not an
+oversight) — if your app uses one of these, check it manually:
+
+- **Routes with multiple parameters pegged with no separator**
+  (`'/:foo:bar'`): unsupported since path-to-regexp v6 already, use a
+  literal separator (`'/:foo-:bar'`) or two segments.
+- **Raw regex routes** (`app.get(/^\/foo\/(bar|baz)$/, ...)`) and **a wildcard
+  in the middle of a path** (`'/api/*/edit'`): path-to-regexp v8 doesn't
+  support either as a mechanical rewrite — both require restructuring the
+  route (split into multiple explicit routes, or a named wildcard segment)
+  rather than a text substitution. Neither pattern is used anywhere in this
+  codebase.
+- **Middleware that reassigns `req.query` wholesale** (`req.query = {...}`):
+  Express 5 made `req.query` a getter — reassigning the whole object no
+  longer works; mutating existing keys (`req.query.foo = 'bar'`) still does.
+- **`req.acceptsCharset()`/`acceptsEncoding()`/`acceptsLanguage()`** (singular,
+  deprecated Express 4 names): removed outright in Express 5, no shim — use
+  the plural forms (`acceptsCharsets`/`acceptsEncodings`/`acceptsLanguages`)
+  that already existed in Express 4. No usage of the singular forms was found
+  anywhere in this codebase or its examples.
+- **`req.params` no longer has `Object.prototype` on string routes** — code
+  doing `req.params.hasOwnProperty(...)` or relying on inherited object
+  methods on `req.params` should use `Object.prototype.hasOwnProperty.call(...)`
+  instead. Not used anywhere in this codebase.
+- **`res.clearCookie()` ignores `maxAge`/`expires` options** now (Express 5)
+  — pass them to `res.cookie()` when setting the cookie instead. Not used
+  with those options anywhere in this codebase.
+- **`req.host` now includes the port number** (e.g. `example.com:3000`)
+  instead of stripping it — arguably a bugfix, but a behavior change for
+  code that assumes a bare hostname. Not used anywhere in this codebase.
 
 ---
 

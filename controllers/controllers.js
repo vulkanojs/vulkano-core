@@ -10,6 +10,7 @@ const AllControllers = require('include-all')({
 });
 
 const scaffoldController = require('./ScaffoldController');
+const { toExpress5Path } = require('../bootstrap/routeCompat');
 
 // PascalCase controller name -> kebab-case URL segment (MyAccount -> my-account)
 function toKebabCase(str) {
@@ -98,7 +99,7 @@ module.exports = function loadControllersApplication() {
       }
 
       if (typeof current[route] === 'function') {
-        routes[`${method} ${pathToRun}`] = current[route];
+        routes[`${method} ${toExpress5Path(pathToRun)}`] = current[route];
       }
 
     });

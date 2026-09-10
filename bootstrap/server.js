@@ -34,6 +34,10 @@ const setupViewEngine = require('./engines');
 // JWT Middleware
 const jwtMiddleware = require('../libs/Jwt');
 
+// Express 5 compat
+const { toExpress5Path } = require('./routeCompat');
+const { applyLegacyApiCompat } = require('./legacyApiCompat');
+
 // Express Config
 const expressConfig = require('./express')();
 
@@ -49,6 +53,12 @@ module.exports = function loadServer() {
       const { JWT_SECRET_KEY, COOKIES_SECRET_KEY } = process.env || {};
 
       const vulkano = express();
+
+      // Legacy 'extended' query-string parser (Express 5 defaults to 'simple',
+      // which doesn't nest brackets like ?a[b]=1 — restore old behavior).
+      vulkano.set('query parser', 'extended');
+
+      applyLegacyApiCompat(vulkano);
 
       // Expose the Express instance early so that custom() initializers in
       // config/routes.js can register routes via app.vulkano.get(), app.vulkano.post(), etc.
@@ -156,7 +166,7 @@ module.exports = function loadServer() {
       // ---------------
       // REQUEST OPTIONS - File: app/config/express/cors.js
       // ---------------
-      vulkano.options('*', (req, res) => {
+      vulkano.options(toExpress5Path('*'), (req, res) => {
         // ---------------
         // CORS
         // ---------------
@@ -203,7 +213,11 @@ module.exports = function loadServer() {
       } = expressConfig.rateLimit || {};
 
       if (rateLimitEnabled) {
-        vulkano.use(rateLimitPath || '*', rateLimit(rateLimitOptions));
+        if (rateLimitPath) {
+          vulkano.use(toExpress5Path(rateLimitPath), rateLimit(rateLimitOptions));
+        } else {
+          vulkano.use(rateLimit(rateLimitOptions));
+        }
       }
 
       // ---------------
@@ -220,12 +234,15 @@ module.exports = function loadServer() {
         }
 
         // JWT (secret key)
-        vulkano.use(
-          expressConfig.jwt.path || '*',
-          jwtMiddleware.init().unless({
-            path: expressConfig.jwt.ignore || []
-          })
-        );
+        const jwtGuard = jwtMiddleware.init().unless({
+          path: expressConfig.jwt.ignore || []
+        });
+
+        if (expressConfig.jwt.path) {
+          vulkano.use(toExpress5Path(expressConfig.jwt.path), jwtGuard);
+        } else {
+          vulkano.use(jwtGuard);
+        }
 
         // JWT  Handler error
         vulkano.use((err, req, res, next) => {
@@ -241,7 +258,7 @@ module.exports = function loadServer() {
       // CORS - File: app/config/express/cors.js
       // ---------------
       if (expressConfig.cors && expressConfig.cors.enabled) {
-        vulkano.use(expressConfig.cors.path, (req, res, next) => {
+        vulkano.use(toExpress5Path(expressConfig.cors.path), (req, res, next) => {
           // Enable CORS.
           let tmpCorsHeaders = [
             'X-Requested-With',
@@ -466,6 +483,8 @@ module.exports = function loadServer() {
           pathToRun = `/${pathToRun}`;
         }
 
+        pathToRun = toExpress5Path(pathToRun);
+
         let toExecute = null;
 
         if (typeof current === 'function') {
@@ -520,8 +539,9 @@ module.exports = function loadServer() {
       const server = await vulkano.listen(expressConfig.port);
 
       // Routes registered
-      const routesRegistered = vulkano._router.stack // registered routes
-        .filter((r) => r.route && r.route.path !== '*') // take out all the middleware
+      const routerInstance = vulkano.router || vulkano._router;
+      const routesRegistered = (routerInstance ? routerInstance.stack : []) // registered routes
+        .filter((r) => r.route && r.route.path !== toExpress5Path('*')) // take out all the middleware
         .map((r) => {
           return {
             method: Object.keys(r.route.methods)[0].toUpperCase(),
