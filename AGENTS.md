@@ -1,8 +1,13 @@
-# Vulkano Core — CLAUDE.md
+# Vulkano Core
 
 ## Overview
 
-`@vulkano/core` (v1.30.1) is the engine of the Vulkano MVC framework. It bootstraps the environment, connects to the database, and auto-loads all models, controllers, services, and responses before starting the Express server. The user app only calls `require('@vulkano/core')`.
+`@vulkano/core` (v2.x, Express 5) is the engine of the Vulkano MVC framework. It bootstraps the environment, connects to the database, and auto-loads all models, controllers, services, and responses before starting the Express server. The user app only calls `require('@vulkano/core')`.
+
+> **Two supported lines:** this `master`/`2.x` line runs on **Express 5** (Node `>=24`) — the
+> active line for new projects. The **`1.x`** branch stays on Express 4 (Node `>=20`) for
+> existing projects, maintenance fixes only. See README.md's "Express 5" section for the
+> compatibility notes and the migration checklist for anything an app's own code calls directly.
 
 ```
 /**
@@ -28,6 +33,7 @@ core/
 │   ├── express.js                ← Merges all Express configuration sources
 │   ├── logger.js                 ← Console helpers (colors, column formatting)
 │   ├── responses.js              ← Auto-loads and injects response methods into res
+│   ├── routeCompat.js            ← Translates '*'/'/admin*'/':id?' route syntax to path-to-regexp v8 (Express 5)
 │   ├── server.js                 ← Starts Express, registers middleware, routes, sockets
 │   ├── services.js               ← Auto-loads libs/services and injects them as globals
 │   └── views.js                  ← Nunjucks base config (path, filters, helpers)
@@ -338,6 +344,20 @@ module.exports = {
 - Does not validate that the controller/action exist before registering (fails at runtime with `console.error`).
 - Route conflicts resolved by registration order (first registered wins).
 
+### Wildcard / optional-param routes (Express 5)
+
+Every path registered by `controllers/controllers.js` and the `app/config/routes.js` loop
+passes through `bootstrap/routeCompat.js`'s `toExpress5Path()` before reaching Express, so
+these two legacy-syntax forms keep working (permanent Vulkano convention, not app compat):
+
+```
+'/admin*'  or  '/admin/*'   → translated to '/admin{*splat}'  (path-to-regexp v8)
+'/user/:id?'                → translated to '/user{/:id}'
+```
+
+The wildcard's captured tail is `req.params.splat` (an array of path segments) — Express 5
+removed the old `req.params[0]` string form entirely, and Vulkano does not restore it.
+
 ---
 
 ## Models
@@ -416,6 +436,15 @@ module.exports = {
 
 > **Note:** `searchBy` is `[]` in the scaffold default, so text search via `?search=` query param
 > does nothing unless you override `getAll` and configure `searchBy`.
+
+> **Security — never spread the raw query into `filter`.** `props` in a custom `getAll(props)`
+> is `req.query`, attacker-controlled. `Paginate.serializeQuery()` only ever reads flat
+> top-level keys from it (`page`, `per_page`, `sort`, `search`, `searchType`, `fields`) — never
+> a `filter` key — precisely so a request can't reach into the Mongo filter. Follow the same
+> rule: destructure only the specific fields you expect, and build `filter` yourself. Never do
+> `defaultProps.filter = { ...defaultProps.filter, ...props.filter }` — that lets a request send
+> `?filter[active]=false` and override the soft-delete scope. See README.md's "getAll(props)"
+> section for the full safe-vs-unsafe example.
 
 ### Auto-populate (relations)
 
@@ -519,10 +548,31 @@ get(req, res) {
 }
 ```
 
-- Expects a **Promise** (returns 500 with descriptive error if not)
+- Expects a **Promise, or a function** (async or plain, called with no arguments) — returns 500
+  with a descriptive error if neither
 - On `.then()`: responds `{ success: true, statusCode, data: result }`
 - On `.catch()`: responds `{ success: false, statusCode, error: { detail, errorCode, errorName } }`
 - `.finally()`: always calls `res.status(code).jsonp(output)`
+
+**Async/await controllers — no `try`/`catch` needed:** passing a function instead of a Promise
+lets VSR call it and catch both a `throw` and an awaited rejection the same way it catches a
+rejected Promise:
+
+```js
+get(req, res) {
+  res.vsr(async () => {
+    const user = await User.getByField(req.params.id);
+    if (!user) {
+      throw new VSError('Not found', 404); // caught by VSR, not the process
+    }
+    return user;
+  });
+}
+```
+
+Use whichever style fits: promise-chain code (e.g. `database/scaffold.js`) still uses
+`return VSError.reject(...)`/`VSError.notFound(...)` — that's the correct idiom inside a
+`.then()`. `throw new VSError(...)` is the idiom for async/await-style code.
 
 ---
 
