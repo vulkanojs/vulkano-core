@@ -312,6 +312,35 @@ This automatically exposes:
 
 Query string params supported on list: `page`, `per_page`, `sort`, `search`, `fields`.
 
+### Subdocuments — opt-in via `subdocs`
+
+Add a `subdocs` array to expose generic CRUD routes for the model's own subdocument (embedded
+array) fields — off by default, same on/off convention as `allowedMethods`:
+
+```js
+// app/controllers/api/ProductsController.js
+module.exports = {
+  scaffold: 'Product',
+  allowedMethods: ['get', 'post', 'put', 'patch', 'delete'],
+  subdocs: ['reviews'] // Product.attributes.reviews must be an array of subdocuments
+};
+```
+
+This generates:
+
+| Method   | Path                                  | Action                              |
+|----------|---------------------------------------|--------------------------------------|
+| `POST`   | `/api/products/:id/:key`              | Add a subdocument (`Model.createSubdoc`)  |
+| `GET`    | `/api/products/:id/:key`              | List every item under `:key` (via `getByField`) |
+| `GET`    | `/api/products/:id/:key/:subId`       | Find one subdocument (`Model.getSubdoc`)  |
+| `PUT`    | `/api/products/:id/:key/:subId`       | Update one subdocument (`Model.updateSubdoc`) |
+| `DELETE` | `/api/products/:id/:key/:subId`       | Remove one subdocument (`Model.removeSubdoc`) |
+
+`:key` is restricted to the names listed in `subdocs` — a request for any other key (including a
+real but non-array field, like a plain `String` attribute) 404s instead of reaching
+`Model.createSubdoc()` and blowing up on a field that isn't an array. Omit `subdocs` (or leave it
+empty) to disable this entirely — the 5 base CRUD routes above are unaffected either way.
+
 A scaffold controller wires each allowed HTTP method to the matching standard CRUD method on the model
 (`getAll`, `get<ModelName>`, `create`, `update`, `delete` — see [Models](#models-business-logic-lives-here) below), so the model
 still needs those methods implemented or auto-generated.

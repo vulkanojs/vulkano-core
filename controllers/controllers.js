@@ -33,7 +33,8 @@ module.exports = function loadControllersApplication() {
     const {
       scaffold,
       allowedMethods,
-      model
+      model,
+      subdocs
     } = current || {};
 
     // `scaffold` can be `true` + a separate `model` field, or the model
@@ -46,7 +47,7 @@ module.exports = function loadControllersApplication() {
         throw new Error(`Scaffold model "${scaffoldModel}" not found in global scope for controller "${controllerFileName}". Make sure the model exists in app/models.`);
       }
 
-      const scaffoldingCurrent = scaffoldController(scaffoldModel, allowedMethods);
+      const scaffoldingCurrent = scaffoldController(scaffoldModel, allowedMethods, subdocs);
 
       Object.keys(scaffoldingCurrent).forEach( (m) => {
 

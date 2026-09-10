@@ -142,7 +142,7 @@ module.exports = {
         const merged = { ...record, ...data };
 
         return Example
-          .findOneAndUpdate({ _id }, merged, { new: true })
+          .findOneAndUpdate({ _id }, merged, { returnDocument: 'after' })
           .then( (r) => {
 
             const tmp = r.toObject({ transform: true });

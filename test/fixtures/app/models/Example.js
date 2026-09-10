@@ -24,7 +24,14 @@ module.exports = {
     secret: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'School'
-    }
+    },
+    // Subdocument array — exercises the scaffold's getSubdoc/createSubdoc/
+    // updateSubdoc/removeSubdoc through a scaffold-generated controller
+    // (as opposed to Item.js's comments, wired through a hand-written one).
+    lines: [{
+      description: { type: String, trim: true },
+      qty: { type: Number, default: 1 }
+    }]
   },
 
   // Override scaffold getAll to select just name/school/age — populate

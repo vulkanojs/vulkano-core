@@ -46,6 +46,16 @@ module.exports = {
     // the fields:
     // active, createdAt, updatedAt
     // was created automatically
+
+    // Subdocument array — an embedded list that lives inside this same
+    // document (no separate collection/model). Manipulated through the
+    // scaffold's getSubdoc/createSubdoc/updateSubdoc/removeSubdoc, wired to
+    // routes on RestScaffoldController.js. See that file for the full
+    // CRUD-on-a-subdocument example.
+    lines: [{
+      description: { type: String, trim: true },
+      qty: { type: Number, default: 1 }
+    }]
   }
 
 };

@@ -48,7 +48,7 @@ module.exports = {
     return this.getByField(_id)
       .then((record) => {
         const merged = { ...record, ...data };
-        return this.findOneAndUpdate({ _id }, merged, { new: true })
+        return this.findOneAndUpdate({ _id }, merged, { returnDocument: 'after' })
           .then((r) => r.toObject({ transform: true }));
       });
   },

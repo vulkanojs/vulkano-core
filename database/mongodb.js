@@ -12,6 +12,31 @@ global.Mixed = mongoose.Schema.Types.Mixed;
 
 const AllModels = require('./models')();
 
+// Mongoose 9 no longer calls pre-middleware with a `next` callback (it now
+// expects a synchronous function or one returning a Promise). Vulkano's own
+// hook convention — every beforeSave/beforeUpdate/beforeFindOneAndUpdate/
+// beforeRemove/beforeValidate — is written as `(next) => { ...; next(); }`,
+// so wrap any such function into a Promise-returning one Mongoose 9 accepts,
+// preserving the exact old calling convention (including `next(err)` to
+// reject) for every existing model, in this framework and in consuming apps.
+// A hook already written with zero parameters (already Promise/async-style)
+// is passed through unchanged. Post-hooks are unaffected — Mongoose 9 still
+// calls them with `(doc, cb)` exactly as before, verified directly against
+// the installed mongoose@9, so no wrapping is needed there.
+function toMongoose9PreHook(fn) {
+
+  if (typeof fn !== 'function' || fn.length === 0) {
+    return fn;
+  }
+
+  return function legacyPreHook() {
+    return new Promise((resolve, reject) => {
+      fn.call(this, (err) => (err ? reject(err) : resolve()));
+    });
+  };
+
+}
+
 module.exports = async function loadDatabaseApplication() {
 
   const {
@@ -183,7 +208,7 @@ module.exports = async function loadDatabaseApplication() {
 
       // Save
       if (current.beforeSave) {
-        schema.pre('save', current.beforeSave);
+        schema.pre('save', toMongoose9PreHook(current.beforeSave));
         delete schema.statics.beforeSave;
       }
       if (current.afterSave) {
@@ -198,7 +223,7 @@ module.exports = async function loadDatabaseApplication() {
       // (schema.statics.update), which Mongoose auto-wraps with any hook whose
       // name matches an existing static method.
       if (current.beforeUpdate) {
-        schema.pre('updateOne', { document: true, query: false }, current.beforeUpdate);
+        schema.pre('updateOne', { document: true, query: false }, toMongoose9PreHook(current.beforeUpdate));
         delete schema.statics.beforeUpdate;
       }
       if (current.afterUpdate) {
@@ -208,7 +233,7 @@ module.exports = async function loadDatabaseApplication() {
 
       // findOneAndUpdate
       if (current.beforeFindOneAndUpdate) {
-        schema.pre('findOneAndUpdate', current.beforeFindOneAndUpdate);
+        schema.pre('findOneAndUpdate', toMongoose9PreHook(current.beforeFindOneAndUpdate));
         delete schema.statics.beforeFindOneAndUpdate;
       }
       if (current.afterFindOneAndUpdate) {
@@ -220,7 +245,7 @@ module.exports = async function loadDatabaseApplication() {
       // Bound to "deleteOne" (the Mongoose 8 document method): `doc.remove()`
       // and the legacy "remove" hook name were both removed upstream.
       if (current.beforeRemove) {
-        schema.pre('deleteOne', { document: true, query: false }, current.beforeRemove);
+        schema.pre('deleteOne', { document: true, query: false }, toMongoose9PreHook(current.beforeRemove));
         delete schema.statics.beforeRemove;
       }
       if (current.afterRemove) {
@@ -230,7 +255,7 @@ module.exports = async function loadDatabaseApplication() {
 
       // Validation
       if (current.beforeValidate) {
-        schema.pre('validate', current.beforeValidate);
+        schema.pre('validate', toMongoose9PreHook(current.beforeValidate));
         delete schema.statics.beforeValidate;
       }
       if (current.afterValidate) {
@@ -246,3 +271,5 @@ module.exports = async function loadDatabaseApplication() {
   });
 
 };
+
+module.exports.toMongoose9PreHook = toMongoose9PreHook;

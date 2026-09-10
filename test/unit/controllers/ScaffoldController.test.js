@@ -5,6 +5,8 @@
 
 const scaffoldController = require('../../../controllers/ScaffoldController');
 
+global.VSError = require('../../../libs/VSError');
+
 describe('ScaffoldController', () => {
 
   const originalMongoUri = process.env.MONGO_URI;
@@ -113,6 +115,79 @@ describe('ScaffoldController', () => {
     it('restricts routes when allowedMethods is a comma-separated string', () => {
       const routes = scaffoldController('Product', 'put, delete');
       expect(Object.keys(routes).sort()).toEqual(['delete :id', 'put :id'].sort());
+    });
+
+    describe('subdocs (opt-in via the `subdocs` array)', () => {
+
+      it('generates no subdoc routes when subdocs is omitted', () => {
+        const routes = scaffoldController('Product');
+        expect(routes['post :id/:key']).toBeUndefined();
+        expect(routes['get :id/:key/:subId?']).toBeUndefined();
+        expect(routes['put :id/:key/:subId']).toBeUndefined();
+        expect(routes['delete :id/:key/:subId']).toBeUndefined();
+      });
+
+      it('generates no subdoc routes when subdocs is an empty array', () => {
+        const routes = scaffoldController('Product', undefined, []);
+        expect(routes['post :id/:key']).toBeUndefined();
+      });
+
+      it('generates the 4 subdoc routes when subdocs has at least one key', () => {
+        const routes = scaffoldController('Product', undefined, ['reviews']);
+        expect(routes['post :id/:key']).toBeInstanceOf(Function);
+        expect(routes['get :id/:key/:subId?']).toBeInstanceOf(Function);
+        expect(routes['put :id/:key/:subId']).toBeInstanceOf(Function);
+        expect(routes['delete :id/:key/:subId']).toBeInstanceOf(Function);
+      });
+
+      it('"post :id/:key" delegates to Model.createSubdoc(key, id, body) with status 201', () => {
+        global.Product.createSubdoc = jest.fn().mockResolvedValue({ id: 'r1' });
+        const routes = scaffoldController('Product', undefined, ['reviews']);
+        routes['post :id/:key']({ ...req, params: { id: '1', key: 'reviews' } }, res);
+        expect(global.Product.createSubdoc).toHaveBeenCalledWith('reviews', '1', { name: 'x' });
+        expect(res.vsr).toHaveBeenCalledWith(expect.any(Promise), 201);
+      });
+
+      it('"get :id/:key/:subId?" with a subId delegates to Model.getSubdoc(key, id, subId)', () => {
+        global.Product.getSubdoc = jest.fn().mockResolvedValue({ id: 'r1' });
+        const routes = scaffoldController('Product', undefined, ['reviews']);
+        routes['get :id/:key/:subId?']({ params: { id: '1', key: 'reviews', subId: 'r1' } }, res);
+        expect(global.Product.getSubdoc).toHaveBeenCalledWith('reviews', '1', 'r1');
+      });
+
+      it('"get :id/:key/:subId?" without a subId lists the whole array via getByField', () => {
+        global.Product.getByField = jest.fn().mockResolvedValue({ reviews: [{ id: 'r1' }] });
+        const routes = scaffoldController('Product', undefined, ['reviews']);
+        routes['get :id/:key/:subId?']({ params: { id: '1', key: 'reviews' } }, res);
+        expect(global.Product.getByField).toHaveBeenCalledWith('1');
+      });
+
+      it('"put :id/:key/:subId" delegates to Model.updateSubdoc(key, id, subId, body)', () => {
+        global.Product.updateSubdoc = jest.fn().mockResolvedValue({ id: 'r1' });
+        const routes = scaffoldController('Product', undefined, ['reviews']);
+        routes['put :id/:key/:subId']({ ...req, params: { id: '1', key: 'reviews', subId: 'r1' } }, res);
+        expect(global.Product.updateSubdoc).toHaveBeenCalledWith('reviews', '1', 'r1', { name: 'x' });
+        expect(res.vsr).toHaveBeenCalledWith(expect.any(Promise), 202);
+      });
+
+      it('"delete :id/:key/:subId" delegates to Model.removeSubdoc(key, id, subId)', () => {
+        global.Product.removeSubdoc = jest.fn().mockResolvedValue(true);
+        const routes = scaffoldController('Product', undefined, ['reviews']);
+        routes['delete :id/:key/:subId']({ params: { id: '1', key: 'reviews', subId: 'r1' } }, res);
+        expect(global.Product.removeSubdoc).toHaveBeenCalledWith('reviews', '1', 'r1');
+        expect(res.vsr).toHaveBeenCalledWith(expect.any(Promise), 204);
+      });
+
+      it('rejects with 404 when :key is not in the subdocs allowlist', async () => {
+        global.Product.createSubdoc = jest.fn().mockResolvedValue({});
+        const routes = scaffoldController('Product', undefined, ['reviews']);
+        routes['post :id/:key']({ ...req, params: { id: '1', key: 'notAllowed' } }, res);
+        expect(global.Product.createSubdoc).not.toHaveBeenCalled();
+        expect(res.vsr).toHaveBeenCalledWith(expect.any(Promise));
+        const rejectedPromise = res.vsr.mock.calls[0][0];
+        await expect(rejectedPromise).rejects.toMatchObject({ statusCode: 404 });
+      });
+
     });
 
   });

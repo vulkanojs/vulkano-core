@@ -388,6 +388,14 @@ module.exports = {
 
 **Auto-trim:** All non-Boolean attributes get `trim: true` by default. Disable with `{ type: String, trim: false }`.
 
+**Mongoose 9 note:** `beforeSave(next)`/`beforeUpdate(next)`/`beforeFindOneAndUpdate(next)`/
+`beforeRemove(next)`/`beforeValidate(next)` still work exactly as written above — Mongoose 9
+itself no longer passes a `next` callback to `pre` middleware, but `database/mongodb.js` wraps
+every such hook (`toMongoose9PreHook`) into a Promise-returning function Mongoose 9 accepts,
+so the callback-style convention keeps working unchanged for every model, framework and
+app-defined alike. Post-hooks (`afterSave(doc, cb)`, etc.) needed no such wrapping — Mongoose 9
+still calls them with a real callback.
+
 ### Scaffold methods available on every model
 
 > **Model scaffold vs ScaffoldController are two different things.**
@@ -401,6 +409,7 @@ Model.create(data)                            // insert new record
 Model.update(id, data)                        // merge-update existing record
 Model.delete(id)                              // soft delete — sets active: false (no hard delete)
 Model.createSubdoc(key, parentId, data)       // push to subdocument array
+Model.getSubdoc(key, parentId, subdocId)      // find a single subdocument by id
 Model.updateSubdoc(key, parentId, subdocId, data)
 Model.removeSubdoc(key, parentId, subdocId)
 Model.deleteSubdoc(...)                       // alias for removeSubdoc
@@ -534,6 +543,32 @@ Generates las siguientes rutas, cada una delegando al método correspondiente de
 
 > **Important:** Scaffold endpoints have no authentication middleware by default.
 > Protect them via JWT config or custom middleware.
+
+### Subdocuments — opt-in via `subdocs`
+
+```js
+module.exports = {
+  scaffold: 'Product',
+  subdocs: ['reviews']   // Product.attributes.reviews must be an array of subdocuments
+}
+```
+
+Generates, in addition to the 5 routes above:
+
+| Ruta | Método del modelo | Status |
+|---|---|---|
+| `POST /api/product/:id/:key` | `Product.createSubdoc(key, id, req.body)` | 201 |
+| `GET  /api/product/:id/:key` (sin `:subId`) | `Product.getByField(id)` → `r[key]` | 200 |
+| `GET  /api/product/:id/:key/:subId` | `Product.getSubdoc(key, id, subId)` | 200 |
+| `PUT  /api/product/:id/:key/:subId` | `Product.updateSubdoc(key, id, subId, req.body)` | 202 |
+| `DELETE /api/product/:id/:key/:subId` | `Product.removeSubdoc(key, id, subId)` | 204 |
+
+`:key` solo acepta los nombres listados en `subdocs` — cualquier otro valor (incluido un campo
+real pero no-array, como un `String` normal) devuelve 404 en vez de llegar a
+`Model.createSubdoc()` y reventar contra un campo que no es array. `subdocs` ausente o vacío =
+deshabilitado, sin efecto sobre las 5 rutas base. Wiring en `controllers/ScaffoldController.js` +
+`controllers/controllers.js` (que extrae `subdocs` del controller y lo pasa como tercer
+argumento).
 
 ---
 

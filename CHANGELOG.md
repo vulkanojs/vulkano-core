@@ -10,6 +10,24 @@ features from this point on).
 
 ### Changed
 - **Requires Node.js `>=24`** (was `>=20`).
+- **Bumped `mongoose` to `^9.9.5`** (was `^8.12.1`). Mongoose 9 stopped passing a `next` callback
+  to `pre` middleware — it now calls hooks with zero arguments and expects a synchronous function
+  or one returning a Promise, so Vulkano's own hook convention (every `beforeSave`/`beforeUpdate`/
+  `beforeFindOneAndUpdate`/`beforeRemove`/`beforeValidate` written as `(next) => { ...; next(); }`,
+  in `database/models.js`'s defaults and in every model that defines its own) would otherwise
+  crash with `TypeError: next is not a function` on save/update/validate/remove — verified this
+  directly against the installed mongoose@9 before writing the fix. `database/mongodb.js` now
+  wraps any such `(next)`-style hook into a Promise-returning function Mongoose 9 accepts, so
+  existing models — in this framework and in consuming apps — keep working unchanged; a hook
+  already written with zero parameters (already Promise/async-style) passes through untouched.
+  Post-hooks (`afterSave(doc, cb)`, etc.) needed no change — confirmed Mongoose 9 still calls
+  them with a real callback, unlike pre-hooks. Also switched `database/scaffold.js`'s
+  `findOneAndUpdate(..., { new: true })` to the non-deprecated `{ returnDocument: 'after' }` (the
+  old option still worked, just logged a deprecation warning on every update).
+- Bumped `undici` to `^8.10.2` (was `^7.28.0`) and `vite-plus` to `^0.3.1` (was `^0.3.0`) — no
+  code changes needed for either; `libs/ApiClient.js`'s narrow `Agent`/`fetch` usage is
+  unaffected by undici 8's breaking changes (HTTP/2-by-default, legacy handler wrapper removal,
+  stricter Blob validation — none apply here).
 - Migrated from Express 4 to Express 5 (`^5.2.1`), used natively — **no compatibility layer
   restoring old Express 4 API** (`req.param()`, legacy `res.send/json/jsonp` two-argument forms,
   `res.redirect`'s old argument order, `res.redirect('back')`, etc.), and **the query-string
@@ -24,6 +42,24 @@ features from this point on).
   internally to path-to-regexp v8 syntax via `bootstrap/routeCompat.js`).
 
 ### Added
+- `database/scaffold.js`: new `getSubdoc(key, parent, subdoc)` — finds a single subdocument by id
+  (404 if the parent or the subdocument doesn't exist), alongside the existing `createSubdoc`/
+  `updateSubdoc`/`removeSubdoc`. Verified end-to-end through both a hand-written controller
+  (`ItemController`'s `comments`) and, for the first time, a `scaffold: true` controller with
+  extra subdoc routes layered on top (`ExampleController`'s new `lines` field) — confirmed live
+  via curl: `POST /api/example/:id/lines`, `GET /api/example/:id/lines/:lineId`,
+  `PUT /api/example/:id/lines/:lineId`, plus `GET /api/example/:id` showing the parent's `lines`
+  array.
+- **`ScaffoldController` now supports subdocuments generically**, opt-in via a `subdocs` array
+  (`scaffold: 'Product', subdocs: ['reviews']`) — same on/off convention as `allowedMethods`.
+  Generates `POST/GET/PUT/DELETE /api/products/:id/:key(/:subId)` wired to
+  `createSubdoc`/`getSubdoc`/`updateSubdoc`/`removeSubdoc`; `GET .../:id/:key` with no `subId`
+  lists every item under that key. `:key` is restricted to the `subdocs` allowlist — an
+  unlisted key (including a real but non-array field) 404s rather than reaching
+  `Model.createSubdoc()` and blowing up. `controllers/controllers.js` now extracts `subdocs`
+  from the controller definition and passes it through as a third argument. Verified live via
+  curl on a bare scaffold controller (`SchoolController` + a new `grades` field) with no
+  hand-written subdoc code at all.
 - `res.vsr()` now also accepts a function (async or plain) instead of only a Promise —
   `res.vsr(async () => { ... })` — so async/await controllers don't need an explicit
   `try`/`catch`. A thrown error or an awaited rejection inside the function both funnel into
@@ -37,8 +73,23 @@ features from this point on).
   live under both `'simple'` (Express 5 default, where the bracket key doesn't even parse into
   an object) and `'extended'` (where it does parse into an object, but is still never read).
   Documented the safe pattern for custom `getAll(props)` overrides in the README.
+- Fixed `database/scaffold.js`'s `update()` and its mirrored pattern in `examples/models/Example.js`
+  / `test/fixtures/app/models/Item.js` to use `{ returnDocument: 'after' }` instead of the
+  deprecated `{ new: true }` (see Mongoose bump above).
 
 ### Tests
+- `test/unit/controllers/ScaffoldController.test.js` — new cases for the generic `subdocs`
+  feature (on/off, route generation, delegation to each Model.*Subdoc method, 404 on an
+  unlisted `:key`).
+- `test/integration/scaffold-subdoc.test.js` (new) — `getSubdoc` + the existing subdoc methods
+  through a hand-wired `scaffold: true` controller (`ExampleController`'s `lines`).
+- `test/integration/scaffold-generic-subdoc.test.js` (new) — the fully generic `subdocs: [...]`
+  path end-to-end (`SchoolController`'s `grades`, zero hand-written subdoc code).
+- `test/unit/database/mongodb.test.js` — new cases for the Mongoose 9 pre-hook compatibility
+  wrapper (zero-arg passthrough, argument-ignoring, async delay respected, `next(err)` rejection,
+  `this` preserved). Existing `test/integration/hooks.test.js` (hook firing order) and
+  `test/integration/subdoc.test.js` (subdocument CRUD) both re-verified green against Mongoose 9,
+  the latter also confirmed live via curl (create → update → verify → remove → confirm gone).
 - `test/unit/bootstrap/routeCompat.test.js` (new).
 - `test/unit/libs/Paginate.test.js` — new case locking down the filter-bypass guard above.
 - `test/integration/vsr.test.js` — new cases for the async-function `res.vsr()` support.

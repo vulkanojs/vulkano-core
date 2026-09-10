@@ -229,7 +229,7 @@ module.exports = {
           updatedAt: Date.now()
         };
 
-        return this.findOneAndUpdate({ _id }, merged, { new: true })
+        return this.findOneAndUpdate({ _id }, merged, { returnDocument: 'after' })
           .then( (r) => {
 
             const tmp = r.toObject({ transform: true });
@@ -251,6 +251,36 @@ module.exports = {
 
     // Soft delete: set active=false instead of removing the document
     return this.update(id, { active: false });
+
+  },
+
+  /**
+   * Method to get a single subdocument by id
+   *
+   * @param {String} key
+   * @param {ObjectID} parent
+   * @param {ObjectID} subdoc
+   * @returns {Promise}
+   */
+  getSubdoc(key, parent, subdoc) {
+
+    return this
+      .findOne({ _id: parent })
+      .then( (r) => {
+
+        if (!r) {
+          return VSError.reject('Invalid ID. Record not found.', 404);
+        }
+
+        const current = r[key] ? r[key].id(subdoc) : null;
+
+        if (!current) {
+          return VSError.reject('Invalid ID. Item not found.', 404);
+        }
+
+        return current;
+
+      });
 
   },
 

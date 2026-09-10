@@ -1,4 +1,4 @@
-module.exports = (modelName, allowedMethods) => {
+module.exports = (modelName, allowedMethods, subdocs) => {
 
   const {
     config
@@ -118,6 +118,76 @@ module.exports = (modelName, allowedMethods) => {
     }
 
   };
+
+  // ─────────────────────────────────────────────
+  // Subdocuments — opt-in via the `subdocs` array on the controller
+  // (`scaffold: 'Product', subdocs: ['reviews']`). Absent or empty = off,
+  // same on/off convention as `allowedMethods`. `:key` is restricted to the
+  // names in that list — a request for a key not in it 404s, rather than
+  // accepting any field name and letting a non-array field (e.g. a plain
+  // String attribute) blow up in Model.createSubdoc()'s `r[key].push(...)`.
+  // ─────────────────────────────────────────────
+  const subdocKeys = Array.isArray(subdocs) ? subdocs : [];
+
+  if (subdocKeys.length > 0) {
+
+    const invalidSubdocKey = (key) => !subdocKeys.includes(key);
+
+    allMethods['post :id/:key'] = function onCreateSubdoc(req, res) {
+
+      const { id, key } = req.params || {};
+
+      if (invalidSubdocKey(key)) {
+        return res.vsr(VSError.reject(`Unknown subdocument key "${key}".`, 404));
+      }
+
+      res.vsr(global[modelName].createSubdoc(key, id, req.body), 201);
+
+    };
+
+    allMethods['get :id/:key/:subId?'] = function onGetSubdoc(req, res) {
+
+      const { id, key, subId } = req.params || {};
+
+      if (invalidSubdocKey(key)) {
+        return res.vsr(VSError.reject(`Unknown subdocument key "${key}".`, 404));
+      }
+
+      if (subId) {
+        res.vsr(global[modelName].getSubdoc(key, id, subId));
+        return;
+      }
+
+      // No subId — list every item under this key on the parent record.
+      res.vsr(global[modelName].getByField(id).then((r) => r[key]));
+
+    };
+
+    allMethods['put :id/:key/:subId'] = function onUpdateSubdoc(req, res) {
+
+      const { id, key, subId } = req.params || {};
+
+      if (invalidSubdocKey(key)) {
+        return res.vsr(VSError.reject(`Unknown subdocument key "${key}".`, 404));
+      }
+
+      res.vsr(global[modelName].updateSubdoc(key, id, subId, req.body), 202);
+
+    };
+
+    allMethods['delete :id/:key/:subId'] = function onDeleteSubdoc(req, res) {
+
+      const { id, key, subId } = req.params || {};
+
+      if (invalidSubdocKey(key)) {
+        return res.vsr(VSError.reject(`Unknown subdocument key "${key}".`, 404));
+      }
+
+      res.vsr(global[modelName].removeSubdoc(key, id, subId), 204);
+
+    };
+
+  }
 
   if (allowedMethods) {
 
