@@ -126,12 +126,42 @@ module.exports = (modelName, allowedMethods, subdocs) => {
   // names in that list — a request for a key not in it 404s, rather than
   // accepting any field name and letting a non-array field (e.g. a plain
   // String attribute) blow up in Model.createSubdoc()'s `r[key].push(...)`.
+  //
+  // Entries can be a plain string (`'lines'`, no per-key method restriction)
+  // or `{ key: ['GET', 'POST'] }` to restrict that key's subdoc routes to
+  // specific HTTP methods (`subdocs: ['lines', { reviews: ['GET', 'POST'] }]`).
   // ─────────────────────────────────────────────
-  const subdocKeys = Array.isArray(subdocs) ? subdocs : [];
+  const subdocKeys = [];
+  const subdocMethods = {};
+
+  (Array.isArray(subdocs) ? subdocs : []).forEach((entry) => {
+
+    if (typeof entry === 'string') {
+      subdocKeys.push(entry);
+      return;
+    }
+
+    const [key] = Object.keys(entry || {});
+
+    if (!key) {
+      return;
+    }
+
+    subdocKeys.push(key);
+
+    if (Array.isArray(entry[key])) {
+      subdocMethods[key] = entry[key].map((m) => m.toUpperCase());
+    }
+
+  });
 
   if (subdocKeys.length > 0) {
 
     const invalidSubdocKey = (key) => !subdocKeys.includes(key);
+
+    const methodNotAllowed = (key, method) => (
+      subdocMethods[key] && !subdocMethods[key].includes(method)
+    );
 
     allMethods['post :id/:key'] = function onCreateSubdoc(req, res) {
 
@@ -139,6 +169,10 @@ module.exports = (modelName, allowedMethods, subdocs) => {
 
       if (invalidSubdocKey(key)) {
         return res.vsr(VSError.reject(`Unknown subdocument key "${key}".`, 404));
+      }
+
+      if (methodNotAllowed(key, 'POST')) {
+        return res.vsr(VSError.reject(`Method POST not allowed for subdocument key "${key}".`, 405));
       }
 
       res.vsr(global[modelName].createSubdoc(key, id, req.body), 201);
@@ -151,6 +185,10 @@ module.exports = (modelName, allowedMethods, subdocs) => {
 
       if (invalidSubdocKey(key)) {
         return res.vsr(VSError.reject(`Unknown subdocument key "${key}".`, 404));
+      }
+
+      if (methodNotAllowed(key, 'GET')) {
+        return res.vsr(VSError.reject(`Method GET not allowed for subdocument key "${key}".`, 405));
       }
 
       if (subId) {
@@ -171,6 +209,10 @@ module.exports = (modelName, allowedMethods, subdocs) => {
         return res.vsr(VSError.reject(`Unknown subdocument key "${key}".`, 404));
       }
 
+      if (methodNotAllowed(key, 'PUT')) {
+        return res.vsr(VSError.reject(`Method PUT not allowed for subdocument key "${key}".`, 405));
+      }
+
       res.vsr(global[modelName].updateSubdoc(key, id, subId, req.body), 202);
 
     };
@@ -181,6 +223,10 @@ module.exports = (modelName, allowedMethods, subdocs) => {
 
       if (invalidSubdocKey(key)) {
         return res.vsr(VSError.reject(`Unknown subdocument key "${key}".`, 404));
+      }
+
+      if (methodNotAllowed(key, 'DELETE')) {
+        return res.vsr(VSError.reject(`Method DELETE not allowed for subdocument key "${key}".`, 405));
       }
 
       res.vsr(global[modelName].removeSubdoc(key, id, subId), 204);

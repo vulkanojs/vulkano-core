@@ -188,6 +188,60 @@ describe('ScaffoldController', () => {
         await expect(rejectedPromise).rejects.toMatchObject({ statusCode: 404 });
       });
 
+      describe('per-key method restriction (`{ key: [\'GET\', \'POST\'] }`)', () => {
+
+        it('a plain string entry keeps all methods allowed', () => {
+          global.Product.createSubdoc = jest.fn().mockResolvedValue({});
+          const routes = scaffoldController('Product', undefined, ['reviews']);
+          routes['post :id/:key']({ ...req, params: { id: '1', key: 'reviews' } }, res);
+          expect(global.Product.createSubdoc).toHaveBeenCalled();
+        });
+
+        it('mixes plain string entries and restricted entries in the same array', () => {
+          const routes = scaffoldController('Product', undefined, ['lines', { reviews: ['GET'] }]);
+          expect(routes['post :id/:key']).toBeInstanceOf(Function);
+          expect(routes['get :id/:key/:subId?']).toBeInstanceOf(Function);
+        });
+
+        it('allows a method listed for the key', () => {
+          global.Product.getSubdoc = jest.fn().mockResolvedValue({ id: 'r1' });
+          const routes = scaffoldController('Product', undefined, [{ reviews: ['GET'] }]);
+          routes['get :id/:key/:subId?']({ params: { id: '1', key: 'reviews', subId: 'r1' } }, res);
+          expect(global.Product.getSubdoc).toHaveBeenCalledWith('reviews', '1', 'r1');
+        });
+
+        it('rejects with 405 when the method is not listed for the key', async () => {
+          global.Product.createSubdoc = jest.fn().mockResolvedValue({});
+          const routes = scaffoldController('Product', undefined, [{ reviews: ['GET'] }]);
+          routes['post :id/:key']({ ...req, params: { id: '1', key: 'reviews' } }, res);
+          expect(global.Product.createSubdoc).not.toHaveBeenCalled();
+          const rejectedPromise = res.vsr.mock.calls[0][0];
+          await expect(rejectedPromise).rejects.toMatchObject({ statusCode: 405 });
+        });
+
+        it('method names in the allowlist are case-insensitive', () => {
+          global.Product.createSubdoc = jest.fn().mockResolvedValue({});
+          const routes = scaffoldController('Product', undefined, [{ reviews: ['get', 'post'] }]);
+          routes['post :id/:key']({ ...req, params: { id: '1', key: 'reviews' } }, res);
+          expect(global.Product.createSubdoc).toHaveBeenCalled();
+        });
+
+        it('restriction applies independently per key', async () => {
+          global.Product.createSubdoc = jest.fn().mockResolvedValue({});
+          const routes = scaffoldController('Product', undefined, ['lines', { reviews: ['GET'] }]);
+
+          routes['post :id/:key']({ ...req, params: { id: '1', key: 'lines' } }, res);
+          expect(global.Product.createSubdoc).toHaveBeenCalledWith('lines', '1', { name: 'x' });
+
+          global.Product.createSubdoc.mockClear();
+          routes['post :id/:key']({ ...req, params: { id: '1', key: 'reviews' } }, res);
+          expect(global.Product.createSubdoc).not.toHaveBeenCalled();
+          const rejectedPromise = res.vsr.mock.calls[res.vsr.mock.calls.length - 1][0];
+          await expect(rejectedPromise).rejects.toMatchObject({ statusCode: 405 });
+        });
+
+      });
+
     });
 
   });

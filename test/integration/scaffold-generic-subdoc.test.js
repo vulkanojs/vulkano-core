@@ -71,3 +71,52 @@ describe('generic subdoc routes — :key restricted to the subdocs allowlist', (
   });
 
 });
+
+describe('generic subdoc routes — per-key method restriction (`{ notices: [\'GET\', \'POST\'] }`)', () => {
+
+  it('POST /:id/notices is allowed (listed in the key\'s allowlist)', async () => {
+    const { status, data } = await http.post(`/${parentId}/notices`, { text: 'Enrollment open' });
+    expect(status).toBe(201);
+    expect(data.data.text).toBe('Enrollment open');
+  });
+
+  it('GET /:id/notices/:subId is allowed (listed in the key\'s allowlist)', async () => {
+    const { data: created } = await http.post(`/${parentId}/notices`, { text: 'Holiday' });
+    const noticeId = created.data._id;
+
+    const { status, data } = await http.get(`/${parentId}/notices/${noticeId}`);
+    expect(status).toBe(200);
+    expect(data.data.text).toBe('Holiday');
+  });
+
+  it('PUT /:id/notices/:subId 405s (method not in the key\'s allowlist)', async () => {
+    const { data: created } = await http.post(`/${parentId}/notices`, { text: 'Original' });
+    const noticeId = created.data._id;
+
+    const { status } = await http.put(`/${parentId}/notices/${noticeId}`, { text: 'Changed' });
+    expect(status).toBe(405);
+
+    const { data } = await http.get(`/${parentId}/notices/${noticeId}`);
+    expect(data.data.text).toBe('Original');
+  });
+
+  it('DELETE /:id/notices/:subId 405s (method not in the key\'s allowlist)', async () => {
+    const { data: created } = await http.post(`/${parentId}/notices`, { text: 'Persistent' });
+    const noticeId = created.data._id;
+
+    const { status } = await http.delete(`/${parentId}/notices/${noticeId}`);
+    expect(status).toBe(405);
+
+    const { status: getStatus } = await http.get(`/${parentId}/notices/${noticeId}`);
+    expect(getStatus).toBe(200);
+  });
+
+  it('PUT/DELETE restriction on notices does not affect grades (unrestricted key)', async () => {
+    const { data: created } = await http.post(`/${parentId}/grades`, { label: 'Unaffected', level: 1 });
+    const gradeId = created.data._id;
+
+    const { status } = await http.put(`/${parentId}/grades/${gradeId}`, { label: 'Still Works', level: 1 });
+    expect(status).toBe(202);
+  });
+
+});

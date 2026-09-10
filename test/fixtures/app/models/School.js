@@ -10,6 +10,12 @@ module.exports = {
     grades: [{
       label: { type: String, trim: true },
       level: { type: Number, default: 1 }
+    }],
+    // Subdocument array with a per-key method restriction on SchoolController
+    // (`subdocs: [..., { notices: ['GET'] }]`) — exercises ScaffoldController's
+    // 405 path when a method outside the allowlist hits a restricted key.
+    notices: [{
+      text: { type: String, trim: true }
     }]
   }
 
