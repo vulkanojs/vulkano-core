@@ -8,6 +8,7 @@ dotenv.config({ path: path.join(__dirname, '../.env.test'), quiet: !process.env.
 
 const TEST_PORT = process.env.TEST_PORT || 9877;
 const TEST_PORT_HBS = process.env.TEST_PORT_HBS || 9879;
+const TEST_PORT_SECURED = process.env.TEST_PORT_SECURED || 9881;
 const TEST_DB_URI = process.env.TEST_DB_URI;
 
 function pidFile(name) {
@@ -74,10 +75,20 @@ module.exports = async function globalSetup() {
   // — same app/server.js, see app/config/views/config.js
   await Promise.all([
     spawnFixtureServer('default', { TEST_PORT: String(TEST_PORT) }),
-    spawnFixtureServer('hbs', { VIEW_ENGINE: 'hbs', TEST_PORT: String(TEST_PORT_HBS) })
+    spawnFixtureServer('hbs', { VIEW_ENGINE: 'hbs', TEST_PORT: String(TEST_PORT_HBS) }),
+    // JWT, rate-limit, cookies, and session all disabled by default in the
+    // fixture config (matching a fresh app) — this variant flips them on via
+    // TEST_ENABLE_SECURITY so they're actually exercised under Express 5,
+    // not just inspected as code.
+    spawnFixtureServer('secured', {
+      TEST_ENABLE_SECURITY: '1',
+      COOKIES_SECRET_KEY: 'vulkano-test-cookie-secret',
+      TEST_PORT: String(TEST_PORT_SECURED)
+    })
   ]);
 
   process.env.TEST_SERVER_URL = `http://localhost:${TEST_PORT}`;
   process.env.TEST_SERVER_HBS_URL = `http://localhost:${TEST_PORT_HBS}`;
+  process.env.TEST_SERVER_SECURED_URL = `http://localhost:${TEST_PORT_SECURED}`;
 
 };

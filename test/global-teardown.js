@@ -19,4 +19,5 @@ function killServer(name) {
 module.exports = async function globalTeardown() {
   killServer('default');
   killServer('hbs');
+  killServer('secured');
 };

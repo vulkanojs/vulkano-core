@@ -38,6 +38,30 @@ module.exports = {
     res.vsr('this is not a promise');
   },
 
+  // GET /test/asyncok — res.vsr(async () => {...}) resolves normally, no try/catch needed
+  'get asyncok': function onAsyncOk(req, res) {
+    res.vsr(async () => {
+      const value = await Promise.resolve({ fromAsync: true });
+      return value;
+    });
+  },
+
+  // GET /test/asyncawaitreject — an awaited rejection inside the async function
+  // propagates to VSR's own .catch(), no try/catch needed in the controller
+  'get asyncawaitreject': function onAsyncAwaitReject(req, res) {
+    res.vsr(async () => {
+      await VSError.reject('rejected inside async', 409);
+    });
+  },
+
+  // GET /test/asyncthrow — a synchronous throw inside the async function
+  // is caught the same way, since it runs inside VSR's own .then()
+  'get asyncthrow': function onAsyncThrow(req, res) {
+    res.vsr(async () => {
+      throw new VSError('thrown inside async', 400);
+    });
+  },
+
   // GET /test/servererror — rejects with a plain Error
   'get servererror': function onServerError(req, res) {
     res.vsr(Promise.reject(new Error('Something went wrong')));

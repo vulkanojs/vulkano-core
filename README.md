@@ -252,6 +252,32 @@ res.vsr(VSError.notFound('User'));
 res.vsr(Promise.reject(new Error('Something went wrong')));
 ```
 
+### Async/await controllers — no `try`/`catch` needed
+
+`res.vsr()` also accepts a function instead of a Promise — an async one, or a
+plain one that returns a Promise. VSR calls it and funnels both a `throw` and
+an awaited rejection into the same `.catch()` that already handles a
+rejected Promise — you don't need a `try`/`catch` in the controller either
+way:
+
+```js
+// Promise style
+get(req, res) {
+  res.vsr(Product.getByField(req.params.id));
+}
+
+// async/await style — equivalent, no try/catch
+get(req, res) {
+  res.vsr(async () => {
+    const product = await Product.getByField(req.params.id);
+    if (!product) {
+      throw new VSError('Not found', 404); // caught by VSR, not the process
+    }
+    return product;
+  });
+}
+```
+
 ---
 
 ## Scaffold — zero-code REST API
@@ -325,6 +351,55 @@ module.exports = {
 ```
 
 NOTE: To find examples with the best practices for available methods ahd hooks, look in `examples/models` and read the file `Example.js`, and Scaffold Model API `ExampleWithScaffold.js`.
+
+### `getAll(props)` — never spread the raw query into the Mongo filter
+
+The controller passes `req.query` straight through as `props`
+(`res.vsr(Product.getAll(req.query))`) — so `props` is **attacker-controlled**.
+`Paginate.serializeQuery()` only ever reads flat top-level keys from it
+(`page`, `per_page`, `sort`, `search`, `searchType`, `fields`) and never a
+`filter` key, precisely so a request can't reach into the Mongo filter
+directly. Follow the same rule in your own `getAll` overrides: destructure
+only the specific fields you expect, and build `filter` yourself — never
+spread `props` (or a `props.filter`) into it.
+
+```js
+// app/models/Product.js
+module.exports = {
+  attributes: { /* ... */ },
+
+  getAll(props) {
+
+    const defaultProps = {
+      sort: 'createdAt|DESC',
+      searchBy: ['name'],
+      filter: {
+        active: true // soft-delete scope — must not be overridable by the request
+      }
+    };
+
+    // Safe: only two known, explicitly-named fields ever reach the filter.
+    const { category, inStock } = props || {};
+
+    if (category) {
+      defaultProps.filter.category = category;
+    }
+
+    if (inStock !== undefined) {
+      defaultProps.filter.inStock = inStock === 'true';
+    }
+
+    // UNSAFE — never do this: it lets a request send ?filter[active]=false
+    // (or any other field) and override the soft-delete scope above.
+    // defaultProps.filter = { ...defaultProps.filter, ...props.filter };
+
+    const query = Paginate.serializeQuery(defaultProps, props);
+    return Paginate.get(this, query);
+
+  }
+
+};
+```
 
 ### Vulkano models — don't hand-roll `createdAt` or `updatedAt`
 
@@ -782,79 +857,42 @@ files fall back to sane defaults — and every file is auto-merged into the fina
 
 ---
 
-## Express 5 — compatibility layer and residual edge cases
+## Express 5
 
-`@vulkano/core` runs on Express 5. The core absorbs the breaking changes that
-matter for real Vulkano usage, so the great majority of apps built on it
-don't need to change anything **right now**.
+`@vulkano/core` v2.x is built on Express 5, used natively — no compatibility
+layer restoring old Express 4 API surface (`req.param()`, legacy `res.*`
+signatures, etc.). If your app calls those directly in its own controllers,
+update it to Express 5's native equivalents when you upgrade (see
+[Express's own migration guide](https://expressjs.com/en/guide/migrating-5.html)).
 
-**Most of this is permanent — Vulkano's own conventions, not a temporary
-shim** (the wildcard route translation and the `'extended'` query parser
-below). **The part that IS temporary** is `bootstrap/legacyApiCompat.js` —
-it restores old Express 4 *API surface* (`req.param()`, legacy `res.*`
-signatures, etc.) that an existing app's own code might call, and it will be
-removed in a future major version. Booting a server with it active prints a
-console warning naming the checklist below. Update your app when
-convenient — none of this is urgent, but plan for it before the next major
-bump:
-
-| If your app uses... | Update to... |
-|---|---|
-| `req.param(name)` | `req.params.name` / `req.body.name` / `req.query.name` (explicit) |
-| `res.send(status, body)` | `res.status(status).send(body)` |
-| `res.send(status)` (shorthand) | `res.sendStatus(status)` |
-| `res.json(status, body)` | `res.status(status).json(body)` |
-| `res.jsonp(status, body)` | `res.status(status).jsonp(body)` |
-| `res.redirect(url, status)` | `res.redirect(status, url)` |
-| `res.redirect('back')` | `res.redirect(req.get('Referrer') \|\| '/')` |
-| `res.location('back')` | `res.location(req.get('Referrer') \|\| '/')` |
-| `req.params[0]` (wildcard tail) | `req.params.splat` (array of path segments) |
-| Relying on `req.body` always being an object | Still true (shimmed to `{}`) — no action needed, but this shim goes away too |
-
-Not in the table above because they're **not going away**: wildcard route
-syntax (`'/admin*'`, `'/*'`) and `':id?'` optional-param syntax both keep
-working forever — Vulkano translates them to native path-to-regexp v8
-syntax internally (`bootstrap/routeCompat.js`), the same way it already
-translates other legacy config shapes. No need to rewrite these in your
-routes.
-
-Everything in the table above keeps working unchanged until the layer is
-removed — this is a heads-up, not a breaking change.
+Two things Vulkano *does* keep translating — these are Vulkano's own
+routing conventions, not Express 4 compat, so they're permanent:
 
 - **Wildcard routes**: bare `'*'`/`'/*'` (whole-app catch-all) and a wildcard
   glued or slash-separated onto a prefix (`'/admin*'`, `'/admin/*'` — the
   documented SPA catch-all convention above) are translated automatically to
   path-to-regexp v8 syntax, in your controllers, `app/config/routes.js`, and
   the `rateLimit.path`/`jwt.path`/`cors.path` config options (including when
-  those are arrays). The captured tail is also restored at `req.params[0]` as
-  a plain string, matching Express 4 almost exactly — the one gap is a
-  wildcard that matches *nothing* (`GET /admin` against `/admin*`): Express 4
-  gave `req.params[0] === ''`, this gives `req.params[0] === undefined`
-  (Express 5 omits an empty match from `req.params` entirely, so there's
-  nothing to back-fill from) — alongside Express 5's own `req.params.splat`
-  array. `req.params` also enumerates the extra `'0'` key this adds
-  (`Object.keys(req.params)` includes it), harmless in this codebase but
-  worth knowing if your app iterates `req.params`' keys generically.
-- **Legacy optional-param routes** (`'/user/:id?'`): translated to Express 5's
-  `'/user{/:id}'` syntax too — Vulkano's own code never generates this, but
-  Express 5 rejects the raw `?` syntax at **boot time**, so a downstream
-  app's existing controller using it would otherwise fail to start on
-  upgrade, not just at request time.
-- `req.param(name)`, `res.send(status, body)`,
-  `res.send(status)` (single-argument shorthand — sets the status the same
-  way Express 4 did, instead of silently sending the number as a 200 body),
-  `res.json(status, body)`, `res.jsonp(status, body)`,
-  `res.redirect(url, status)`, `res.redirect('back')`, and
-  `res.location('back')` all keep working exactly as in Express 4.
-- `req.body` defaults to `{}` instead of `undefined` when no body-parsing
-  middleware matched the request — scaffold and custom controllers that pass
-  `req.body` straight into a model method don't need a null-check.
-- The query-string parser is set to Express's own `'extended'` mode (native
-  `qs`-based, allows prototype-pollution-guard keys like `constructor` —
-  identical to Express 4's default), so `?a[b]=1` still nests instead of
-  Express 5's new `'simple'` default.
+  those are arrays). Express 5 captures the matched tail as `req.params.splat`
+  (an array of path segments) instead of Express 4's `req.params[0]` string —
+  update any code reading the old index form.
+- **Optional-param routes** (`'/user/:id?'`): translated to Express 5's
+  `'/user{/:id}'` syntax too. Vulkano's own generated routes never use this,
+  but Express 5 rejects the raw `?` syntax at **boot time** (not request
+  time), so an app's own controller using it would otherwise fail to start
+  on upgrade.
 
 **Verified, not just assumed, to need no action:**
+- **Query-string parsing**: left as Express 5's native `'simple'` default
+  (not forced to `'extended'`). Scaffold's `getAll(req.query)` /
+  `Paginate.serializeQuery()` only ever read flat top-level keys (`page`,
+  `per_page`, `sort`, `search`, `searchType`, `fields`) — verified they never
+  read a `filter` key from the request query at all, so a query like
+  `?filter[active]=false` cannot bypass a model's own hardcoded
+  soft-delete `filter: { active: true }` default either way. If your own
+  model code needs nested query objects for something outside Paginate,
+  set it explicitly: `app.vulkano.set('query parser', 'extended')` in your
+  `app/config/bootstrap.js`.
 - `express.static()`'s `dotfiles` default is `'ignore'` in both Express 4's
   and Express 5's underlying `send` package — no behavior change.
 - `express.urlencoded()`'s `extended` option default flipped from `true` to

@@ -114,6 +114,17 @@ describe('Paginate.serializeQuery', () => {
     expect(result.search).toEqual({ active: true });
   });
 
+  it('[security] a "filter" key in the raw query cannot override the model\'s own filter (soft-delete bypass guard)', () => {
+    // props here plays the role of req.query — attacker-controlled. Even if
+    // it carries a `filter` key (e.g. from `?filter[active]=false` under an
+    // 'extended' query parser), serializeQuery must never read it — only
+    // baseProps.filter (the model's own hardcoded default) may end up in
+    // the final search object.
+    const attackerControlledQuery = { filter: { active: false, role: 'admin' } };
+    const result = Paginate.serializeQuery(baseProps, attackerControlledQuery);
+    expect(result.search).toEqual({ active: true });
+  });
+
   it('search term + filter: uses $and with filter and $or', () => {
     const result = Paginate.serializeQuery(baseProps, { search: 'hello' });
     expect(result.search.$and).toBeDefined();

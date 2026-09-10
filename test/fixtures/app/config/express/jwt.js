@@ -2,11 +2,15 @@
  * JWT Config
  */
 
+// TEST_ENABLE_SECURITY=1 switches the "secured" fixture server variant to
+// actually enforce JWT on /secure — the default variant keeps it disabled.
+const securityEnabled = process.env.TEST_ENABLE_SECURITY === '1';
+
 module.exports = {
 
   // Enable JWT
   // @type Boolean
-  enabled: false,
+  enabled: securityEnabled,
 
   // Secret key — use https://api.wordpress.org/secret-key/1.1/salt/ to generate one
   // @type String
@@ -26,12 +30,12 @@ module.exports = {
 
   // Path where the token is required
   // @type String
-  path: '/api/',
+  path: securityEnabled ? '/secure' : '/api/',
 
   // Paths excluded from token verification
   // See https://github.com/jfromaniello/express-unless for pattern examples
   // @type Array
-  ignore: [
+  ignore: securityEnabled ? [] : [
     '/api/',
     /^\/api\/auth(?!\/(current))/i
   ]

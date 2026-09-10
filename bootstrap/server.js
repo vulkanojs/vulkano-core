@@ -34,9 +34,8 @@ const setupViewEngine = require('./engines');
 // JWT Middleware
 const jwtMiddleware = require('../libs/Jwt');
 
-// Express 5 compat
+// Express 5 route compat (Vulkano's own wildcard/optional-param route conventions)
 const { toExpress5Path } = require('./routeCompat');
-const { applyLegacyApiCompat } = require('./legacyApiCompat');
 
 // Express Config
 const expressConfig = require('./express')();
@@ -53,12 +52,6 @@ module.exports = function loadServer() {
       const { JWT_SECRET_KEY, COOKIES_SECRET_KEY } = process.env || {};
 
       const vulkano = express();
-
-      // Legacy 'extended' query-string parser (Express 5 defaults to 'simple',
-      // which doesn't nest brackets like ?a[b]=1 — restore old behavior).
-      vulkano.set('query parser', 'extended');
-
-      applyLegacyApiCompat(vulkano);
 
       // Expose the Express instance early so that custom() initializers in
       // config/routes.js can register routes via app.vulkano.get(), app.vulkano.post(), etc.

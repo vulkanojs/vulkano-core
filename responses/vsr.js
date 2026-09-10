@@ -19,21 +19,30 @@ module.exports = function VSRPromise(promiseToRun, httpStatusCode) {
     statusCode: code
   };
 
-  if (!promiseToRun || typeof promiseToRun.then !== 'function') {
+  // Accept an async (or plain) function as an alternative to a Promise —
+  // lets an async/await controller skip the try/catch VSR's own .catch()
+  // already provides: res.vsr(async () => { ... await ...; return x; }).
+  // A synchronous throw inside the function is caught the same way an
+  // async rejection would be, since it runs inside a .then() callback.
+  const workingPromise = (typeof promiseToRun === 'function')
+    ? Promise.resolve().then(() => promiseToRun())
+    : promiseToRun;
 
-    console.error('[VSR] The response is not a Promise. Got:', typeof promiseToRun);
+  if (!workingPromise || typeof workingPromise.then !== 'function') {
+
+    console.error('[VSR] The response is not a Promise or a function. Got:', typeof promiseToRun);
     return res.status(500).jsonp({
       success: false,
       statusCode: 500,
       error: {
-        detail: 'Internal error: controller must return a Promise.'
+        detail: 'Internal error: controller must return a Promise or a function.'
       }
     });
 
   }
 
   // Executing promise
-  promiseToRun
+  workingPromise
     .then( (r) => {
 
       if ( (r.statusCode && r.statusCode >= 400) || output.statusCode >= 400) {

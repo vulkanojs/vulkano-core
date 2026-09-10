@@ -17,6 +17,22 @@ module.exports = {
     res.json({ message: 'Hello, world!' });
   },
 
+  // Exercised only by the "secured" fixture server variant
+  // (TEST_ENABLE_SECURITY=1) — JWT-protected, rate-limited, and
+  // session-backed routes, all disabled/no-op on the default variant.
+  'GET /secure/whoami': (req, res) => {
+    res.json({ ok: true });
+  },
+
+  'GET /limited/ping': (req, res) => {
+    res.json({ ok: true });
+  },
+
+  'GET /session-counter': (req, res) => {
+    req.session.views = (req.session.views || 0) + 1;
+    res.json({ views: req.session.views });
+  },
+
   // Custom initializer: registers routes directly via app.vulkano.get(), etc.
   custom() {
     app.vulkano.get('/explicit/custom', (req, res) => {

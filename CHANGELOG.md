@@ -10,21 +10,44 @@ features from this point on).
 
 ### Changed
 - **Requires Node.js `>=24`** (was `>=20`).
-- Migrated from Express 4 to Express 5 (`^5.2.1`). Two Vulkano-owned conventions carry over as
-  framework defaults, not app-code compat: the wildcard route normalizer (`'/admin*'` and bare
-  `'*'`/`'/*'` still work, translated internally to path-to-regexp v8 syntax) and the
-  query-string parser (still `'extended'`, matching Express 4's nested-bracket behavior instead
-  of Express 5's new `'simple'` default). A temporary `bootstrap/legacyApiCompat.js` compatibility layer
-  additionally restores old Express 4 API surface an existing app's *own code* might call —
-  `req.param()`, legacy two-argument `res.send/json/jsonp`, `res.redirect`'s old argument order
-  and `'back'` sentinel, `res.location('back')`, legacy optional-param routes (`':id?'`), and
-  `req.body` defaulting to `{}` instead of `undefined`. That layer is temporary and will be
-  removed in a future major version — see the README's "Express 5 — compatibility layer and
-  residual edge cases" section for the full checklist of what to update, and the handful of
-  genuinely unshimmable residual cases.
+- Migrated from Express 4 to Express 5 (`^5.2.1`), used natively — **no compatibility layer
+  restoring old Express 4 API** (`req.param()`, legacy `res.send/json/jsonp` two-argument forms,
+  `res.redirect`'s old argument order, `res.redirect('back')`, etc.), and **the query-string
+  parser is Express 5's native `'simple'` default**, not forced back to `'extended'` — verified
+  `Paginate.serializeQuery()` only reads flat top-level query keys and never a `filter` key, so
+  the nested-bracket parser wasn't protecting anything Vulkano's own scaffold relies on. If your
+  app's own code calls the old `res.*`/`req.param()` APIs directly, or needs nested query
+  objects for something of its own outside Paginate, update/configure it explicitly (see the
+  README's "Express 5" section). One Vulkano-owned routing convention DOES carry over as a
+  permanent framework default, not app-code compat: the wildcard/optional-param route translator
+  (`'/admin*'`, bare `'*'`/`'/*'`, and legacy `':id?'` routes all still work, translated
+  internally to path-to-regexp v8 syntax via `bootstrap/routeCompat.js`).
+
+### Added
+- `res.vsr()` now also accepts a function (async or plain) instead of only a Promise —
+  `res.vsr(async () => { ... })` — so async/await controllers don't need an explicit
+  `try`/`catch`. A thrown error or an awaited rejection inside the function both funnel into
+  VSR's existing `.catch()` the same way a rejected Promise does. See README's "Responses"
+  section.
+
+### Fixed
+- **Guarded against a soft-delete filter bypass**: confirmed (and pinned with a regression
+  test) that a `filter` key in the raw request query — e.g. `?filter[active]=false` — can never
+  override a model's own hardcoded `filter` default in `Paginate.serializeQuery()`. Verified
+  live under both `'simple'` (Express 5 default, where the bracket key doesn't even parse into
+  an object) and `'extended'` (where it does parse into an object, but is still never read).
+  Documented the safe pattern for custom `getAll(props)` overrides in the README.
 
 ### Tests
-- `test/unit/bootstrap/routeCompat.test.js`, `test/unit/bootstrap/legacyApiCompat.test.js` (new).
+- `test/unit/bootstrap/routeCompat.test.js` (new).
+- `test/unit/libs/Paginate.test.js` — new case locking down the filter-bypass guard above.
+- `test/integration/vsr.test.js` — new cases for the async-function `res.vsr()` support.
+- `test/integration/security-middleware.test.js` (new) — JWT (401/200), rate limiting (429 past
+  the fixture's 3/min limit), and session-cookie persistence, run against a new "secured"
+  fixture server variant (`TEST_ENABLE_SECURITY=1`, see `test/global-setup.js`) that actually
+  enables JWT/rate-limit/cookies/session — previously `enabled: false` everywhere and never
+  exercised at runtime. All three additionally confirmed live via curl against a manually
+  booted server.
 
 ## [1.30.1]
 

@@ -62,6 +62,31 @@ describe('VSR — Vulkano Standard Response', () => {
 
   });
 
+  describe('async-function support (res.vsr(async () => {...})) — no try/catch needed', () => {
+
+    it('resolves normally when the async function returns a value', async () => {
+      const { status, data } = await axios.get('/test/asyncok');
+      expect(status).toBe(200);
+      expect(data.success).toBe(true);
+      expect(data.data).toEqual({ fromAsync: true });
+    });
+
+    it('an awaited rejection inside the async function is caught by VSR, no try/catch needed', async () => {
+      const { status, data } = await axios.get('/test/asyncawaitreject');
+      expect(status).toBe(409);
+      expect(data.success).toBe(false);
+      expect(data.error.detail).toBe('rejected inside async');
+    });
+
+    it('a synchronous throw inside the async function is caught by VSR, no try/catch needed', async () => {
+      const { status, data } = await axios.get('/test/asyncthrow');
+      expect(status).toBe(400);
+      expect(data.success).toBe(false);
+      expect(data.error.detail).toBe('thrown inside async');
+    });
+
+  });
+
   describe('Non-promise guard (bug fix)', () => {
 
     it('returns 500 with descriptive message when controller does not return a Promise', async () => {
