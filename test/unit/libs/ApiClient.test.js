@@ -6,14 +6,15 @@
 const { setupGlobals } = require('../helpers/globals');
 setupGlobals();
 
-// Mock undici Agent to capture the connect options passed to it
+// Mock undici's Agent and fetch — ApiClient destructures both directly from
+// 'undici' (not the Node global fetch), so the mock must provide both.
 jest.mock('undici', () => ({
-  Agent: jest.fn().mockImplementation((opts) => ({ _opts: opts }))
+  Agent: jest.fn().mockImplementation((opts) => ({ _opts: opts })),
+  fetch: jest.fn()
 }));
 
-const { Agent } = require('undici');
+const { Agent, fetch } = require('undici');
 
-// Mock global fetch
 const mockResponse = (body = { ok: true }, status = 200, ok = true) => ({
   ok,
   status,
@@ -22,8 +23,6 @@ const mockResponse = (body = { ok: true }, status = 200, ok = true) => ({
   text: () => Promise.resolve(''),
   body: null
 });
-
-global.fetch = jest.fn().mockResolvedValue(mockResponse());
 
 const ApiClient = require('../../../libs/ApiClient');
 
