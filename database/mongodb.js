@@ -57,50 +57,54 @@ module.exports = async function loadDatabaseApplication() {
     settings: dbSettings
   } = database || {};
 
-  if (!connection) {
-    return;
-  }
+  // Connecting to MongoDB is optional — a project without database.connection
+  // configured still needs its models registered as globals below (plain
+  // attribute-less models don't even use Mongoose; schema-based ones just
+  // fail at query time instead of at boot, same as any other missing config).
+  if (connection) {
 
-  const toConnect = (connections && connection in connections)
-    ? connections[connection]
-    : (connection || null);
+    const toConnect = (connections && connection in connections)
+      ? connections[connection]
+      : (connection || null);
 
-  if (!toConnect) {
-    throw new Error(`Invalid connection to MongoDB with source "${connection}"`);
-  }
+    if (!toConnect) {
+      throw new Error(`Invalid connection to MongoDB with source "${connection}"`);
+    }
 
-  // Build connection props from user config; family defaults to 4 (IPv4)
-  // unless explicitly set to another value in database.config
-  const connectionProps = merge.all([
-    { family: 4 },
-    (database ? database.config || {} : {})
-  ]);
+    // Build connection props from user config; family defaults to 4 (IPv4)
+    // unless explicitly set to another value in database.config
+    const connectionProps = merge.all([
+      { family: 4 },
+      (database ? database.config || {} : {})
+    ]);
 
-  if (dbSettings) {
-    Object.keys(dbSettings).forEach( (s) => {
-      mongoose.set(s, dbSettings[s]);
-    });
-  }
+    if (dbSettings) {
+      Object.keys(dbSettings).forEach( (s) => {
+        mongoose.set(s, dbSettings[s]);
+      });
+    }
 
-  // Node throws an uncaught exception on an EventEmitter's 'error' event when
-  // nothing is listening for it — without this, a connection drop after the
-  // initial connect (network blip, MongoDB restart) crashes the whole
-  // process instead of just failing the queries in flight. Attached before
-  // connect() so it also catches errors emitted during the initial attempt.
-  if (!mongoose.connection.listenerCount('error')) {
-    mongoose.connection.on('error', (err) => {
-      console.log(` \x1b[41mERROR\x1b[0m: MongoDB connection error: ${err.message}`);
-    });
-  }
+    // Node throws an uncaught exception on an EventEmitter's 'error' event when
+    // nothing is listening for it — without this, a connection drop after the
+    // initial connect (network blip, MongoDB restart) crashes the whole
+    // process instead of just failing the queries in flight. Attached before
+    // connect() so it also catches errors emitted during the initial attempt.
+    if (!mongoose.connection.listenerCount('error')) {
+      mongoose.connection.on('error', (err) => {
+        console.log(` \x1b[41mERROR\x1b[0m: MongoDB connection error: ${err.message}`);
+      });
+    }
 
-  if (!mongoose.connection.listenerCount('disconnected')) {
-    mongoose.connection.on('disconnected', () => {
-      console.log(' \x1b[33mWARNING\x1b[0m: MongoDB disconnected.');
-    });
-  }
+    if (!mongoose.connection.listenerCount('disconnected')) {
+      mongoose.connection.on('disconnected', () => {
+        console.log(' \x1b[33mWARNING\x1b[0m: MongoDB disconnected.');
+      });
+    }
 
-  if (!mongoose.connection.readyState) {
-    await mongoose.connect(toConnect, connectionProps);
+    if (!mongoose.connection.readyState) {
+      await mongoose.connect(toConnect, connectionProps);
+    }
+
   }
 
   const db = mongoose.connection;
@@ -111,7 +115,7 @@ module.exports = async function loadDatabaseApplication() {
     const current = AllModels[model];
     if (!current.attributes) {
       global[model] = current;
-    } else {
+    } else if (connection) {
 
       // Allow trim all attributes
       const attributes = {};
@@ -266,6 +270,11 @@ module.exports = async function loadDatabaseApplication() {
       global[model] = db.model(model, schema, model.toLowerCase());
       global[model].attributes = attributes;
 
+    } else {
+      // No database connection: expose the raw model definition as-is,
+      // skip schema compilation, indexes, plugins and lifecycle callbacks —
+      // none of it is usable without a real Mongoose connection anyway.
+      global[model] = current;
     }
 
   });
