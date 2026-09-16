@@ -16,8 +16,8 @@ const { rateLimit } = require('express-rate-limit');
 const useragent = require('express-useragent');
 const cookieParser = require('cookie-parser');
 const expressSession = require('express-session');
-const { createClient: socketRedis } = require('redis');
 const socketMongoose = require('mongoose');
+const { connectRedisClient } = require('./redisCompat');
 const { createAdapter: socketRedisAdapter } = require('@socket.io/redis-adapter');
 const { createAdapter: socketMongoAdapter } = require('@socket.io/mongo-adapter');
 
@@ -362,10 +362,9 @@ module.exports = function loadServer() {
       if (redisEnabled === true) {
         const { redis } = app.config || {};
 
-        const rClient = socketRedis(redis);
-        rClient.on('error', (err) => console.log('Redis Client Error', err));
-
-        app.redisClient = await rClient.connect();
+        app.redisClient = await connectRedisClient(redis, (err) =>
+          console.log('Redis Client Error', err)
+        );
       }
 
       // ---------------
@@ -726,10 +725,12 @@ module.exports = function loadServer() {
       let subClient = null;
 
       if (String(adapter).toLocaleLowerCase() === 'redis') {
-        pubClient = socketRedis(redisAdapter);
-        pubClient.on('error', (err) => console.log('Socket Redis Client Error', err));
+        pubClient = await connectRedisClient(redisAdapter, (err) =>
+          console.log('Socket Redis Client Error', err)
+        );
 
         subClient = pubClient.duplicate();
+        await subClient.connect();
 
         io.adapter(socketRedisAdapter(pubClient, subClient));
       } else if (String(adapter).toLocaleLowerCase() === 'mongodb') {
@@ -794,7 +795,9 @@ module.exports = function loadServer() {
         io.adapter(socketMongoAdapter(socketsMongoCollection, { addCreatedAtField: true }));
       }
 
-      Promise.all([pubClient ? pubClient.connect() : null, subClient ? subClient.connect() : null])
+      // pubClient/subClient (redis adapter branch) are already connected
+      // above, before io.adapter() is wired up — nothing left to await here.
+      Promise.resolve()
         .catch((err) => {
           throw new Error(`Socket Redis adapter failed to connect: ${err.message}`);
         })

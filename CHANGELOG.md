@@ -2,6 +2,46 @@
 
 All notable changes to `@vulkano/core` are documented here.
 
+## [Unreleased]
+
+### Fixed
+- **Redis client compat with `@redis/client` v6** (`bootstrap/server.js`, new
+  `bootstrap/redisCompat.js`), affecting both `app.redisClient`
+  (`app/config/redis.js`) and the Socket.io Redis adapter
+  (`app/config/sockets/adapters/redis.js`):
+  - **Flat `host`/`port` was silently ignored.** `@redis/client` v6's
+    `createClient()` only ever reads `options.socket.host` /
+    `options.socket.port` — confirmed by reading the installed
+    `@redis/client@6.2.1` source (`RedisClient.parseOptions`,
+    `RedisSocket`'s `#createSocketFactory`). A flat `{ host, port }` at the
+    config root — which is exactly Vulkano's own documented shape, shipped
+    in every `app/config/redis.js` template and in the README — was never
+    read, so the client silently fell back to `localhost:6379` no matter
+    what the app configured. Both call sites now normalize `host`/`port`
+    under `socket` right before `createClient()`; the app-facing config
+    shape (`host`/`port`/`password`) is unchanged.
+  - **`HELLO` broke every Redis <6.0 server.** `@redis/client` v6 defaults
+    to the RESP3 handshake and sends `HELLO` unconditionally
+    (`DEFAULT_RESP = 3`, read in `#getHandshakeCommands()`) — Redis added
+    `HELLO` in 6.0, so any older server rejects it with
+    `ERR unknown command 'HELLO'` and the connection never completes.
+    Connecting now auto-retries once with the classic RESP2/AUTH handshake
+    (`RESP: 2`) when that specific error is detected, so a project talking
+    to Redis <6.0 doesn't need to know about RESP versions or set anything
+    itself.
+  - The Socket.io Redis adapter's `pubClient`/`subClient` are now connected
+    *before* `io.adapter(...)` is wired up (previously connected afterwards,
+    unawaited, via a `Promise.all` that is now a no-op) — this also matches
+    `@socket.io/redis-adapter`'s own documented connect-then-adapter order.
+
+### Tests
+- `test/unit/bootstrap/redisCompat.test.js` (new) — `normalizeRedisOptions`
+  (flat → nested `socket`, nested takes precedence, url-based config
+  untouched), `isMissingHelloError`, and `connectRedisClient` (normalizes
+  + connects, propagates a real connection error without retrying, retries
+  exactly once with `RESP: 2` on a missing-`HELLO` error, doesn't loop a
+  second time if `RESP: 2` was already set).
+
 ## [2.0.0]
 
 **This is the start of the v2.x line, built on Express 5.** Existing Express 4 projects that
