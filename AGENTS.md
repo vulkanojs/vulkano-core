@@ -733,7 +733,7 @@ npm run test:watch  # watch mode
 npm run test:coverage
 ```
 
-Requires `core/.env.test` with `TEST_DB_URI`, `TEST_PORT`, and `JWT_SECRET_KEY` (used to sign the test JWTs for socket auth). The test suite:
+Requires `core/.env.test` with `TEST_DB_URI`, `TEST_PORT`, and `JWT_SECRET_KEY` (used to sign the test JWTs for socket auth) to run the integration suite. Without `TEST_DB_URI` set, `jest.config.js` skips the `integration` project entirely and only `unit` (no database needed) runs — `npm test` never hard-fails for missing DB config. The test suite:
 - Starts a full Vulkano fixture server as a child process
 - Drops and rebuilds the test database on every run
 - Covers: VSR response format, routing (params + query strings), scaffold CRUD, pagination, model validation, ReDoS protection, file uploads, sockets (handshake auth + event routing)
