@@ -2,9 +2,15 @@
 
 All notable changes to `@vulkano/core` are documented here.
 
-## [Unreleased]
+## [2.1.1]
 
 ### Fixed
+- **`npm test` no longer hard-fails when `TEST_DB_URI` isn't set.** `test/global-setup.js`
+  used to `throw` before any test ran if `core/.env.test` had no `TEST_DB_URI` — killing the
+  entire run, including the `unit` project, which never touches a database.
+  `jest.config.js` now loads `.env.test` and only adds the `integration` project (the one
+  that spins up a real MongoDB) when `TEST_DB_URI` is present; otherwise it logs a warning
+  and runs `unit` alone.
 - **Redis client compat with `@redis/client` v6** (`bootstrap/server.js`, new
   `bootstrap/redisCompat.js`), affecting both `app.redisClient`
   (`app/config/redis.js`) and the Socket.io Redis adapter
