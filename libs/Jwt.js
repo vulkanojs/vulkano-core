@@ -138,7 +138,7 @@ module.exports = {
       const payload = jwtSimple.decode(token, customKey || key);
       data = this.decrypt(payload);
 
-    } catch (e) {
+    } catch {
       // invalid token
     }
 
@@ -197,7 +197,7 @@ module.exports = {
 
       data = result;
 
-    } catch (e) {
+    } catch {
       data = null;
     }
 

@@ -1,6 +1,6 @@
 {
   "name": "@vulkano/core",
-  "version": "2.1.2",
+  "version": "2.1.3",
   "description": "A MVC framework using Express 5",
   "license": "MIT",
   "author": "Vulkano Team",
@@ -13,6 +13,7 @@
   },
   "scripts": {
     "dev": "./node_modules/nodemon/bin/nodemon.js test/fixtures/server.js --inspect --trace-deprecation --trace-warnings",
+    "lint": "vp lint",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",

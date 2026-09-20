@@ -49,11 +49,23 @@ export default defineConfig({
     },
     rules: {
       curly: "error",
+      // Plain-JS codebase: type inference flags option-object spreads and
+      // destructured plain functions (false positives).
+      "typescript/no-misused-spread": "off",
+      "typescript/unbound-method": "off",
       "no-console": "off",
       "no-underscore-dangle": "off",
       "no-throw-literal": "off",
       "no-unneeded-ternary": "off",
       "guard-for-in": "off",
+      "no-unused-vars": [
+        "error",
+        {
+          "argsIgnorePattern": "^_",
+          "varsIgnorePattern": "^_",
+          "caughtErrorsIgnorePattern": "^_"
+        }
+      ]
     },
     ignorePatterns: [
       ".claude",

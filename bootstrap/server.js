@@ -505,7 +505,7 @@ module.exports = function loadServer() {
             toExecute = module
               ? AllControllers[module][controller][action]
               : AllControllers[controller][action];
-          } catch (e) {
+          } catch {
             toExecute = null;
           }
 
@@ -797,7 +797,7 @@ module.exports = function loadServer() {
 
       // pubClient/subClient (redis adapter branch) are already connected
       // above, before io.adapter() is wired up — nothing left to await here.
-      Promise.resolve()
+      void Promise.resolve()
         .catch((err) => {
           throw new Error(`Socket Redis adapter failed to connect: ${err.message}`);
         })
@@ -834,7 +834,7 @@ module.exports = function loadServer() {
                   toExecute = module
                     ? AllControllers[module][controller][action]
                     : AllControllers[controller][action];
-                } catch (e) {
+                } catch {
                   toExecute = null;
                 }
               }

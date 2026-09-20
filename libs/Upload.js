@@ -244,7 +244,7 @@ module.exports = {
     try {
       fs.accessSync(dir, fs.constants.W_OK);
       return true;
-    } catch (err) {
+    } catch {
       return false;
     }
 

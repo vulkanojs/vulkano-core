@@ -99,7 +99,7 @@ module.exports = {
       if (!response.ok) {
 
         let errorData = {};
-        try { errorData = await response.json(); } catch (_) {}
+        try { errorData = await response.json(); } catch {}
 
         const { msg, message: errorMessage, error: errorMessage2 } = errorData || {};
         const message = msg || errorMessage || errorMessage2 || 'Unable to connect to the Request Service';
@@ -113,9 +113,15 @@ module.exports = {
 
       }
 
-      if (responseType === 'arraybuffer') return response.arrayBuffer();
-      if (responseType === 'text') return response.text();
-      if (responseType === 'stream') return response.body;
+      if (responseType === 'arraybuffer') {
+        return response.arrayBuffer();
+      }
+      if (responseType === 'text') {
+        return response.text();
+      }
+      if (responseType === 'stream') {
+        return response.body;
+      }
 
       const data = await response.json();
       return data || {};

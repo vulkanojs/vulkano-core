@@ -20,7 +20,9 @@ function defaultArrayMerge(target, source, options) {
 }
 
 function getMergeFunction(key, options) {
-  if (!options.customMerge) return merge; // eslint-disable-line no-use-before-define
+  if (!options.customMerge) {
+    return merge; // eslint-disable-line no-use-before-define
+  }
   const custom = options.customMerge(key);
   return typeof custom === 'function' ? custom : merge; // eslint-disable-line no-use-before-define
 }
@@ -40,7 +42,7 @@ function getKeys(target) {
 function propertyIsOnObject(object, property) {
   try {
     return property in object;
-  } catch (_) {
+  } catch {
     return false;
   }
 }
@@ -63,7 +65,9 @@ function mergeObject(target, source, options) {
 
   getKeys(source).forEach((key) => {
 
-    if (propertyIsUnsafe(target, key)) return;
+    if (propertyIsUnsafe(target, key)) {
+      return;
+    }
 
     if (propertyIsOnObject(target, key) && options.isMergeableObject(source[key])) {
       destination[key] = getMergeFunction(key, options)(target[key], source[key], options);

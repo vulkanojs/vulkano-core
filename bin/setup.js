@@ -50,7 +50,9 @@ function scaffold() {
     const abs = path.join(appDir, relPath);
     fs.mkdirSync(abs, { recursive: true });
     const keep = path.join(abs, '.gitkeep');
-    if (!fs.existsSync(keep)) fs.writeFileSync(keep, '', 'utf8');
+    if (!fs.existsSync(keep)) {
+      fs.writeFileSync(keep, '', 'utf8');
+    }
   }
 
   // ─────────────────────────────────────────────

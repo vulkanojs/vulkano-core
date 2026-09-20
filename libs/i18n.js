@@ -26,7 +26,7 @@ module.exports = (() => {
   });
 
   // Change translations
-  i18next.init({
+  void i18next.init({
     lng: 'en',
     fallbackLng: 'en',
     resources: Object.fromEntries(resources)
