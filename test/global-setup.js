@@ -9,6 +9,8 @@ dotenv.config({ path: path.join(__dirname, '../.env.test'), quiet: !process.env.
 const TEST_PORT = process.env.TEST_PORT || 9877;
 const TEST_PORT_HBS = process.env.TEST_PORT_HBS || 9879;
 const TEST_PORT_SECURED = process.env.TEST_PORT_SECURED || 9881;
+const TEST_PORT_PROD = process.env.TEST_PORT_PROD || 9883;
+const TEST_PORT_PROD_HBS = process.env.TEST_PORT_PROD_HBS || 9885;
 const TEST_DB_URI = process.env.TEST_DB_URI;
 
 function pidFile(name) {
@@ -84,11 +86,21 @@ module.exports = async function globalSetup() {
       TEST_ENABLE_SECURITY: '1',
       COOKIES_SECRET_KEY: 'vulkano-test-cookie-secret',
       TEST_PORT: String(TEST_PORT_SECURED)
+    }),
+    // NODE_ENV=production variants — exercise the app-provided
+    // _shared/errors/{404,500}.html pages (dev mode uses the core's own).
+    spawnFixtureServer('prod', { NODE_ENV: 'production', TEST_PORT: String(TEST_PORT_PROD) }),
+    spawnFixtureServer('prod-hbs', {
+      NODE_ENV: 'production',
+      VIEW_ENGINE: 'hbs',
+      TEST_PORT: String(TEST_PORT_PROD_HBS)
     })
   ]);
 
   process.env.TEST_SERVER_URL = `http://localhost:${TEST_PORT}`;
   process.env.TEST_SERVER_HBS_URL = `http://localhost:${TEST_PORT_HBS}`;
   process.env.TEST_SERVER_SECURED_URL = `http://localhost:${TEST_PORT_SECURED}`;
+  process.env.TEST_SERVER_PROD_URL = `http://localhost:${TEST_PORT_PROD}`;
+  process.env.TEST_SERVER_PROD_HBS_URL = `http://localhost:${TEST_PORT_PROD_HBS}`;
 
 };

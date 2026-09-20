@@ -2,6 +2,16 @@
 
 All notable changes to `@vulkano/core` are documented here.
 
+## [2.1.2]
+
+### Fixed
+- **fix: 404 in production returned 500.** With `NODE_ENV=production`, any URL without a
+  matching route (`/nope`, `/api/nope`, `/nope.css`, ...) answered 500 instead of 404. The
+  "ERROR 404" middleware in `bootstrap/server.js` referenced `views.path`, but `views` isn't
+  in scope there, so it threw a `ReferenceError` that the error handler turned into the 500
+  page. It now uses `vulkano.get('views')`, like the 5xx handler. Covered by
+  `test/integration/errors-production.test.js`.
+
 ## [2.1.1]
 
 ### Fixed

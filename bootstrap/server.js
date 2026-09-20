@@ -552,7 +552,7 @@ module.exports = function loadServer() {
         res.status(404);
 
         if (app.PRODUCTION) {
-          res.render(`${views.path}/_shared/errors/404.html`);
+          res.render(`${vulkano.get('views')}/_shared/errors/404.html`);
           return;
         }
 
