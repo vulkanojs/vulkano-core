@@ -5,6 +5,12 @@ All notable changes to `@vulkano/core` are documented here.
 ## [Unreleased]
 
 ### Fixed
+- **`?populate=` ignored on single-record GET.** The generated `get<Model>(id)` called
+  `getByField(id)` without props, and the scaffold `get :id` route didn't pass
+  `req.query`, so `GET /api/<resource>/:id?populate=x` never populated (lists did).
+  Now `get<Model>(id, props)` forwards props and the scaffold route passes `req.query`.
+  The `_buildPopulate` allowlist (`autopopulate: true`) still applies. The integration
+  fixture's hand-written `get :id` (which hid the bug) was removed.
 - **View engine from `config/views.js` was ignored.** `app.js` only read `views.config`
   (the `config/views/config.js` shape), so a flat `config/views.js` with
   `engine: 'handlebars'` silently fell back to Nunjucks — and, since include-all maps the

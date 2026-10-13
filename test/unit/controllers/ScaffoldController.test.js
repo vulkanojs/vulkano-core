@@ -80,10 +80,10 @@ describe('ScaffoldController', () => {
       expect(res.vsr).toHaveBeenCalledWith(expect.any(Promise));
     });
 
-    it('"get :id" delegates to Model.getModelName(id)', () => {
+    it('"get :id" delegates to Model.getModelName(id, req.query)', () => {
       const routes = scaffoldController('Product');
-      routes['get :id'](req, res);
-      expect(global.Product.getProduct).toHaveBeenCalledWith('1');
+      routes['get :id']({ ...req, query: { populate: 'category' } }, res);
+      expect(global.Product.getProduct).toHaveBeenCalledWith('1', { populate: 'category' });
     });
 
     it('post() delegates to Model.create(body) with status 201', () => {

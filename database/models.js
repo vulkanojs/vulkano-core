@@ -69,8 +69,8 @@ module.exports = function loadModelsApplication() {
         return global[i].getAll(props);
       },
 
-      [getModelName](id) {
-        return global[i].getByField(id);
+      [getModelName](id, props) {
+        return global[i].getByField(id, null, props);
       }
 
     };

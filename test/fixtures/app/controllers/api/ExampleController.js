@@ -10,10 +10,8 @@ module.exports = {
     res.vsr(Example.getAll(req.query || {}));
   },
 
-  // GET /api/example/:id?populate=school
-  'get :id'(req, res) {
-    res.vsr(Example.getByField(req.params.id, null, req.query || {}));
-  },
+  // GET /api/example/:id?populate=school — no override: the scaffold route
+  // (getExample(id, req.query)) must forward populate on its own.
 
   // POST /api/example/
   post(req, res) {

@@ -65,7 +65,7 @@ module.exports = (modelName, allowedMethods, subdocs) => {
         id
       } = req.params || {};
 
-      res.vsr(global[modelName][getModelName](id) );
+      res.vsr(global[modelName][getModelName](id, req.query || {}));
 
     },
 
