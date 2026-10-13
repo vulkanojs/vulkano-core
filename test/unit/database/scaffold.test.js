@@ -5,10 +5,17 @@
 
 const scaffold = require('../../../database/scaffold');
 
-// Fake model: only what _buildPopulate reads (this.schema.paths)
+// Fake ref model: every path visible, so _sanitizeFields keeps any field
+const fakeRef = Object.assign(Object.create(scaffold), {
+  schema: { path: () => ({ options: {} }) }
+});
+
+// Fake model: only what _buildPopulate reads (this.schema.paths, and the
+// ref models on this.db.models for request field selection)
 function fakeModel(paths) {
   return Object.assign(Object.create(scaffold), {
-    schema: { paths }
+    schema: { paths },
+    db: { models: { School: fakeRef, Tag: fakeRef } }
   });
 }
 
@@ -152,6 +159,44 @@ describe('scaffold._parsePopulateEntries', () => {
         { name: 'school', fields: ['name'] },
         { name: 'teacher', fields: null }
       ]);
+  });
+
+});
+
+// ─────────────────────────────────────────────
+// _sanitizeFields — request field selection never reaches a `select: false` path
+// ─────────────────────────────────────────────
+describe('scaffold._sanitizeFields', () => {
+
+  const hidden = { options: { select: false } };
+  const visible = { options: {} };
+  const byPath = { name: visible, password: hidden, secret: hidden };
+  const model = Object.assign(Object.create(scaffold), {
+    schema: { path: (p) => byPath[p] }
+  });
+
+  it('keeps visible fields and exclusions', () => {
+    expect(model._sanitizeFields(['name', '-name'])).toEqual(['name', '-name']);
+  });
+
+  it('drops a select: false path named explicitly', () => {
+    expect(model._sanitizeFields(['name', 'password'])).toEqual(['name']);
+  });
+
+  it('drops any +field override', () => {
+    expect(model._sanitizeFields(['+password', '+name'])).toEqual([]);
+  });
+
+  it('drops a sub-path of a select: false path', () => {
+    expect(model._sanitizeFields(['secret.part'])).toEqual([]);
+  });
+
+  it('trims and drops empty entries', () => {
+    expect(model._sanitizeFields([' name ', '', ' password'])).toEqual(['name']);
+  });
+
+  it('returns [] for missing fields', () => {
+    expect(model._sanitizeFields(undefined)).toEqual([]);
   });
 
 });

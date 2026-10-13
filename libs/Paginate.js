@@ -220,18 +220,25 @@ module.exports = {
     delete criteria.per_page;
     delete criteria.perPage; // Fallback
 
-    const fields = [];
+    const rawFields = [];
     if (Array.isArray(criteria.fields)) {
       criteria.fields.forEach( (f) => {
-        fields.push(f);
+        rawFields.push(f);
       });
     } else if (typeof criteria.fields === 'string') {
       const tmpFields = (criteria.fields) ? criteria.fields.split(',') : [];
       tmpFields.forEach( (f) => {
-        fields.push(f);
+        rawFields.push(f);
       });
     }
     delete criteria.fields;
+
+    // ?fields= is request data — the model drops any `select: false` path
+    // (database/scaffold.js _sanitizeFields); a model without it gets no
+    // request field selection at all (its default projection stays)
+    const fields = typeof Model._sanitizeFields === 'function'
+      ? Model._sanitizeFields(rawFields)
+      : [];
 
     const tmpSort = (criteria.sort || '').split(',');
     const sort = { sort: {} };

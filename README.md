@@ -437,6 +437,12 @@ module.exports = {
 };
 ```
 
+`?fields=` and `?populate=rel:fields` are request data too: `Paginate.get` and
+`_buildPopulate` drop any `+field` override and any `select: false` path
+(the model's own `_sanitizeFields`, inherited from the scaffold), so mark secrets (`password: { type: String, select: false }`)
+and they never leave through a list or a populate. Read them in model code with
+`.select('+password')`.
+
 ### Vulkano models — don't hand-roll `createdAt` or `updatedAt`
 
 `@vulkano/core`'s `database/mongodb.js` auto-injects `createdAt: Date` and `updatedAt: Date` attributes into every model schema if the model doesn't already define them (`if (!attributes.createdAt) { ... }`, same for `updatedAt`). Never add a manual timestamp field (`at`, `date`, `timestamp`, `createdAt`, `updatedAt`, etc.) to a model's `attributes` — they're already automatic in Vulkano, so a hand-rolled one is redundant, and if named anything other than `createdAt`/`updatedAt` it also fights the framework's own sort/index defaults (`database/scaffold.js` defaults `sort: 'createdAt|DESC'`). Use `createdAt` and `updatedAt` directly in indexes, sort strings, and business logic.

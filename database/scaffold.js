@@ -51,6 +51,41 @@ module.exports = {
   },
 
   /**
+   * Drop request field selections that would expose a `select: false` path
+   * of this model (e.g. a password hash). `fields` comes from the request
+   * (?fields=, ?populate=rel:fields), and Mongoose returns a `select: false`
+   * path when it's named explicitly or prefixed with `+`. Those paths stay
+   * reachable only through `.select('+field')` in model code.
+   * Applied by Paginate.get and _buildPopulate.
+   *
+   * @param {Array} fields field names
+   * @returns {Array} the fields safe to select
+   */
+  _sanitizeFields(fields) {
+
+    const { schema } = this;
+
+    return (fields || [])
+      .map((f) => String(f).trim())
+      .filter((f) => {
+
+        if (!f || f.startsWith('+')) {
+          return false;
+        }
+
+        // Check every prefix: `secret.part` is hidden when `secret` is
+        const parts = f.replace(/^-/, '').split('.');
+
+        return !parts.some((_part, i) => {
+          const path = schema && schema.path(parts.slice(0, i + 1).join('.'));
+          return path && path.options && path.options.select === false;
+        });
+
+      });
+
+  },
+
+  /**
    * Build populate array by auto-detecting the model's own relations that
    * were opted in — either via `autopopulate: true` on the attribute
    * definition, or via the `extra` allowlist passed here for a one-off call.
@@ -102,8 +137,15 @@ module.exports = {
 
         const populateProps = { path: field };
 
-        if (entry.fields && entry.fields.length > 0) {
-          populateProps.select = entry.fields.join(' ');
+        // Request-supplied fields: never a `select: false` path of the ref
+        // model; a ref model without _sanitizeFields gets no field selection
+        const refModel = this.db && this.db.models ? this.db.models[ref] : null;
+        const fields = refModel && typeof refModel._sanitizeFields === 'function'
+          ? refModel._sanitizeFields(entry.fields)
+          : [];
+
+        if (fields.length > 0) {
+          populateProps.select = fields.join(' ');
         }
 
         return populateProps;

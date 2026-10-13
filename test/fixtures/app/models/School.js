@@ -4,6 +4,8 @@ module.exports = {
   attributes: {
     name: { type: String, required: true },
     address: { type: String },
+    // Hidden path — ?fields= / ?populate=school:<fields> must never return it
+    pin: { type: String, select: false },
     // Subdocument array — exercises ScaffoldController's generic, opt-in
     // subdoc routes (`subdocs: ['grades']` on SchoolController), as opposed
     // to Item/Example's hand-written subdoc routes.

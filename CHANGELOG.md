@@ -4,6 +4,18 @@ All notable changes to `@vulkano/core` are documented here.
 
 ## [Unreleased]
 
+### Security
+- **`?fields=` / `?populate=rel:fields` exposed `select: false` paths.** Request field
+  selection went straight into Mongoose's `.select()`, and Mongoose returns a
+  `select: false` path (e.g. a password hash) when it's named explicitly or prefixed with
+  `+` — so `GET /api/users?fields=+password` on any `getAll(req.query)` endpoint (scaffold
+  included), or `?populate=author:+password` on an `autopopulate` relation, leaked it.
+  New model method `_sanitizeFields(fields)` (scaffold, so every model has it) drops
+  `+field` overrides and any `select: false` path (or sub-path); `Paginate.get` and
+  `_buildPopulate` run request fields through it — a model without it gets no request
+  field selection. Model code keeps `.select('+field')` for the cases that need it
+  (login). Covered by `test/integration/hidden-fields.test.js` + unit tests.
+
 ### Fixed
 - **`?populate=` ignored on single-record GET.** The generated `get<Model>(id)` called
   `getByField(id)` without props, and the scaffold `get :id` route didn't pass
