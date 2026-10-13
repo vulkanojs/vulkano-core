@@ -41,6 +41,9 @@ All notable changes to `@vulkano/core` are documented here.
   `config.js`. `bootstrap/views.js` now reads `app.config.views` in either shape (file
   wins when both exist). Covered by `test/unit/bootstrap/views.test.js`.
 
+### Docs
+- README § Built-in Global Libs: `Encrypter` is reversible AES encryption (was described as bcrypt password hashing); `VSError` lists `reject`/`notFound` only (no `badRequest`).
+
 ## [2.1.2]
 
 ### Fixed

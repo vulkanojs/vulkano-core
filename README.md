@@ -464,11 +464,11 @@ All files in `app/services/` are auto-loaded as globals. The framework also expo
 
 | Global      | Description                                                     |
 |-------------|-----------------------------------------------------------------|
-| `VSError`   | Structured error factory (`reject`, `notFound`, `badRequest`)   |
+| `VSError`   | Structured error factory (`reject`, `notFound`)                 |
 | `Jwt`       | Sign / verify JWT tokens                                        |
 | `Paginate`  | Query serialization and pagination helpers                      |
 | `Merge`     | Deep-merge utility (deepmerge-compatible, full option support)  |
-| `Encrypter` | Hash and compare passwords (bcrypt-based)                       |
+| `Encrypter` | Reversible encryption (`encrypt`/`dencrypt`) — never passwords  |
 | `Filter`    | Input sanitization helpers                                      |
 | `Crontab`   | Schedule recurring jobs with cron expressions                   |
 | `ApiClient` | HTTP client for calling external APIs (native fetch + undici)   |
