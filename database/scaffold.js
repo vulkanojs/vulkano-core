@@ -86,6 +86,32 @@ module.exports = {
   },
 
   /**
+   * Remove this model's `select: false` paths from a plain object — for
+   * results that skip the query projection (save() returns the whole doc).
+   *
+   * @param {Object} obj plain record
+   * @returns {Object} the same object without hidden paths
+   */
+  _stripHidden(obj) {
+
+    const paths = (this.schema && this.schema.paths) || {};
+
+    Object.keys(paths)
+      .filter((p) => paths[p].options && paths[p].options.select === false)
+      .forEach((p) => {
+        const parts = p.split('.');
+        const last = parts.pop();
+        const parent = parts.reduce((o, k) => (o ? o[k] : undefined), obj);
+        if (parent) {
+          delete parent[last];
+        }
+      });
+
+    return obj;
+
+  },
+
+  /**
    * Build populate array by auto-detecting the model's own relations that
    * were opted in — either via `autopopulate: true` on the attribute
    * definition, or via the `extra` allowlist passed here for a one-off call.
@@ -229,7 +255,9 @@ module.exports = {
       delete obj._id;
     }
 
-    return obj.save();
+    // save() returns the whole document, `select: false` paths included
+    return obj.save()
+      .then((r) => this._stripHidden(r.toObject({ transform: true })));
 
   },
 
@@ -291,8 +319,16 @@ module.exports = {
    */
   delete(id) {
 
-    // Soft delete: set active=false instead of removing the document
-    return this.update(id, { active: false });
+    // Soft delete: set active=false instead of removing the document.
+    // Written directly, not through update(): `fillable` limits what a
+    // request may update and usually leaves `active` out.
+    return this.getByField(id)
+      .then(() => this.findOneAndUpdate(
+        { _id: id },
+        { active: false, updatedAt: Date.now() },
+        { returnDocument: 'after' }
+      ))
+      .then((r) => r.toObject({ transform: true }));
 
   },
 

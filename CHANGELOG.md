@@ -17,6 +17,17 @@ All notable changes to `@vulkano/core` are documented here.
   (login). Covered by `test/integration/hidden-fields.test.js` + unit tests.
 
 ### Fixed
+- **Scaffold soft delete did nothing on a model with `fillable`.** `delete(id)` called
+  `update(id, { active: false })`, and `update` drops every field outside `fillable` —
+  `active` included — so `DELETE /api/<resource>/:id` answered 204 and left the record
+  active. `delete` now writes `{ active: false, updatedAt }` directly (still 404 for a
+  missing record). `fillable` stays an update-only allowlist.
+- **Scaffold `create` response included `select: false` paths.** `save()` returns the
+  whole document, so `POST` echoed back a password hash. `create` now resolves to a plain
+  object (`toObject({ transform: true })`, same shape as `update`/`get<Model>`) without
+  hidden paths (new `_stripHidden`). Code that used the resolved value as a Mongoose
+  document (`.save()` on it) must re-fetch it.
+- Covered by `test/integration/scaffold-fillable.test.js` (Member fixture).
 - **`?populate=` ignored on single-record GET.** The generated `get<Model>(id)` called
   `getByField(id)` without props, and the scaffold `get :id` route didn't pass
   `req.query`, so `GET /api/<resource>/:id?populate=x` never populated (lists did).

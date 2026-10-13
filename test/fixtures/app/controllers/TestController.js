@@ -144,6 +144,15 @@ module.exports = {
     res.vsr(promise);
   },
 
+  // DELETE /test/resetmembers — hard-deletes all members (test helper, test env only)
+  'delete resetmembers': function onResetMembers(req, res) {
+    const db = mongoose.connection.db;
+    const promise = db
+      ? db.collection('member').deleteMany({}).then(() => ({ reset: true }))
+      : Promise.resolve({ reset: true });
+    res.vsr(promise);
+  },
+
   // GET /test/:id — single route param (after specific routes to avoid shadowing)
   'get :id': function onGetById(req, res) {
     const { id } = req.params;
