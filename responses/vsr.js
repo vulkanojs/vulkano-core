@@ -45,7 +45,7 @@ module.exports = function VSRPromise(promiseToRun, httpStatusCode) {
   workingPromise
     .then( (r) => {
 
-      if ( (r.statusCode && r.statusCode >= 400) || output.statusCode >= 400) {
+      if ( (r?.statusCode && r.statusCode >= 400) || output.statusCode >= 400) {
 
         if (r.statusCode && r.statusCode !== 402) {
           return Promise.reject(r);

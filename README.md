@@ -248,7 +248,7 @@ res.vsr(VSError.reject('Not allowed', 403));
 // 404
 res.vsr(VSError.notFound('User'));
 
-// Plain rejection → 500
+// Rejection without a statusCode → 400 BadRequest
 res.vsr(Promise.reject(new Error('Something went wrong')));
 ```
 
