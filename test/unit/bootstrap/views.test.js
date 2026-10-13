@@ -8,9 +8,12 @@
 const path = require('node:path');
 const { setupGlobals } = require('../helpers/globals');
 
-function loadViewsConfig() {
+function loadViewsConfig(appConfig = {}) {
   jest.resetModules();
-  setupGlobals({ APP_PATH: path.join(__dirname, '../../fixtures/views-only/app') });
+  setupGlobals({
+    APP_PATH: path.join(__dirname, '../../fixtures/views-only/app'),
+    app: { config: appConfig }
+  });
   return require('../../../bootstrap/views');
 }
 
@@ -25,6 +28,23 @@ describe('views bootstrap config', () => {
     const config = loadViewsConfig();
     expect(config.engine).toBe('nunjucks');
     expect(config.ext).toBe('.html');
+  });
+
+  it('reads the engine from config/views.js (flat file)', () => {
+    const config = loadViewsConfig({ views: { engine: 'handlebars', ext: '.hbs' } });
+    expect(config.engine).toBe('handlebars');
+    expect(config.ext).toBe('.hbs');
+  });
+
+  it('reads the engine from config/views/config.js (folder)', () => {
+    const config = loadViewsConfig({ views: { config: { engine: 'handlebars' }, helpers: {} } });
+    expect(config.engine).toBe('handlebars');
+    expect(config.ext).toBe('.html');
+  });
+
+  it('keeps nunjucks when the views folder has no config.js', () => {
+    const config = loadViewsConfig({ views: { helpers: {} } });
+    expect(config.engine).toBe('nunjucks');
   });
 
   it('lists core filters before project filters', () => {

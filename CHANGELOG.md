@@ -2,6 +2,16 @@
 
 All notable changes to `@vulkano/core` are documented here.
 
+## [Unreleased]
+
+### Fixed
+- **View engine from `config/views.js` was ignored.** `app.js` only read `views.config`
+  (the `config/views/config.js` shape), so a flat `config/views.js` with
+  `engine: 'handlebars'` silently fell back to Nunjucks — and, since include-all maps the
+  file and the `views/` folder to the same key, adding the file also hid the folder's
+  `config.js`. `bootstrap/views.js` now reads `app.config.views` in either shape (file
+  wins when both exist). Covered by `test/unit/bootstrap/views.test.js`.
+
 ## [2.1.2]
 
 ### Fixed

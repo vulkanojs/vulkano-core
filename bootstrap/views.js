@@ -27,12 +27,18 @@ const appHelpers = require('include-all')({
   optional: true
 });
 
+// Project engine settings. include-all maps both `config/views.js` and
+// `config/views/config.js` to `app.config.views`: the file gives the settings
+// directly, the folder nests them under `config`. When both exist, the file wins.
+const { views: appViews } = (typeof app !== 'undefined' && app.config) || {};
+const appSettings = appViews?.config || (appViews?.engine || appViews?.ext ? appViews : {});
+
 module.exports = {
   path: path.join(APP_PATH, 'views'),
 
-  engine: 'nunjucks',
+  engine: appSettings.engine || 'nunjucks',
 
-  ext: '.html',
+  ext: appSettings.ext || '.html',
 
   filters: [coreFilters || {}, appFilters || {}],
 
