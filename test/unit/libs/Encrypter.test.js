@@ -109,3 +109,68 @@ describe('Encrypter — custom opts', () => {
   });
 
 });
+
+describe('Encrypter — derived keys cache', () => {
+
+  const crypto = require('node:crypto');
+
+  let scryptSpy;
+
+  beforeEach(() => {
+    Encrypter.clearKeys();
+    scryptSpy = jest.spyOn(crypto, 'scryptSync');
+  });
+
+  afterEach(() => {
+    scryptSpy.mockRestore();
+    delete process.env.ENCRYPTER_KEYS_LIMIT;
+    setupGlobals();
+  });
+
+  it('derives the key only once for the same key + salt', () => {
+    const enc1 = new Encrypter('cache-key');
+    const enc2 = new Encrypter('cache-key');
+    expect(scryptSpy).toHaveBeenCalledTimes(1);
+    expect(enc1.key).toBe(enc2.key);
+    expect(enc2.dencrypt(enc1.encrypt('cached'))).toBe('cached');
+  });
+
+  it('derives a separate key for a different salt', () => {
+    const enc1 = new Encrypter('cache-key', { salt: 'salt-a' });
+    const enc2 = new Encrypter('cache-key', { salt: 'salt-b' });
+    expect(scryptSpy).toHaveBeenCalledTimes(2);
+    expect(() => enc2.dencrypt(enc1.encrypt('secret'))).toThrow();
+  });
+
+  it('derives a separate key for a different encryption key', () => {
+    new Encrypter('cache-key-one');
+    new Encrypter('cache-key-two');
+    expect(scryptSpy).toHaveBeenCalledTimes(2);
+  });
+
+  it('clears the cache when ENCRYPTER_KEYS_LIMIT is reached', () => {
+    process.env.ENCRYPTER_KEYS_LIMIT = '2';
+    new Encrypter('limit-1');
+    new Encrypter('limit-2');
+    new Encrypter('limit-3'); // limit reached → cache cleared
+    new Encrypter('limit-1'); // derived again
+    expect(scryptSpy).toHaveBeenCalledTimes(4);
+  });
+
+  it('app.config.encryption.keysLimit overrides ENCRYPTER_KEYS_LIMIT', () => {
+    process.env.ENCRYPTER_KEYS_LIMIT = '100';
+    setupGlobals({ app: { config: { encryption: { keysLimit: 1 } } } });
+    new Encrypter('config-limit-1');
+    new Encrypter('config-limit-2'); // limit reached → cache cleared
+    new Encrypter('config-limit-1'); // derived again
+    expect(scryptSpy).toHaveBeenCalledTimes(3);
+  });
+
+  it('clearKeys forces the key to be derived again', () => {
+    new Encrypter('clear-key');
+    Encrypter.clearKeys();
+    new Encrypter('clear-key');
+    expect(scryptSpy).toHaveBeenCalledTimes(2);
+  });
+
+});
