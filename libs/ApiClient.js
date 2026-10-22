@@ -1,5 +1,18 @@
 const { Agent, fetch } = require('undici');
 
+/**
+ * Shared dispatchers
+ *
+ * One undici Agent per SSL verification + keep-alive combination, reused by
+ * every request. Each Agent keeps its own connection pool per origin, so the
+ * TCP + TLS connections are reused (keep-alive) instead of opening a new one
+ * on every call.
+ *
+ * With keepAlive = false the dispatcher uses pipelining: 0, which makes undici
+ * close the connection after each response.
+ */
+const apiClientDispatchers = {};
+
 module.exports = {
 
   /**
@@ -49,6 +62,45 @@ module.exports = {
   },
 
   /**
+   * Method to get a shared dispatcher by SSL verification and keep-alive
+   *
+   * @param {Boolean} sslVerify
+   * @param {Boolean} keepAlive
+   * @returns {Agent}
+   */
+  _getDispatcher(sslVerify, keepAlive) {
+
+    const key = `${sslVerify ? 'verify' : 'noverify'}:${keepAlive ? 'keepalive' : 'close'}`;
+
+    if (!apiClientDispatchers[key]) {
+      apiClientDispatchers[key] = new Agent({
+        connect: { rejectUnauthorized: sslVerify },
+        pipelining: keepAlive ? 1 : 0
+      });
+    }
+
+    return apiClientDispatchers[key];
+
+  },
+
+  /**
+   * Close and remove the shared dispatchers
+   *
+   * @returns {Promise}
+   */
+  async closeDispatchers() {
+
+    const current = Object.keys(apiClientDispatchers).map((key) => {
+      const dispatcher = apiClientDispatchers[key];
+      delete apiClientDispatchers[key];
+      return dispatcher;
+    });
+
+    await Promise.all(current.map((dispatcher) => (dispatcher.close ? dispatcher.close() : null)));
+
+  },
+
+  /**
    * Method to send a request
    *
    * @param {Object} props
@@ -62,7 +114,8 @@ module.exports = {
       method,
       responseType,
       headers,
-      rejectUnauthorized
+      rejectUnauthorized,
+      keepAlive
     } = typeof props === 'string'
       ? { url: props, method: 'GET' }
       : (props || {});
@@ -74,6 +127,11 @@ module.exports = {
     const envDefault = process.env.API_CLIENT_REJECT_UNAUTHORIZED !== 'false';
     const sslVerify = rejectUnauthorized !== undefined ? rejectUnauthorized !== false : envDefault;
 
+    // Keep-alive is enabled by default. It can be turned off globally via
+    // API_CLIENT_KEEP_ALIVE=false in .env — a per-call `keepAlive` always wins.
+    const envKeepAlive = process.env.API_CLIENT_KEEP_ALIVE !== 'false';
+    const useKeepAlive = keepAlive !== undefined ? keepAlive !== false : envKeepAlive;
+
     const optHeaders = {
       'Content-Type': 'application/json',
       Accept: 'application/json',
@@ -83,7 +141,7 @@ module.exports = {
     const options = {
       method: (method || 'GET').toUpperCase(),
       headers: optHeaders,
-      dispatcher: new Agent({ connect: { rejectUnauthorized: sslVerify } })
+      dispatcher: this._getDispatcher(sslVerify, useKeepAlive)
     };
 
     if (body) {
@@ -123,8 +181,9 @@ module.exports = {
         return response.body;
       }
 
-      const data = await response.json();
-      return data || {};
+      // Empty bodies (e.g. 204) resolve to {}
+      const text = await response.text();
+      return text ? (JSON.parse(text) || {}) : {};
 
     } catch (err) {
 

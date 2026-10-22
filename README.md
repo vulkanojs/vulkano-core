@@ -489,6 +489,17 @@ the whole app via `.env`:
 API_CLIENT_REJECT_UNAUTHORIZED=false
 ```
 
+`ApiClient` reuses connections (keep-alive): requests share one undici dispatcher per SSL setting,
+with a connection pool per origin, so calls to the same API don't open a new TCP + TLS connection
+each time. A single call can opt out with `keepAlive: false` (the connection is closed after the
+response), and the default can be flipped for the whole app via `.env`:
+
+```
+# .env — closes the connection after every ApiClient call.
+# A per-call keepAlive always overrides this, in either direction.
+API_CLIENT_KEEP_ALIVE=false
+```
+
 ---
 
 ## File Uploads
