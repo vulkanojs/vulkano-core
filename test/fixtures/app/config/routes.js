@@ -18,10 +18,19 @@ module.exports = {
   },
 
   // Exercised only by the "secured" fixture server variant
-  // (TEST_ENABLE_SECURITY=1) — JWT-protected, rate-limited, and
+  // (TEST_ENABLE_SECURITY=1) — JWT/Basic Auth-protected, rate-limited, and
   // session-backed routes, all disabled/no-op on the default variant.
   'GET /secure/whoami': (req, res) => {
     res.json({ ok: true });
+  },
+
+  'GET /basic/whoami': (req, res) => {
+    res.json({ user: req.basicAuth.user });
+  },
+
+  // Behind Basic Auth AND JWT on the secured variant
+  'GET /both/whoami': (req, res) => {
+    res.json({ user: req.basicAuth.user });
   },
 
   'GET /limited/ping': (req, res) => {

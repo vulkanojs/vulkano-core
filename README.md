@@ -664,6 +664,55 @@ const { _id } = Jwt.decode(Jwt.getToken(req)) || {};
 
 ---
 
+## Basic Auth
+
+HTTP Basic Authentication (RFC 7617) for routes that a person opens in a browser, like an admin
+panel, API docs or a staging site. It needs no extra package. Configure it in
+`app/config/express/basicAuth.js`. See
+[`examples/config/express/basicAuth.js`](examples/config/express/basicAuth.js) for an example:
+
+```js
+module.exports = {
+  enabled: true,
+  path: ['/admin', '/docs'],     // '*' (whole app, default), a path, or an array of paths
+  realm: 'Vulkano',              // name shown by the browser's login prompt
+  users: {
+    admin: process.env.BASIC_AUTH_PASS,                   // plain password
+    ops: '$2b$10$Qe6Jb0m5h1ZJ0n6xq3W1oO3yQnM4Yz8d2c...'   // or a bcrypt hash
+  }
+};
+```
+
+- **Passwords:** a value starting with `$2a$`, `$2b$` or `$2y$` is checked as a bcrypt hash
+  (`bcryptjs`). Any other value is compared as plain text, in constant time. A user whose password
+  is empty or `undefined` (for example, an env var that isn't set) is skipped. If no user is left,
+  the server refuses to start.
+- **On success:** the request continues with `req.basicAuth = { user }`.
+- **On failure:** the response is `401` with
+  `WWW-Authenticate: Basic realm="…", charset="UTF-8"`, so the browser shows its login prompt. The
+  body is `{ success: false, statusCode: 401, error: { detail: 'Unauthorized' } }`.
+- **Order:** Basic Auth runs after rate limiting and before JWT. A `CORS` preflight (`OPTIONS`) is
+  answered earlier, so it never needs credentials.
+- **HTTPS:** Basic credentials are only base64-encoded, not encrypted. Only enable Basic Auth
+  behind HTTPS.
+
+### Basic Auth and JWT together
+
+Both can be enabled, even on the same path. A request then needs both: Basic credentials in
+`Authorization` and the JWT token in its own header (`x-token-auth` by default), cookie or query
+parameter.
+
+The two only collide when `app/config/express/jwt.js` sets `header: 'authorization'`, because Basic
+credentials always travel in `Authorization`. In that case the server refuses to start with an
+error. Move the JWT token to another header to fix it:
+
+```js
+// app/config/express/jwt.js
+header: 'x-token-auth'
+```
+
+---
+
 ## Cron Jobs
 
 When Vulkano starts, you can configure your own tasks to run at a given time.
@@ -896,6 +945,7 @@ files fall back to sane defaults — and every file is auto-merged into the fina
 | [`cookies.js`](examples/config/express/cookies.js)               | Cookie parsing + session secret     | [`cookie-parser`](https://www.npmjs.com/package/cookie-parser), [`express-session`](https://www.npmjs.com/package/express-session) |
 | [`cors.js`](examples/config/express/cors.js)                     | Cross-Origin Resource Sharing       | — (handled with a custom middleware, no `cors` package) |
 | [`jwt.js`](examples/config/express/jwt.js)                       | JWT authentication middleware       | [`express-jwt`](https://www.npmjs.com/package/express-jwt), [`jwt-simple`](https://www.npmjs.com/package/jwt-simple) |
+| [`basicAuth.js`](examples/config/express/basicAuth.js)           | HTTP Basic Auth; `path` scopes it (defaults to `'*'`), passwords plain or bcrypt | — (custom middleware, `bcryptjs` for hashes) |
 | [`csp.js`](examples/config/express/csp.js)                       | Content Security Policy rules       | — (custom header builder) |
 | [`helmet.js`](examples/config/express/helmet.js)                 | Security headers                    | [`helmet`](https://helmetjs.github.io/) |
 | [`permissionPolicy.js`](examples/config/express/permissionPolicy.js) | `Permission-Policy` header       | — (custom header builder) |
@@ -925,7 +975,7 @@ routing conventions, not Express 4 compat, so they're permanent:
   glued or slash-separated onto a prefix (`'/admin*'`, `'/admin/*'` — the
   documented SPA catch-all convention above) are translated automatically to
   path-to-regexp v8 syntax, in your controllers, `app/config/routes.js`, and
-  the `rateLimit.path`/`jwt.path`/`cors.path` config options (including when
+  the `rateLimit.path`/`basicAuth.path`/`jwt.path`/`cors.path` config options (including when
   those are arrays). Express 5 captures the matched tail as `req.params.splat`
   (an array of path segments) instead of Express 4's `req.params[0]` string —
   update any code reading the old index form.

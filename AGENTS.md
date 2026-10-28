@@ -46,6 +46,7 @@ core/
 │   └── scaffold.js               ← Base CRUD methods: getAll, getByField, create, update, delete, subdocs
 ├── libs/
 │   ├── ApiClient.js              ← fetch/undici wrapper for outbound HTTP requests (SSL-verified by default)
+│   ├── BasicAuth.js              ← HTTP Basic Auth middleware (plain or bcrypt passwords) + JWT header-collision check
 │   ├── Crontab.js                ← node-cron wrapper for scheduled tasks
 │   ├── Download.js               ← File download helper
 │   ├── Encrypter.js              ← AES-256-CBC encrypt/decrypt
@@ -297,6 +298,7 @@ These are set automatically — never import them manually:
 | `Jwt` | `services.js` | JWT encode/decode library |
 | `Encrypter` | `services.js` | AES-256-CBC encrypt/decrypt |
 | `ApiClient` | `services.js` | Outbound HTTP client |
+| `BasicAuth` | `services.js` | Basic Auth middleware factory (wired from `express/basicAuth.js`) |
 | `Crontab` | `services.js` | Cron job scheduler (`timeZone` defaults to `UTC`) |
 | `i18n` | `services.js` | i18next instance |
 | `View` | `services.js` | `View.render(view, data)` → Promise<html>, renders outside the request/response cycle |
@@ -682,7 +684,7 @@ All sources are deep-merged with `deepmerge`. Final result is in `app.config`.
 
 **Key config files:**
 - `settings.js` — port, database connection, paths
-- `express/cors.js`, `express/jwt.js`, `express/csp.js`, `express/cookies.js`, `express/multer.js` (default `limits.fileSize` 25MB), `express/rateLimit.js` (disabled by default; wraps `express-rate-limit`; `path` scopes it to `'/api'` or an array of paths, defaults to `'*'`)
+- `express/cors.js`, `express/jwt.js`, `express/basicAuth.js` (disabled by default; `path` like `rateLimit`; `users` with plain or bcrypt passwords; runs before JWT — server refuses to start if `jwt.header` is `authorization`, since Basic credentials use that header), `express/csp.js`, `express/cookies.js`, `express/multer.js` (default `limits.fileSize` 25MB), `express/rateLimit.js` (disabled by default; wraps `express-rate-limit`; `path` scopes it to `'/api'` or an array of paths, defaults to `'*'`)
 - `routes.js` — explicit route mappings
 - `bootstrap.js` — startup hook (**required**)
 - `sockets/` — Socket.io config and adapters

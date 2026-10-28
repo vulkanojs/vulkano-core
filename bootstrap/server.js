@@ -34,6 +34,9 @@ const setupViewEngine = require('./engines');
 // JWT Middleware
 const jwtMiddleware = require('../libs/Jwt');
 
+// Basic Auth Middleware
+const basicAuthMiddleware = require('../libs/BasicAuth');
+
 // Express 5 route compat (Vulkano's own wildcard/optional-param route conventions)
 const { toExpress5Path } = require('./routeCompat');
 
@@ -210,6 +213,40 @@ module.exports = function loadServer() {
           vulkano.use(toExpress5Path(rateLimitPath), rateLimit(rateLimitOptions));
         } else {
           vulkano.use(rateLimit(rateLimitOptions));
+        }
+      }
+
+      // ---------------
+      // BASIC AUTH - File: app/config/express/basicAuth.js
+      // ---------------
+      const {
+        enabled: basicAuthEnabled,
+        path: basicAuthPath,
+        ...basicAuthOptions
+      } = expressConfig.basicAuth || {};
+
+      if (basicAuthEnabled) {
+        if (!basicAuthMiddleware.getUsers(basicAuthOptions.users).size) {
+          console.log(
+            ' \x1b[41mERROR\x1b[0m: Basic Auth is enabled but config/express/basicAuth.js has no users with a password'
+          );
+          return;
+        }
+
+        // Basic credentials travel in the Authorization header: JWT can't read its token there too
+        if (basicAuthMiddleware.conflictsWithJwt(expressConfig.jwt)) {
+          console.log(
+            " \x1b[41mERROR\x1b[0m: Basic Auth and JWT both use the Authorization header — set another 'header' in config/express/jwt.js"
+          );
+          return;
+        }
+
+        const basicAuthGuard = basicAuthMiddleware.init(basicAuthOptions);
+
+        if (basicAuthPath) {
+          vulkano.use(toExpress5Path(basicAuthPath), basicAuthGuard);
+        } else {
+          vulkano.use(basicAuthGuard);
         }
       }
 

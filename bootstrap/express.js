@@ -46,6 +46,7 @@ module.exports = function getExpressConfiguration() {
     cookies: {},
     csp: {},
     jwt: {},
+    basicAuth: {},
     session: {},
     permissionPolicy: {},
     rateLimit: {},

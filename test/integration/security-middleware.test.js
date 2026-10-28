@@ -1,5 +1,5 @@
 /**
- * Security middleware — JWT, rate limiting, cookies + session.
+ * Security middleware — JWT, Basic Auth, rate limiting, cookies + session.
  *
  * All disabled in the default fixture (matching a fresh app's defaults),
  * so exercised here against the "secured" fixture server variant
@@ -77,6 +77,92 @@ describe('Cookies + session — persists a counter across requests via the sessi
     const res = await fetch(`${BASE}/session-counter`);
     const body = await res.json();
     expect(body.views).toBe(1);
+  });
+
+});
+
+const basic = (user, password) => `Basic ${Buffer.from(`${user}:${password}`).toString('base64')}`;
+
+describe('Basic Auth — /basic/* requires valid credentials', () => {
+
+  it('401s with no credentials and sends the WWW-Authenticate challenge', async () => {
+    const res = await fetch(`${BASE}/basic/whoami`);
+    expect(res.status).toBe(401);
+    expect(res.headers.get('www-authenticate')).toBe('Basic realm="Vulkano Test", charset="UTF-8"');
+    const body = await res.json();
+    expect(body.success).toBe(false);
+  });
+
+  it('401s with a wrong password', async () => {
+    const res = await fetch(`${BASE}/basic/whoami`, {
+      headers: { Authorization: basic('admin', 'nope') }
+    });
+    expect(res.status).toBe(401);
+  });
+
+  it('401s with an unknown user', async () => {
+    const res = await fetch(`${BASE}/basic/whoami`, {
+      headers: { Authorization: basic('ghost', 'pa:ss') }
+    });
+    expect(res.status).toBe(401);
+  });
+
+  it('200s with a plain password containing ":" and sets req.basicAuth', async () => {
+    const res = await fetch(`${BASE}/basic/whoami`, {
+      headers: { Authorization: basic('admin', 'pa:ss') }
+    });
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ user: 'admin' });
+  });
+
+  it('200s with a bcrypt-hashed password', async () => {
+    const res = await fetch(`${BASE}/basic/whoami`, {
+      headers: { Authorization: basic('hashed', 'hashed-pass') }
+    });
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ user: 'hashed' });
+  });
+
+  it('leaves paths outside its scope alone', async () => {
+    const res = await fetch(`${BASE}/session-counter`);
+    expect(res.status).toBe(200);
+  });
+
+});
+
+describe('Basic Auth + JWT on the same path — no collision (/both/*)', () => {
+
+  const getToken = async () => {
+    const tokenRes = await fetch(`${BASE}/test/sockettoken`);
+    const { data: { token } } = await tokenRes.json();
+    return token;
+  };
+
+  it('401s with only the JWT token (Basic Auth runs first)', async () => {
+    const res = await fetch(`${BASE}/both/whoami`, {
+      headers: { 'x-token-auth': await getToken() }
+    });
+    expect(res.status).toBe(401);
+    expect(res.headers.get('www-authenticate')).toMatch(/^Basic /);
+  });
+
+  it('401s with only Basic credentials (JWT still required)', async () => {
+    const res = await fetch(`${BASE}/both/whoami`, {
+      headers: { Authorization: basic('admin', 'pa:ss') }
+    });
+    expect(res.status).toBe(401);
+    expect(res.headers.get('www-authenticate')).toBeNull();
+  });
+
+  it('200s with Basic credentials in Authorization and the token in x-token-auth', async () => {
+    const res = await fetch(`${BASE}/both/whoami`, {
+      headers: {
+        Authorization: basic('admin', 'pa:ss'),
+        'x-token-auth': await getToken()
+      }
+    });
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual({ user: 'admin' });
   });
 
 });

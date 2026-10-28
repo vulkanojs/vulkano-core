@@ -30,7 +30,7 @@ module.exports = {
 
   // Path where the token is required
   // @type String
-  path: securityEnabled ? '/secure' : '/api/',
+  path: securityEnabled ? ['/secure', '/both'] : '/api/',
 
   // Paths excluded from token verification
   // See https://github.com/jfromaniello/express-unless for pattern examples

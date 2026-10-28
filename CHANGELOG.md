@@ -4,6 +4,16 @@ All notable changes to `@vulkano/core` are documented here.
 
 ## [Unreleased]
 
+### Added
+- **Basic Auth middleware** (`libs/BasicAuth.js`, `app/config/express/basicAuth.js`). It is opt-in
+  (`enabled: false` by default), and `path` scopes it like `rateLimit.path`. Passwords can be plain
+  text, compared in constant time, or bcrypt hashes. A failed request gets `401` with the
+  `WWW-Authenticate` challenge. A successful one gets `req.basicAuth = { user }`. Basic Auth runs
+  before JWT, and both can protect the same path because JWT reads its token from its own header.
+  The server refuses to start when `jwt.header` is `authorization` (both would share the header)
+  or when no user has a password. Covered by `test/unit/libs/BasicAuth.test.js` and
+  `test/integration/security-middleware.test.js` (`/basic`, `/both`).
+
 ### Security
 - **`?fields=` / `?populate=rel:fields` exposed `select: false` paths.** Request field
   selection went straight into Mongoose's `.select()`, and Mongoose returns a
