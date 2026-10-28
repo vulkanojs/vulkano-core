@@ -3,7 +3,7 @@ allowBuilds:
   fsevents: set this to true or false
   unrs-resolver: true
 catalog:
-  vite-plus: ^0.3.1
+  vite-plus: ^1.4.0
 overrides:
   # Safety floor for the real "vite" package pnpm auto-installs to satisfy
   # @voidzero-dev/vite-plus-test / @vitest/mocker's peerDependency (they
