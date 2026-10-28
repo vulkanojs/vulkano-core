@@ -242,7 +242,9 @@ module.exports = function loadServer() {
           if (err && err.name === 'UnauthorizedError') {
             res.status(401).jsonp({ success: false, error: 'Invalid token' });
           } else {
-            next();
+            // Keep any other error (e.g. a JSON body that fails to parse) for the
+            // error handler — a bare next() resumed the request without it
+            next(err);
           }
         });
       }
@@ -608,8 +610,11 @@ module.exports = function loadServer() {
 
         res.status(status);
 
-        // AJAX Response
-        if (req.xhr) {
+        // AJAX / API clients: XHR, a JSON body, or JSON preferred over HTML
+        const wantsJson =
+          req.xhr || req.is('json') || req.accepts(['html', 'json']) === 'json';
+
+        if (wantsJson) {
           res.jsonp({
             success: false,
             statusCode: status,
@@ -628,7 +633,7 @@ module.exports = function loadServer() {
         }
 
         if (app.PRODUCTION) {
-          if (+status > 400 && +status < 500) {
+          if (+status >= 400 && +status < 500) {
             res.render(`${vulkano.get('views')}/_shared/errors/404.html`);
           } else {
             res.render(`${vulkano.get('views')}/_shared/errors/500.html`);

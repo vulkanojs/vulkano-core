@@ -17,6 +17,19 @@ All notable changes to `@vulkano/core` are documented here.
   (login). Covered by `test/integration/hidden-fields.test.js` + unit tests.
 
 ### Fixed
+- **A JSON body that failed to parse answered 500 when JWT was enabled.** The JWT error
+  handler in `bootstrap/server.js` called a bare `next()` for every error that wasn't an
+  `UnauthorizedError`, which dropped the error and resumed the request: the route then ran
+  without `res.vsr` (registered after the body parser) and threw
+  `res.vsr is not a function`. It now calls `next(err)`, so the error reaches the error
+  handler with its own status (400 for `entity.parse.failed`).
+- **API clients got the HTML error page.** The error handler only answered JSON to XHR
+  requests. It now also answers JSON when the request sends a JSON body or prefers JSON over
+  HTML (`Accept`), with no stack in production.
+- **A 400 rendered the 500 page in production.** The 4xx check was `> 400`; it's now
+  `>= 400`, so a 400 renders `_shared/errors/404.html` like the other 4xx statuses.
+- Covered by `test/integration/errors-json.test.js` (default, JWT-secured and production
+  fixtures).
 - **Scaffold soft delete did nothing on a model with `fillable`.** `delete(id)` called
   `update(id, { active: false })`, and `update` drops every field outside `fillable` —
   `active` included — so `DELETE /api/<resource>/:id` answered 204 and left the record
