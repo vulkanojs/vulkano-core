@@ -283,7 +283,8 @@ module.exports = {
   // Salt for key derivation (scrypt)
   salt: process.env.ENCRYPTION_SALT || 'vulkano-salt-v1',
 
-  // Cipher algorithm
+  // Legacy cipher (CBC). Encrypts while ENCRYPT_ALGORITHM is unset and always
+  // decrypts `ciphertext|iv` values
   algorithm: process.env.ENCRYPTION_ALGORITHM || 'aes-256-cbc'
 
 };
@@ -405,6 +406,7 @@ module.exports = {
       'ENCRYPTION_KEY=',
       'ENCRYPTION_SALT=salt',
       'ENCRYPTION_ALGORITHM=aes-256-cbc',
+      'ENCRYPT_ALGORITHM=aes-256-gcm',
       ''
     ].join('\n'), 'utf8');
   }

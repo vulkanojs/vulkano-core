@@ -49,7 +49,7 @@ core/
 │   ├── BasicAuth.js              ← HTTP Basic Auth middleware (plain or bcrypt passwords) + JWT header-collision check
 │   ├── Crontab.js                ← node-cron wrapper for scheduled tasks
 │   ├── Download.js               ← File download helper
-│   ├── Encrypter.js              ← AES-256-CBC encrypt/decrypt
+│   ├── Encrypter.js              ← AES-256-CBC encrypt/decrypt; AES-256-GCM opt-in via `ENCRYPT_ALGORITHM` (reads both)
 │   ├── Filter.js                 ← String filter system (trim, prefix, suffix, etc.)
 │   ├── Jwt.js                    ← JWT encode/decode + Express middleware
 │   ├── Paginate.js               ← Mongoose pagination, search, and filtering
@@ -296,7 +296,7 @@ These are set automatically — never import them manually:
 | `Paginate` | `services.js` | Pagination and search library |
 | `VSError` | `services.js` | Standard error class |
 | `Jwt` | `services.js` | JWT encode/decode library |
-| `Encrypter` | `services.js` | AES-256-CBC encrypt/decrypt |
+| `Encrypter` | `services.js` | AES-256-CBC encrypt/decrypt; AES-256-GCM opt-in via `ENCRYPT_ALGORITHM` (reads both) |
 | `ApiClient` | `services.js` | Outbound HTTP client |
 | `BasicAuth` | `services.js` | Basic Auth middleware factory (wired from `express/basicAuth.js`) |
 | `Crontab` | `services.js` | Cron job scheduler (`timeZone` defaults to `UTC`) |

@@ -15,6 +15,23 @@ All notable changes to `@vulkano/core` are documented here.
   `test/integration/security-middleware.test.js` (`/basic`, `/both`).
 
 ### Security
+- **`Encrypter` used AES-256-CBC without authentication.** A wrong key or a tampered value
+  only threw when the padding came out invalid; about 1 in 256 times `dencrypt` returned
+  garbage instead (the intermittent `decrypting with the wrong key throws` test), and CBC
+  without a MAC is malleable. AES-256-GCM is **opt-in** in 2.x so projects in production
+  change nothing on upgrade:
+  - `ENCRYPT_ALGORITHM` unset: `encrypt` keeps writing `ciphertext|iv` with
+    `encryption.algorithm` (aes-256-cbc), so a rollback to an older core reads every value.
+  - `ENCRYPT_ALGORITHM=aes-256-gcm`: `encrypt` writes `ciphertext|iv|authTag`; a wrong key
+    or tampering always throws. New projects (`bin/setup.js`) get it in `.env`.
+  - `dencrypt` always reads both formats, so the variable can be turned on or off at any
+    time (turn it on only once every instance runs this core).
+  - A value that is not a 256-bit GCM cipher is logged (`console.error`) and ignored.
+  - With GCM on, the first legacy value decrypted logs a `console.warn` once per process;
+    `Encrypter.isLegacy(value)` finds stored values to re-encrypt. GCM becomes the default
+    and the CBC fallback is dropped in a future major, once legacy values are gone.
+  - The JWT path is not exposed to padding-oracle attacks: `Jwt.decode` and `express-jwt`
+    verify the HMAC signature before decrypting.
 - **`?fields=` / `?populate=rel:fields` exposed `select: false` paths.** Request field
   selection went straight into Mongoose's `.select()`, and Mongoose returns a
   `select: false` path (e.g. a password hash) when it's named explicitly or prefixed with

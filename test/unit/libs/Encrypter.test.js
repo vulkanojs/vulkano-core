@@ -5,7 +5,11 @@
 const { setupGlobals } = require('../helpers/globals');
 setupGlobals(); // Encrypter calls `new VSError` in dencrypt when the IV is missing
 
+// GCM on: a wrong key always throws. The legacy (CBC) default is covered by
+// `Encrypter — ENCRYPT_ALGORITHM` below.
+process.env.ENCRYPT_ALGORITHM = 'aes-256-gcm';
 const Encrypter = require('../../../libs/Encrypter');
+delete process.env.ENCRYPT_ALGORITHM;
 
 describe('Encrypter', () => {
 
@@ -18,13 +22,12 @@ describe('Encrypter', () => {
     expect(enc.dencrypt(encrypted)).toBe(original);
   });
 
-  it('encrypted output contains an IV segment separated by |', () => {
+  it('encrypted output is ciphertext|iv|authTag', () => {
     const enc = new Encrypter(KEY);
-    const encrypted = enc.encrypt('data');
-    expect(encrypted).toContain('|');
-    const parts = encrypted.split('|');
-    expect(parts).toHaveLength(2);
-    expect(parts[1]).toHaveLength(32); // 16 bytes → 32 hex chars
+    const parts = enc.encrypt('data').split('|');
+    expect(parts).toHaveLength(3);
+    expect(parts[1]).toHaveLength(24); // 12-byte GCM IV → 24 hex chars
+    expect(parts[2]).toHaveLength(32); // 16-byte auth tag → 32 hex chars
   });
 
   it('two encryptions of the same string produce different ciphertexts (random IV)', () => {
@@ -45,6 +48,32 @@ describe('Encrypter', () => {
     const enc2 = new Encrypter('wrong-key');
     const encrypted = enc1.encrypt('secret');
     expect(() => enc2.dencrypt(encrypted)).toThrow();
+  });
+
+  it('decrypting with the wrong key always throws (auth tag)', () => {
+    const enc1 = new Encrypter('correct-key');
+    const enc2 = new Encrypter('wrong-key');
+    for (let i = 0; i < 2000; i++) {
+      expect(() => enc2.dencrypt(enc1.encrypt(`secret-${i}`))).toThrow();
+    }
+  });
+
+  it('a tampered ciphertext or auth tag throws', () => {
+    const enc = new Encrypter(KEY);
+    const [encrypted, iv, tag] = enc.encrypt('secret').split('|');
+    const flip = (hex) => (hex[0] === '0' ? '1' : '0') + hex.slice(1);
+    expect(() => enc.dencrypt([flip(encrypted), iv, tag].join('|'))).toThrow();
+    expect(() => enc.dencrypt([encrypted, iv, flip(tag)].join('|'))).toThrow();
+    expect(() => enc.dencrypt([encrypted, iv, tag.slice(0, 8)].join('|'))).toThrow();
+  });
+
+  it('decrypts legacy ciphertext|iv values written with aes-256-cbc', () => {
+    const crypto = require('node:crypto');
+    const enc = new Encrypter(KEY);
+    const iv = crypto.randomBytes(16);
+    const cipher = crypto.createCipheriv('aes-256-cbc', enc.key, iv);
+    const legacy = `${cipher.update('old token', 'utf8', 'hex')}${cipher.final('hex')}|${iv.toString('hex')}`;
+    expect(enc.dencrypt(legacy)).toBe('old token');
   });
 
   it('dencrypt throws VSError when IV is missing', () => {
@@ -106,6 +135,85 @@ describe('Encrypter — custom opts', () => {
     const enc = new Encrypter(KEY, { algorithm: 'aes-256-cbc', salt: 'fixed-salt' });
     expect(enc.algorithm).toBe('aes-256-cbc');
     expect(enc.dencrypt(enc.encrypt('algo test'))).toBe('algo test');
+  });
+
+});
+
+describe('Encrypter — ENCRYPT_ALGORITHM', () => {
+
+  let errorSpy;
+  let warnSpy;
+
+  // Encrypter reads ENCRYPT_ALGORITHM once, when the module loads
+  function load(value) {
+    if (value === undefined) {
+      delete process.env.ENCRYPT_ALGORITHM;
+    } else {
+      process.env.ENCRYPT_ALGORITHM = value;
+    }
+    let Lib;
+    jest.isolateModules(() => {
+      Lib = require('../../../libs/Encrypter');
+    });
+    return Lib;
+  }
+
+  beforeEach(() => {
+    errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    errorSpy.mockRestore();
+    warnSpy.mockRestore();
+    delete process.env.ENCRYPT_ALGORITHM;
+  });
+
+  it('without it, keeps writing legacy ciphertext|iv values (no change in production)', () => {
+    const enc = new (load(undefined))('env-key');
+    const encrypted = enc.encrypt('legacy');
+    expect(encrypted.split('|')).toHaveLength(2);
+    expect(enc.dencrypt(encrypted)).toBe('legacy');
+    expect(errorSpy).not.toHaveBeenCalled();
+    expect(warnSpy).not.toHaveBeenCalled();
+  });
+
+  it('with a 256-bit GCM cipher, writes ciphertext|iv|authTag without logging an error', () => {
+    const enc = new (load('aes-256-gcm'))('env-key');
+    const encrypted = enc.encrypt('gcm');
+    expect(encrypted.split('|')).toHaveLength(3);
+    expect(enc.dencrypt(encrypted)).toBe('gcm');
+    expect(errorSpy).not.toHaveBeenCalled();
+  });
+
+  it.each(['aes-256-cbc', 'aes-128-gcm', 'not-a-cipher'])('logs and ignores %s (keeps legacy values)', (value) => {
+    const enc = new (load(value))('env-key');
+    expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining(`ENCRYPT_ALGORITHM "${value}"`));
+    const encrypted = enc.encrypt('fallback');
+    expect(encrypted.split('|')).toHaveLength(2);
+    expect(enc.dencrypt(encrypted)).toBe('fallback');
+  });
+
+  it('turning it off still reads GCM values (safe rollback of the opt-in)', () => {
+    const gcm = new (load('aes-256-gcm'))('env-key').encrypt('written with gcm');
+    const enc = new (load(undefined))('env-key');
+    expect(enc.dencrypt(gcm)).toBe('written with gcm');
+  });
+
+  it('with GCM on, reading a legacy value warns once per process', () => {
+    const legacy = new (load(undefined))('env-key').encrypt('old');
+    const enc = new (load('aes-256-gcm'))('env-key');
+    expect(enc.dencrypt(legacy)).toBe('old');
+    expect(enc.dencrypt(legacy)).toBe('old');
+    expect(warnSpy).toHaveBeenCalledTimes(1);
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('Legacy aes-256-cbc value decrypted'));
+  });
+
+  it('isLegacy tells both formats apart', () => {
+    const Lib = load('aes-256-gcm');
+    const legacy = new (load(undefined))('env-key').encrypt('old');
+    expect(Lib.isLegacy(legacy)).toBe(true);
+    expect(Lib.isLegacy(new Lib('env-key').encrypt('new'))).toBe(false);
   });
 
 });
