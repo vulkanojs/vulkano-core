@@ -774,7 +774,26 @@ module.exports = function loadServer() {
         subClient = pubClient.duplicate();
         await subClient.connect();
 
-        io.adapter(socketRedisAdapter(pubClient, subClient));
+        const socketsRedisKey = String(
+          process.env.SOCKETS_REDIS_KEY || redisAdapter.key || ''
+        ).trim();
+        const socketsRedisTimeout = Number(
+          process.env.SOCKETS_REDIS_TIMEOUT || redisAdapter.requestsTimeout
+        );
+
+        const socketsRedisOptions = {};
+
+        // Only set each option when defined, otherwise keep the adapter's defaults
+        // (key: 'socket.io', requestsTimeout: 5000)
+        if (socketsRedisKey) {
+          socketsRedisOptions.key = socketsRedisKey;
+        }
+
+        if (socketsRedisTimeout > 0) {
+          socketsRedisOptions.requestsTimeout = socketsRedisTimeout;
+        }
+
+        io.adapter(socketRedisAdapter(pubClient, subClient, socketsRedisOptions));
       } else if (String(adapter).toLocaleLowerCase() === 'mongodb') {
         const { settings: socketsMongoSettings } = mongodbAdapter || {};
 

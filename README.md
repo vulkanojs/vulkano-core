@@ -879,7 +879,9 @@ Redis/MongoDB adapter settings live in `app/config/sockets/adapters/redis.js` an
 module.exports = {
   host: process.env.REDIS_HOST || 'localhost',
   port: process.env.REDIS_PORT || '6379',
-  password: process.env.REDIS_PASSWORD || ''
+  password: process.env.REDIS_PASSWORD || '',
+  key: process.env.SOCKETS_REDIS_KEY || '',                 // channel prefix, only applied when set
+  requestsTimeout: process.env.SOCKETS_REDIS_TIMEOUT || ''    // ms, inter-server requests, only applied when set (default 5000)
 };
 ```
 
