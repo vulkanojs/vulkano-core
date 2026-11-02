@@ -284,7 +284,7 @@ module.exports = {
   salt: process.env.ENCRYPTION_SALT || 'vulkano-salt-v1',
 
   // Legacy cipher (CBC). Encrypts while ENCRYPT_ALGORITHM is unset and always
-  // decrypts `ciphertext|iv` values
+  // decrypts 'ciphertext|iv' values
   algorithm: process.env.ENCRYPTION_ALGORITHM || 'aes-256-cbc'
 
 };
@@ -407,6 +407,8 @@ module.exports = {
       'ENCRYPTION_SALT=salt',
       'ENCRYPTION_ALGORITHM=aes-256-cbc',
       'ENCRYPT_ALGORITHM=aes-256-gcm',
+      'SOCKETS_REDIS_KEY=',
+      'SOCKETS_REDIS_TIMEOUT=',
       ''
     ].join('\n'), 'utf8');
   }
