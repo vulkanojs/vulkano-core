@@ -2,6 +2,17 @@
 
 All notable changes to `@vulkano/core` are documented here.
 
+## [1.32.1]
+
+### Added
+- **Socket.io Redis adapter options** (`options` in `app/config/sockets/adapters/redis.js`).
+  The object goes to `@socket.io/redis-adapter`'s `createAdapter()` (`key`, `requestsTimeout`,
+  `publishOnSpecificResponseChannel`, ...) and is stripped from the Redis client config. Before,
+  every app used the default `socket.io` key, so apps or environments sharing one Redis server
+  answered each other's `fetchSockets()`/`allRooms()` requests and received each other's room
+  broadcasts; one slow or stuck foreign process made those requests fail with
+  `timeout reached while waiting for allRooms response`.
+
 ## [1.30.1]
 
 ### Fixed

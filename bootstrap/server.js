@@ -713,12 +713,15 @@ module.exports = function loadServer() {
       let subClient = null;
 
       if (String(adapter).toLocaleLowerCase() === 'redis') {
-        pubClient = socketRedis(redisAdapter);
+        // `options` goes to @socket.io/redis-adapter (key, requestsTimeout, ...), the rest to the client
+        const { options: redisAdapterOptions, ...redisClientConfig } = redisAdapter || {};
+
+        pubClient = socketRedis(redisClientConfig);
         pubClient.on('error', (err) => console.log('Socket Redis Client Error', err));
 
         subClient = pubClient.duplicate();
 
-        io.adapter(socketRedisAdapter(pubClient, subClient));
+        io.adapter(socketRedisAdapter(pubClient, subClient, redisAdapterOptions || {}));
       } else if (String(adapter).toLocaleLowerCase() === 'mongodb') {
         const { settings: socketsMongoSettings } = mongodbAdapter || {};
 

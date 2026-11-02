@@ -697,7 +697,16 @@ Redis/MongoDB adapter settings live in `app/config/sockets/adapters/redis.js` an
 module.exports = {
   host: process.env.REDIS_HOST || 'localhost',
   port: process.env.REDIS_PORT || '6379',
-  password: process.env.REDIS_PASSWORD || ''
+  password: process.env.REDIS_PASSWORD || '',
+
+  // Optional. Passed to @socket.io/redis-adapter, not to the Redis client.
+  // Give each app/environment its own `key` when several share one Redis server:
+  // with the default key ('socket.io') they all answer each other's
+  // fetchSockets()/allRooms() requests and receive each other's room broadcasts.
+  options: {
+    key: `my-app:${process.env.NODE_ENV}`,
+    requestsTimeout: 5000
+  }
 };
 ```
 
