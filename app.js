@@ -180,77 +180,84 @@ async function startVulkano() {
     return;
   }
 
-  bootstrap((callbackAfterInitVulkano) => {
-    // Start Express
-    app.server.start(() => {
-      const { sockets, settings: configSettings, vite } = app.config || {};
+  // Resolves once the server listens, app.vite is set and the project's
+  // after-start callback ran — callers (e.g. a test helper) await it as the
+  // readiness signal.
+  await new Promise((resolve, reject) => {
+    bootstrap((callbackAfterInitVulkano) => {
+      // Start Express
+      Promise.resolve(app.server.start(() => {
+        const { sockets, settings: configSettings, vite } = app.config || {};
 
-      const { database } = configSettings || {};
+        const { database } = configSettings || {};
 
-      const { connection } = database || {};
+        const { connection } = database || {};
 
-      const connectionToShow = connection && process.env.MONGO_URI ? 'MONGO_URI' : connection;
+        const connectionToShow = connection && process.env.MONGO_URI ? 'MONGO_URI' : connection;
 
-      const serverConfig = [];
+        const serverConfig = [];
 
-      const nodeVersion = process.version.match(/^v(\d+\.\d+\.\d+)/)[1];
-      const portText = String(app.vulkano.get('port') || 8000);
-      const socketText = sockets.enabled ? String(sockets.adapter || 'memory').toUpperCase() : 'NO';
+        const nodeVersion = process.version.match(/^v(\d+\.\d+\.\d+)/)[1];
+        const portText = String(app.vulkano.get('port') || 8000);
+        const socketText = sockets.enabled ? String(sockets.adapter || 'memory').toUpperCase() : 'NO';
 
-      serverConfig.push(`🚀 PORT: ${colors.fg.green}${showColumn(portText, 7)}${colors.reset}`);
-      serverConfig.push(' | ');
-      serverConfig.push(
-        `🌿 ENV: ${app.PRODUCTION ? colors.fg.red : colors.fg.green}${showColumn(NODE_ENV, 0)}${colors.reset}`
-      );
-
-      console.log(serverConfig.join(''));
-
-      const totalHeapSize = v8.getHeapStatistics().total_available_size;
-      const totalHeapSizeGb = (totalHeapSize / 1024 / 1024 / 1024).toFixed(2);
-
-      const nodeConfig = [];
-      nodeConfig.push(`📦 NODE: ${colors.fg.green}${showColumn(nodeVersion, 7)}${colors.reset}`);
-      nodeConfig.push(' | ');
-      nodeConfig.push(`🧠 MAX MEM: `, `${colors.fg.green}${totalHeapSizeGb} GB${colors.reset}`);
-      console.log(nodeConfig.join(''));
-
-      const startUpConfig = [];
-      startUpConfig.push(
-        `🔌 SOCKETS: `,
-        `${sockets.enabled ? colors.fg.green : colors.fg.blue}${showColumn(socketText, 10)}${colors.reset}`
-      );
-      startUpConfig.push(' | ');
-      startUpConfig.push(
-        `🍃 DB: `,
-        connection
-          ? `${colors.fg.green}${connectionToShow}${colors.reset}`
-          : `${colors.fg.blue}NO DATABASE${colors.reset}`
-      );
-      console.log(startUpConfig.join(''));
-
-      if (vite?.enabled) {
-        console.log(
-          `${colors.fg.yellow}⚡ VITE${colors.reset}`,
-          `${colors.fg.green}${showColumn('ENABLED', 5)}${colors.reset}`,
-          `${colors.dim}${vite.buildPath || 'public/.vite'}${colors.reset}`
+        serverConfig.push(`🚀 PORT: ${colors.fg.green}${showColumn(portText, 7)}${colors.reset}`);
+        serverConfig.push(' | ');
+        serverConfig.push(
+          `🌿 ENV: ${app.PRODUCTION ? colors.fg.red : colors.fg.green}${showColumn(NODE_ENV, 0)}${colors.reset}`
         );
-      }
 
-      const startupMs = ((Date.now() - global.START_TIME) / 1000).toFixed(3);
-      console.log(`${colors.fg.magenta}${cutLine}${colors.reset}`);
-      console.log(
-        `${colors.bright}${colors.fg.cyan}${showCenteredText(`⚡ Ready in ${startupMs}s`)}${colors.reset}`
-      );
-      console.log(`${colors.fg.magenta}${cutLine}${colors.reset}`);
+        console.log(serverConfig.join(''));
 
-      if (vite?.enabled) {
-        app.vite = Vite.init(vite.buildPath || 'public/.vite');
-      }
+        const totalHeapSize = v8.getHeapStatistics().total_available_size;
+        const totalHeapSizeGb = (totalHeapSize / 1024 / 1024 / 1024).toFixed(2);
 
-      // Run custom callback after init vulkano
-      if (callbackAfterInitVulkano && typeof callbackAfterInitVulkano === 'function') {
-        callbackAfterInitVulkano();
-      }
+        const nodeConfig = [];
+        nodeConfig.push(`📦 NODE: ${colors.fg.green}${showColumn(nodeVersion, 7)}${colors.reset}`);
+        nodeConfig.push(' | ');
+        nodeConfig.push(`🧠 MAX MEM: `, `${colors.fg.green}${totalHeapSizeGb} GB${colors.reset}`);
+        console.log(nodeConfig.join(''));
+
+        const startUpConfig = [];
+        startUpConfig.push(
+          `🔌 SOCKETS: `,
+          `${sockets.enabled ? colors.fg.green : colors.fg.blue}${showColumn(socketText, 10)}${colors.reset}`
+        );
+        startUpConfig.push(' | ');
+        startUpConfig.push(
+          `🍃 DB: `,
+          connection
+            ? `${colors.fg.green}${connectionToShow}${colors.reset}`
+            : `${colors.fg.blue}NO DATABASE${colors.reset}`
+        );
+        console.log(startUpConfig.join(''));
+
+        if (vite?.enabled) {
+          console.log(
+            `${colors.fg.yellow}⚡ VITE${colors.reset}`,
+            `${colors.fg.green}${showColumn('ENABLED', 5)}${colors.reset}`,
+            `${colors.dim}${vite.buildPath || 'public/.vite'}${colors.reset}`
+          );
+        }
+
+        const startupMs = ((Date.now() - global.START_TIME) / 1000).toFixed(3);
+        console.log(`${colors.fg.magenta}${cutLine}${colors.reset}`);
+        console.log(
+          `${colors.bright}${colors.fg.cyan}${showCenteredText(`⚡ Ready in ${startupMs}s`)}${colors.reset}`
+        );
+        console.log(`${colors.fg.magenta}${cutLine}${colors.reset}`);
+
+        if (vite?.enabled) {
+          app.vite = Vite.init(vite.buildPath || 'public/.vite');
+        }
+
+        // Run custom callback after init vulkano
+        if (callbackAfterInitVulkano && typeof callbackAfterInitVulkano === 'function') {
+          callbackAfterInitVulkano();
+        }
+
+        resolve();
+      })).catch(reject);
     });
   });
 }

@@ -53,6 +53,14 @@ All notable changes to `@vulkano/core` are documented here.
   (login). Covered by `test/integration/hidden-fields.test.js` + unit tests.
 
 ### Fixed
+- **`startVulkano()` resolved before the app was ready.** It returned as soon as it called the
+  project's `app/config/bootstrap.js`, while `app.server.start()` (listen, `app.vite`, the
+  after-start callback) was still running, so a caller awaiting it as the readiness signal (e.g.
+  the Vulkano Framework test helper `waitForReady()`) could send a request before the server
+  listened or before `app.vite` was set (500 in the `vite()` view helper). It now resolves after
+  the after-start callback, and rejects if `app.server.start()` throws. Projects that call
+  `vulkano()` without awaiting it are unaffected. Covered by `test/integration/startup.test.js`
+  (`test/fixtures/startup-probe.js`).
 - **A JSON body that failed to parse answered 500 when JWT was enabled.** The JWT error
   handler in `bootstrap/server.js` called a bare `next()` for every error that wasn't an
   `UnauthorizedError`, which dropped the error and resumed the request: the route then ran
