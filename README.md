@@ -881,9 +881,14 @@ module.exports = {
   port: process.env.REDIS_PORT || '6379',
   password: process.env.REDIS_PASSWORD || '',
   key: process.env.SOCKETS_REDIS_KEY || '',                 // channel prefix, only applied when set
-  requestsTimeout: process.env.SOCKETS_REDIS_TIMEOUT || ''    // ms, inter-server requests, only applied when set (default 5000)
+  requestsTimeout: process.env.SOCKETS_REDIS_TIMEOUT || '',   // ms, inter-server requests, only applied when set (default 5000)
+  options: {                                                  // any other @socket.io/redis-adapter option, passed as-is
+    // publishOnSpecificResponseChannel: true
+  }
 };
 ```
+
+`key`, `requestsTimeout` and `options` go only to the adapter, never to the Redis client. Precedence: `SOCKETS_REDIS_KEY` / `SOCKETS_REDIS_TIMEOUT` (.env) > `key` / `requestsTimeout` > `options.key` / `options.requestsTimeout`. A project on the 1.x shape (everything under `options`) keeps working.
 
 ```js
 // app/config/sockets/adapters/mongodb.js

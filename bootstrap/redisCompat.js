@@ -75,4 +75,45 @@ async function connectRedisClient(config, onError) {
 
 }
 
-module.exports = { normalizeRedisOptions, isMissingHelloError, connectRedisClient };
+// app/config/sockets/adapters/redis.js mixes two things: the Redis client
+// connection (host/port/socket/password...) and the @socket.io/redis-adapter
+// options. Splits them so createClient() never gets adapter-only keys and the
+// adapter gets every option the project set:
+//  - `options`: any @socket.io/redis-adapter option, passed through as-is
+//    (e.g. publishOnSpecificResponseChannel) — same shape as core 1.x.
+//  - `key` / `requestsTimeout`: shorthands, override `options`.
+//  - SOCKETS_REDIS_KEY / SOCKETS_REDIS_TIMEOUT (.env): override both.
+// An empty key or a non-positive timeout is not passed, so the adapter's own
+// defaults apply (key 'socket.io', requestsTimeout 5000).
+function splitRedisAdapterConfig(config, env = process.env) {
+
+  const { key, requestsTimeout, options, ...client } = config || {};
+
+  const adapterOptions = { ...(options || {}) };
+
+  const adapterKey = String(env.SOCKETS_REDIS_KEY || key || adapterOptions.key || '').trim();
+  const adapterTimeout = Number(
+    env.SOCKETS_REDIS_TIMEOUT || requestsTimeout || adapterOptions.requestsTimeout
+  );
+
+  delete adapterOptions.key;
+  delete adapterOptions.requestsTimeout;
+
+  if (adapterKey) {
+    adapterOptions.key = adapterKey;
+  }
+
+  if (adapterTimeout > 0) {
+    adapterOptions.requestsTimeout = adapterTimeout;
+  }
+
+  return { client, adapterOptions };
+
+}
+
+module.exports = {
+  normalizeRedisOptions,
+  isMissingHelloError,
+  connectRedisClient,
+  splitRedisAdapterConfig
+};

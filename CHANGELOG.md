@@ -5,6 +5,15 @@ All notable changes to `@vulkano/core` are documented here.
 ## [Unreleased]
 
 ### Added
+- **Socket.io Redis adapter options.** `app/config/sockets/adapters/redis.js` now reaches
+  `@socket.io/redis-adapter`: `key` and `requestsTimeout` (or `SOCKETS_REDIS_KEY` /
+  `SOCKETS_REDIS_TIMEOUT` in `.env`), plus `options` for any other adapter option (e.g.
+  `publishOnSpecificResponseChannel`), passed as-is. 2.0.0–2.3.0 called the adapter with no
+  options, so every app/environment sharing a Redis server used the same `socket.io` channel;
+  1.x read `options`, and that shape works again. Adapter-only keys are no longer sent to the
+  Redis client. Precedence: env > `key`/`requestsTimeout` > `options`. Helper
+  `splitRedisAdapterConfig` in `bootstrap/redisCompat.js`, covered by
+  `test/unit/bootstrap/redisCompat.test.js`.
 - **Basic Auth middleware** (`libs/BasicAuth.js`, `app/config/express/basicAuth.js`). It is opt-in
   (`enabled: false` by default), and `path` scopes it like `rateLimit.path`. Passwords can be plain
   text, compared in constant time, or bcrypt hashes. A failed request gets `401` with the

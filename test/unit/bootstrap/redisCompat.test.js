@@ -153,3 +153,83 @@ describe('connectRedisClient', () => {
   });
 
 });
+
+describe('splitRedisAdapterConfig', () => {
+
+  let splitRedisAdapterConfig;
+
+  beforeEach(() => {
+    jest.resetModules();
+    jest.doMock('redis', () => ({ createClient: jest.fn() }));
+    ({ splitRedisAdapterConfig } = require('../../../bootstrap/redisCompat'));
+  });
+
+  test('keeps the adapter defaults when nothing is set', () => {
+    expect(splitRedisAdapterConfig({ host: 'localhost', port: '6379' }, {})).toEqual({
+      client: { host: 'localhost', port: '6379' },
+      adapterOptions: {}
+    });
+  });
+
+  test('never sends adapter-only keys to the Redis client', () => {
+    const { client } = splitRedisAdapterConfig({
+      socket: { host: 'localhost', port: '6379' },
+      password: 'secret',
+      key: 'app:prod',
+      requestsTimeout: 10000,
+      options: { publishOnSpecificResponseChannel: true }
+    }, {});
+
+    expect(client).toEqual({ socket: { host: 'localhost', port: '6379' }, password: 'secret' });
+  });
+
+  test('passes `options` through as-is (core 1.x shape)', () => {
+    const { adapterOptions } = splitRedisAdapterConfig({
+      options: { key: 'app:prod', requestsTimeout: 10000, publishOnSpecificResponseChannel: true }
+    }, {});
+
+    expect(adapterOptions).toEqual({
+      key: 'app:prod',
+      requestsTimeout: 10000,
+      publishOnSpecificResponseChannel: true
+    });
+  });
+
+  test('flat key / requestsTimeout override `options`', () => {
+    const { adapterOptions } = splitRedisAdapterConfig({
+      key: 'flat',
+      requestsTimeout: '8000',
+      options: { key: 'nested', requestsTimeout: 1000, publishOnSpecificResponseChannel: true }
+    }, {});
+
+    expect(adapterOptions).toEqual({
+      key: 'flat',
+      requestsTimeout: 8000,
+      publishOnSpecificResponseChannel: true
+    });
+  });
+
+  test('SOCKETS_REDIS_KEY / SOCKETS_REDIS_TIMEOUT override the config', () => {
+    const { adapterOptions } = splitRedisAdapterConfig(
+      { key: 'flat', requestsTimeout: 8000 },
+      { SOCKETS_REDIS_KEY: ' env:key ', SOCKETS_REDIS_TIMEOUT: '12000' }
+    );
+
+    expect(adapterOptions).toEqual({ key: 'env:key', requestsTimeout: 12000 });
+  });
+
+  test('an empty key or a non-positive timeout is not passed', () => {
+    const { adapterOptions } = splitRedisAdapterConfig({ key: '  ', requestsTimeout: '' }, {});
+
+    expect(adapterOptions).toEqual({});
+  });
+
+  test('does not mutate the project config', () => {
+    const config = { key: 'a', options: { key: 'b', publishOnSpecificResponseChannel: true } };
+
+    splitRedisAdapterConfig(config, {});
+
+    expect(config).toEqual({ key: 'a', options: { key: 'b', publishOnSpecificResponseChannel: true } });
+  });
+
+});

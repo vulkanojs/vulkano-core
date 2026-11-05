@@ -17,7 +17,7 @@ const useragent = require('express-useragent');
 const cookieParser = require('cookie-parser');
 const expressSession = require('express-session');
 const socketMongoose = require('mongoose');
-const { connectRedisClient } = require('./redisCompat');
+const { connectRedisClient, splitRedisAdapterConfig } = require('./redisCompat');
 const { createAdapter: socketRedisAdapter } = require('@socket.io/redis-adapter');
 const { createAdapter: socketMongoAdapter } = require('@socket.io/mongo-adapter');
 
@@ -767,31 +767,17 @@ module.exports = function loadServer() {
       let subClient = null;
 
       if (String(adapter).toLocaleLowerCase() === 'redis') {
-        pubClient = await connectRedisClient(redisAdapter, (err) =>
+        const {
+          client: socketsRedisClient,
+          adapterOptions: socketsRedisOptions
+        } = splitRedisAdapterConfig(redisAdapter);
+
+        pubClient = await connectRedisClient(socketsRedisClient, (err) =>
           console.log('Socket Redis Client Error', err)
         );
 
         subClient = pubClient.duplicate();
         await subClient.connect();
-
-        const socketsRedisKey = String(
-          process.env.SOCKETS_REDIS_KEY || redisAdapter.key || ''
-        ).trim();
-        const socketsRedisTimeout = Number(
-          process.env.SOCKETS_REDIS_TIMEOUT || redisAdapter.requestsTimeout
-        );
-
-        const socketsRedisOptions = {};
-
-        // Only set each option when defined, otherwise keep the adapter's defaults
-        // (key: 'socket.io', requestsTimeout: 5000)
-        if (socketsRedisKey) {
-          socketsRedisOptions.key = socketsRedisKey;
-        }
-
-        if (socketsRedisTimeout > 0) {
-          socketsRedisOptions.requestsTimeout = socketsRedisTimeout;
-        }
 
         io.adapter(socketRedisAdapter(pubClient, subClient, socketsRedisOptions));
       } else if (String(adapter).toLocaleLowerCase() === 'mongodb') {

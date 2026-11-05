@@ -10,6 +10,11 @@ module.exports = {
   key: process.env.SOCKETS_REDIS_KEY || 'socket.io',
 
   // ms to wait for other nodes on inter-server requests (fetchSockets, serverSideEmit…) — only applied when set (adapter default: 5000)
-  requestsTimeout: process.env.SOCKETS_REDIS_TIMEOUT || ''
+  requestsTimeout: process.env.SOCKETS_REDIS_TIMEOUT || '',
+
+  // Any other @socket.io/redis-adapter option, passed as-is
+  options: {
+    // publishOnSpecificResponseChannel: true
+  }
 
 };
