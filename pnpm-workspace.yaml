@@ -8,9 +8,10 @@ overrides:
   # Safety floor for the real "vite" package pnpm auto-installs to satisfy
   # @voidzero-dev/vite-plus-test / @vitest/mocker's peerDependency (they
   # require actual vite, not the vite-plus-core alias). Keeps it above the
-  # server.fs.deny bypass (GHSA-v6wh-96g9-6wx3), fixed in 8.0.16.
-  "@vitest/mocker>vite": ^8.1.4
-  "@voidzero-dev/vite-plus-test>vite": ^8.1.4
+  # server.fs.deny bypass (GHSA-v6wh-96g9-6wx3, fixed in 8.0.16) and the
+  # server.fs.allow / launch-editor advisories (GHSA-rq7h-c2jc-7f22 et al.), fixed in 8.1.6.
+  "@vitest/mocker>vite": ^8.1.6
+  "@voidzero-dev/vite-plus-test>vite": ^8.1.6
 peerDependencyRules:
   allowAny:
     - vite

@@ -24,6 +24,13 @@ All notable changes to `@vulkano/core` are documented here.
   `test/integration/security-middleware.test.js` (`/basic`, `/both`).
 
 ### Security
+- **Dependency advisories.** `express-handlebars` floor raised to `^9.0.4`, which moves it to
+  `glob@14` / `minimatch@11` (GHSA-3g3m-2fjr-6pw4, GHSA-g3hv-75wg-m249). The dev-only vite
+  override floor goes from `^8.1.4` to `^8.1.6` (GHSA-rq7h-c2jc-7f22, GHSA-9jrq-w75r-8gcw and the
+  launch-editor advisories). The lockfile was refreshed to pick up `body-parser@2.4.0`,
+  `qs@6.16.1`, `ip-address@10.7.5`, `engine.io@6.6.11` and `brace-expansion@5.0.12`, all of them
+  inside the existing caret ranges. Apps on an older lockfile get these fixes by re-resolving
+  (`pnpm update`); no `package.json` change is needed for them.
 - **`Encrypter` used AES-256-CBC without authentication.** A wrong key or a tampered value
   only threw when the padding came out invalid; about 1 in 256 times `dencrypt` returned
   garbage instead (the intermittent `decrypting with the wrong key throws` test), and CBC
